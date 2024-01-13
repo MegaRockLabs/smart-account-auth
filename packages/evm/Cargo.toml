@@ -1,0 +1,30 @@
+[package]
+name = "saa-evm"
+edition = { workspace = true }
+authors = { workspace = true }
+version = { workspace = true }
+
+
+[dependencies]
+hex                     = { workspace = true }
+k256                    = { workspace = true }
+saa-common              = { workspace = true }
+saa-macros              = { workspace = true }
+
+cosmwasm-std            = { workspace = true }
+cosmwasm-crypto         = { workspace = true }
+
+# Substrate
+scale                   = { workspace = true }
+scale-info              = { workspace = true }
+# CosmWasm
+cosmwasm-schema         = { workspace = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
+# Solana
+borsh                   = { workspace = true }
+borsh-derive            = { workspace = true }
+
+
+[features]
+cosmwasm    = []
