@@ -16,11 +16,15 @@ pub fn wasm_serde(
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq
             )]
-            #[cfg_attr(feature = "cosmwasm", derive(
-                ::serde::Serialize,
-                ::serde::Deserialize,
-                ::schemars::JsonSchema
-            ))]
+            #[cfg_attr(feature = "cosmwasm", 
+                derive(
+                    ::cosmwasm_schema::serde::Serialize,
+                    ::cosmwasm_schema::serde::Deserialize,
+                    ::cosmwasm_schema::schemars::JsonSchema
+                ),
+                schemars(crate = "::cosmwasm_schema::schemars"),
+                serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")
+            )]
             #[cfg_attr(feature = "solana", derive(
                 ::borsh_derive::BorshSerialize, 
                 ::borsh_derive::BorshDeserialize
@@ -31,7 +35,6 @@ pub fn wasm_serde(
                 ::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields)]
             #input
         },
         syn::Data::Enum(_) => parse_quote! {
@@ -40,11 +43,15 @@ pub fn wasm_serde(
                 ::std::fmt::Debug,
                 ::std::cmp::PartialEq
             )]
-            #[cfg_attr(feature = "cosmwasm", derive(
-                ::serde::Serialize,
-                ::serde::Deserialize,
-                ::schemars::JsonSchema
-            ))]
+            #[cfg_attr(feature = "cosmwasm", 
+                derive(
+                    ::cosmwasm_schema::serde::Serialize,
+                    ::cosmwasm_schema::serde::Deserialize,
+                    ::cosmwasm_schema::schemars::JsonSchema
+                ),
+                schemars(crate = "::cosmwasm_schema::schemars"),
+                serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")
+            )]
             #[cfg_attr(feature = "solana", derive(
                 ::borsh_derive::BorshSerialize, 
                 ::borsh_derive::BorshDeserialize
@@ -55,7 +62,6 @@ pub fn wasm_serde(
                 ::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #[serde(deny_unknown_fields, rename_all = "snake_case")]
             #input
         },
         syn::Data::Union(_) => panic!("unions are not supported"),

@@ -5,7 +5,16 @@ authors = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
-macros-proto = { path = "../macros-proto" }
+macros-proto        = { path = "../macros-proto" }
+
+# Substrate
+scale               = { workspace = true }
+scale-info          = { workspace = true }
+# CosmWasm
+cosmwasm-schema     = { workspace = true }
+# Solana
+borsh-derive        = { workspace = true }
+
 
 [features]
 default        = []

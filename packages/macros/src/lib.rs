@@ -1,5 +1,15 @@
 use macros_proto;
 
+#[cfg(feature = "cosmwasm")]
+pub use cosmwasm_schema;
+
+#[cfg(feature = "substrate")]
+pub use {scale, scale_info};
+
+#[cfg(feature = "solana")]
+pub use borsh_derive;
+
+
 pub use macros_proto::wasm_serde;
 
 #[macro_export]

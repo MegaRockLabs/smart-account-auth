@@ -14,7 +14,9 @@ authors         = [ "Kromsten <kromsten@megarock.labs>" ]
 
 [workspace.dependencies]
 k256                    = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-hex                     = "0.4.3"
+hex                     = { version = "0.4.3"  }
+bech32                  = { version = "0.9.1"  }
+
 
 semver                  = "1.0.21"
 thiserror               = "1.0.56"

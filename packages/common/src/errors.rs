@@ -3,33 +3,8 @@ use hex::FromHexError;
 use thiserror::Error;
 use bech32::Error as Bech32Error;
 
-
-#[derive(Error)]
 #[wasm_serde]
-pub enum PublicKeyError {
-    #[error("Public key must not be empty")]
-    Empty,
-
-    #[error("Public key {0}")]
-    Generic(String),
-
-    #[error("{0}")]
-    GenericNoPrefix(String),
-}
-
-impl PublicKeyError {
-    pub fn generic<M: Into<String>>(msg: M) -> Self {
-        Self::Generic(msg.into())
-    }
-
-    pub fn generic_no_prefix<M: Into<String>>(msg: M) -> Self {
-        Self::GenericNoPrefix(msg.into())
-    }
-}
-
-
 #[derive(Error)]
-#[wasm_serde]
 pub enum AddressError {
     #[error("Address must not be empty")]
     Empty,
@@ -49,6 +24,7 @@ pub enum AddressError {
     #[error("{0}")]
     GenericNoPrefix(String),
 }
+
 
 impl AddressError {
     pub fn generic<M: Into<String>>(msg: M) -> Self {
@@ -73,33 +49,12 @@ impl From<Bech32Error> for AddressError {
 }
 
 
-
-#[derive(Error)]
 #[wasm_serde]
-pub enum CredentialError {
-
-    #[error("No credentials provided")]
-    NoCredentials,
-
-    #[error("Credential type is not recognized")]
-    Unknown
-}
-
-
-
-
 #[derive(Error)]
-#[wasm_serde]
 pub enum AuthError {
 
     #[error("{0}")]
-    PublicKey(#[from] PublicKeyError),
-
-    #[error("{0}")]
     Address(#[from] AddressError),
-
-    #[error("{0}")]
-    Credential(#[from] CredentialError),
 
     #[error("{0}")]
     InvalidLength(String),
@@ -107,11 +62,14 @@ pub enum AuthError {
     #[error("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here.")]
     RecoveryParam,
 
+    
     #[error("Error recovering from the signature: Addresses do not match")]
     RecoveryMismatch,
 
+
     #[error("{0}")]
     Recovery(String),
+
 
     #[error("{0}")]
     Generic(String),

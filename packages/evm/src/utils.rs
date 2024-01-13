@@ -1,4 +1,9 @@
-use saa_common::{hashes::keccak256_fixed, AuthError};
+use bech32::{ToBase32, Variant};
+use saa_common::{
+    hashes::{keccak256_fixed, ripemd160, sha256}, 
+    AuthError, AddressError
+};
+
 
 pub fn preamble_msg(msg: &[u8]) -> [u8; 32] {
     const PREFIX: &str = "\x19Ethereum Signed Message:\n";
@@ -17,5 +22,16 @@ pub fn get_recovery_param(v: u8) -> Result<u8, AuthError> {
         27 => Ok(0),
         28 => Ok(1),
         _ => Err(AuthError::RecoveryParam)
+    }
+}
+
+
+pub fn derive_addr(hrp: &str, pubkey_bytes: &[u8]) -> Result<String, AddressError> {
+    let address_bytes = ripemd160(&sha256(pubkey_bytes));
+    let address_str = bech32::encode(hrp, address_bytes.to_base32(), Variant::Bech32);
+
+    match address_str {
+        Ok(s) => Ok(s),
+        Err(err) => Err(err.into()),
     }
 }

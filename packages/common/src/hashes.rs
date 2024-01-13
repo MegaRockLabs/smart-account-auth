@@ -35,15 +35,3 @@ pub fn keccak256_fixed(bytes: &[u8]) -> [u8; 32] {
 
     output
 }
-
-
-
-/* pub fn derive_addr(hrp: &str, pubkey_bytes: &[u8]) -> Result<String, AddressError> {
-    let address_bytes = ripemd160(&sha256(pubkey_bytes));
-    let address_str = bech32::encode(hrp, address_bytes.to_base32(), Variant::Bech32);
-
-    match address_str {
-        Ok(s) => Ok(s),
-        Err(err) => Err(err.into()),
-    }
-} */

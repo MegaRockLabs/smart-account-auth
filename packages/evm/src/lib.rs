@@ -1,14 +1,14 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::Api;
-use saa_common::{AuthError, hashes::keccak256_fixed, Credential, CredentialId};
+
+use saa_common::{AuthError, Credential, CredentialId, hashes::keccak256_fixed};
 use cosmwasm_crypto::secp256k1_recover_pubkey;
 use saa_macros::wasm_serde;
-use utils::{get_recovery_param, preamble_msg};
+use utils::{
+    get_recovery_param, 
+    preamble_msg
+};
 
-pub mod utils;
-
-#[cfg(test)]
-mod tests;
 
 
 #[wasm_serde]
@@ -17,6 +17,7 @@ pub struct EvmCredential {
     pub signature: Vec<u8>,
     pub signer:    Vec<u8>,
 }
+
 
 
 impl Credential for EvmCredential {
@@ -59,9 +60,7 @@ impl Credential for EvmCredential {
 
     #[cfg(feature = "cosmwasm")]
     fn verify_api_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
-        if self.signature.len() < 65 {
-            return Err(AuthError::InvalidLength("Signature must be at least 65 bytes".to_string()));
-        }
+        self.validate()?;
     
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg(&self.message), 
@@ -79,3 +78,9 @@ impl Credential for EvmCredential {
         }
     }
 }
+
+
+
+#[cfg(test)]
+mod tests;
+pub mod utils;

@@ -68,15 +68,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab9008b6bb9fc80b5277f2fe481c09e828743d9151203e804583eb4c9e15b31d"
 
 [[package]]
-name = "borsh"
-version = "1.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f58b559fd6448c6e2fd0adb5720cd98a2506594cafa4737ff98c396f3e82f667"
-dependencies = [
- "cfg_aliases",
-]
-
-[[package]]
 name = "borsh-derive"
 version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,12 +98,6 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
-
-[[package]]
-name = "cfg_aliases"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd16c4719339c4530435d38e511904438d07cce7950afa3718a84ac36c10e89e"
 
 [[package]]
 name = "const-oid"
@@ -596,7 +581,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e8366a6159044a37876a2b9817124296703c586a5c92e2c53751fa06d8d43e8"
 dependencies = [
- "toml_edit 0.20.2",
+ "toml_edit 0.20.7",
 ]
 
 [[package]]
@@ -694,18 +679,12 @@ name = "saa-common"
 version = "0.0.1"
 dependencies = [
  "bech32",
- "borsh-derive",
  "cosmwasm-crypto",
- "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils",
  "hex",
- "parity-scale-codec",
  "ripemd",
  "saa-macros",
- "scale-info",
- "schemars",
- "serde",
  "sha2 0.10.8",
  "thiserror",
  "tiny-keccak",
@@ -715,26 +694,24 @@ dependencies = [
 name = "saa-evm"
 version = "0.0.1"
 dependencies = [
- "borsh",
- "borsh-derive",
+ "bech32",
  "cosmwasm-crypto",
- "cosmwasm-schema",
  "cosmwasm-std",
  "hex",
  "k256",
- "parity-scale-codec",
  "saa-common",
  "saa-macros",
- "scale-info",
- "schemars",
- "serde",
 ]
 
 [[package]]
 name = "saa-macros"
 version = "0.0.1"
 dependencies = [
+ "borsh-derive",
+ "cosmwasm-schema",
  "macros-proto",
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]
@@ -1003,9 +980,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.20.2"
+version = "0.20.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
+checksum = "70f427fce4d84c72b5b732388bf4a9f4531b53f74e2887e3ecb2481f68f66d81"
 dependencies = [
  "indexmap",
  "toml_datetime",
