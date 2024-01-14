@@ -20,9 +20,14 @@ cosmwasm-crypto     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw-utils            = { workspace = true }
 
+# Substrate
+ink                 = { version = "4.3.0" }
+
+
 
 [features]
 default     = []
 substrate   = []
 cosmwasm    = []
+solana      = []
 

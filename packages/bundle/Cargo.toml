@@ -4,14 +4,14 @@ edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
 
-[features]
-default        = []
-substrate      = []
-cosmwasm       = []
-solana         = []
-
 
 [dependencies]
 saa-evm                 = { workspace = true }
 saa-macros              = { workspace = true }
 saa-common              = { workspace = true }
+
+[features]
+default        = []
+substrate      = []
+cosmwasm       = []
+solana         = []
