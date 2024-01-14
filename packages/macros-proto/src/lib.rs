@@ -26,8 +26,8 @@ pub fn wasm_serde(
                 serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")
             )]
             #[cfg_attr(feature = "solana", derive(
-                ::borsh_derive::BorshSerialize, 
-                ::borsh_derive::BorshDeserialize
+                ::borsh::derive::BorshSerialize, 
+                ::borsh::derive::BorshDeserialize
             ))]
             #[cfg_attr(feature = "substrate", derive(
                 ::scale::Encode, 
@@ -53,8 +53,8 @@ pub fn wasm_serde(
                 serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")
             )]
             #[cfg_attr(feature = "solana", derive(
-                ::borsh_derive::BorshSerialize, 
-                ::borsh_derive::BorshDeserialize
+                ::borsh::derive::BorshSerialize, 
+                ::borsh::derive::BorshDeserialize
             ))]
             #[cfg_attr(feature = "substrate", derive(
                 ::scale::Encode, 

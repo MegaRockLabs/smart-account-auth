@@ -7,7 +7,7 @@ pub use cosmwasm_schema;
 pub use {scale, scale_info};
 
 #[cfg(feature = "solana")]
-pub use borsh_derive;
+pub use borsh;
 
 
 pub use macros_proto::wasm_serde;

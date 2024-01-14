@@ -13,7 +13,7 @@ scale-info          = { workspace = true }
 # CosmWasm
 cosmwasm-schema     = { workspace = true }
 # Solana
-borsh-derive        = { workspace = true }
+borsh               = { workspace = true }
 
 
 [features]

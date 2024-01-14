@@ -1,4 +1,5 @@
 use crate::errors::AuthError;
+
 pub type CredentialId = Vec<u8>;
 
 #[cfg(feature = "cosmwasm")]
@@ -12,3 +13,5 @@ pub trait Credential {
     #[cfg(feature = "cosmwasm")]
     fn verify_api_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError>;
 }
+
+pub type Credentials = Vec<Box<dyn Credential>>;
