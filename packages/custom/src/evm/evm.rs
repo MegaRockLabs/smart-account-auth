@@ -16,7 +16,6 @@ pub struct EvmCredential {
 }
 
 
-
 impl Verifiable for EvmCredential {
 
     fn id(&self) -> CredentialId {

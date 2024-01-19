@@ -1,7 +1,8 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env};
-use saa_schema::*;
+use saa_common::{Api, Env};
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
+use saa_schema::*;
+
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 
 

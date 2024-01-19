@@ -11,11 +11,23 @@ saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
 
+scale                   = { workspace = true }
+scale-info              = { workspace = true }
+serde                   = { workspace = true, features = ["derive"] }
+schemars                = { workspace = true, features = ["derive"] }
+borsh                   = { workspace = true, features = ["derive"] }
+
 
 [features]
-default        = []
-solana         = [
+default = []
+std = [
+    "substrate",
+    "scale/std",
+    "scale-info/std",
+]
+solana = [
     "saa-schema/solana",
+    "borsh/derive",
 ]
 substrate      = [
     "saa-schema/substrate",
