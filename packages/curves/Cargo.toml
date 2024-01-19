@@ -18,4 +18,25 @@ cosmwasm-crypto         = { workspace = true }
 
 
 [features]
-cosmwasm    = ["saa-schema/cosmwasm"]
+default = []
+std = [
+    "saa-schema/std",
+    "saa-common/std",
+    "saa-custom/std",
+    "substrate"
+]
+solana = [
+    "saa-schema/solana",
+    "saa-common/solana",
+    "saa-custom/solana",
+]
+substrate = [
+    "saa-schema/substrate",
+    "saa-common/substrate",
+    "saa-custom/substrate",
+]
+cosmwasm = [
+    "saa-schema/cosmwasm",
+    "saa-custom/cosmwasm",
+    "saa-common/cosmwasm",
+]

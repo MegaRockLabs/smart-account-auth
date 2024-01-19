@@ -6,9 +6,10 @@ use saa_common::{
     cosmwasm_crypto::secp256k1_recover_pubkey,
     hashes::keccak256_fixed, 
 };
+use saa_schema::wasm_serde;
 use super::utils::{get_recovery_param, preamble_msg_eth};
 
-#[saa_schema::wasm_serde]
+#[wasm_serde]
 pub struct EvmCredential {
     pub message:   Vec<u8>,
     pub signature: Vec<u8>,

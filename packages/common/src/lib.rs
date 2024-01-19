@@ -5,7 +5,10 @@ pub type CredentialId = Vec<u8>;
 pub use cosmwasm_crypto;
 
 #[cfg(feature = "cosmwasm")]
-pub use cosmwasm_std::{Api, Env};
+pub use cosmwasm_std::{
+    Api, Env, Binary, Addr, CanonicalAddr,
+    from_json, to_json_binary,
+};
 
 pub trait Verifiable {
     fn id(&self) -> CredentialId;

@@ -40,7 +40,7 @@ impl Verifiable for Credential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn Api, env: &Env) -> Result<(), AuthError> {
+    fn verify_api_cosmwasm(&self, api: &dyn saa_common::Api, env: &saa_common::Env) -> Result<(), AuthError> {
         self.validate()?;
         self.value().verify_api_cosmwasm(api, env)
     }

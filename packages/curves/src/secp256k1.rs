@@ -21,7 +21,7 @@ pub struct Secp256k1 {
 
 #[cfg(feature = "cosmwasm")]
 impl From<Secp256k1> for CosmosArbitrary {
-    fn from(v: &Secp256k1) -> Self {
+    fn from(v: Secp256k1) -> Self {
         Self {
             pubkey:    v.pubkey,
             message:   v.message,
@@ -68,6 +68,6 @@ impl Verifiable for Secp256k1 {
             Err(_) => {},
         }
 
-        CosmosArbitrary::from(&self).verify_api_cosmwasm(api, env)
+        CosmosArbitrary::from(self.clone()).verify_api_cosmwasm(api, env)
     }
 }

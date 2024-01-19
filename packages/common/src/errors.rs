@@ -92,10 +92,23 @@ impl From<cosmwasm_crypto::CryptoError> for AuthError {
     }
 }
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "cosmwasm")] 
 impl From<cosmwasm_std::RecoverPubkeyError> for AuthError {
     fn from(err: cosmwasm_std::RecoverPubkeyError) -> Self {
         Self::Recovery(err.to_string())
     }
 }
 
+#[cfg(feature = "cosmwasm")] 
+impl From<cosmwasm_std::StdError> for AuthError {
+    fn from(err: cosmwasm_std::StdError) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
+#[cfg(feature = "cosmwasm")] 
+impl From<cosmwasm_std::VerificationError> for AuthError {
+    fn from(err: cosmwasm_std::VerificationError) -> Self {
+        Self::Generic(err.to_string())
+    }
+}

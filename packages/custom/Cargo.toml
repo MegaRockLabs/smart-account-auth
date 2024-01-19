@@ -14,7 +14,26 @@ data-encoding           = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
 
+cosmwasm-std            = { workspace = true }
+
 
 [features]
-cosmwasm    = ["saa-schema/cosmwasm"]
+default = []
+std = [
+    "saa-schema/std",
+    "saa-common/std",
+    "substrate"
+]
+solana = [
+    "saa-schema/solana",
+    "saa-common/solana",
+]
+substrate = [
+    "saa-schema/substrate",
+    "saa-common/substrate",
+]
+cosmwasm = [
+    "saa-schema/cosmwasm",
+    "saa-common/cosmwasm",
+]
 

@@ -61,14 +61,16 @@ impl Verifiable for CosmosArbitrary {
     fn verify_api_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         use super::utils::pubkey_to_canonical;
 
-        let canoncal = pubkey_to_canonical(&self.pubkey)?;
+        let canonical = pubkey_to_canonical(&self.pubkey);
         let addr = api.addr_humanize(&canonical)?;
+
+        let data = cosmwasm_std::to_json_binary(&self.message)?.to_base64();
 
         let digest = sha256(
             &preamble_msg_arb_036(
                 addr.as_str(), 
-                &self.message
-            )
+                data.as_str()
+            ).as_bytes()
         );
 
         let res = api.secp256k1_verify(

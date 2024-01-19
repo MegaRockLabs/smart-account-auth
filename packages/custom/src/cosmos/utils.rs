@@ -9,7 +9,7 @@ pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> String {
 
 #[cfg(feature = "cosmwasm")]
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> cosmwasm_std::CanonicalAddr {
-    cosmwasm_std::CanonicalAddr(Binary(ripemd160(&sha256(pubkey))))
+    cosmwasm_std::CanonicalAddr(cosmwasm_std::Binary(ripemd160(&sha256(pubkey))))
 }
 
 

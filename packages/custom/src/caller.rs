@@ -2,7 +2,6 @@ use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;
 
 
-
 #[wasm_serde]
 pub struct Caller {
     pub id: CredentialId
@@ -28,7 +27,8 @@ impl Verifiable for Caller {
 
     #[cfg(feature = "cosmwasm")]
     fn verify_api_cosmwasm(&self, api: &dyn cosmwasm_std::Api, _: &cosmwasm_std::Env) -> Result<(), AuthError> {
-        api.addr_validate(cosmwasm_std::from_json(&self.id)?)?;
+        let addr : String = cosmwasm_std::from_json(&self.id)?;
+        api.addr_validate(&addr)?;
         Ok(())
     }
 }
