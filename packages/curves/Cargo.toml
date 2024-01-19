@@ -1,5 +1,5 @@
 [package]
-name = "saa-evm"
+name = "saa-curves"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
@@ -11,10 +11,12 @@ k256                    = { workspace = true }
 bech32                  = { workspace = true }
 saa-common              = { workspace = true }
 saa-macros              = { workspace = true }
+saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true }
 cosmwasm-crypto         = { workspace = true }
 
 
 [features]
+default     = []
 cosmwasm    = []

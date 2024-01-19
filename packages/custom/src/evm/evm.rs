@@ -1,15 +1,10 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::Api;
+use cosmwasm_std::{Api, Env};
 
-use saa_common::{AuthError, Credential, CredentialId, hashes::keccak256_fixed};
+use saa_common::{AuthError, Verifiable, CredentialId, hashes::keccak256_fixed};
 use cosmwasm_crypto::secp256k1_recover_pubkey;
 use saa_macros::wasm_serde;
-use utils::{
-    get_recovery_param, 
-    preamble_msg
-};
-
-
+use super::utils::{get_recovery_param, preamble_msg_eth};
 
 #[wasm_serde]
 pub struct EvmCredential {
@@ -20,14 +15,13 @@ pub struct EvmCredential {
 
 
 
-impl Credential for EvmCredential {
+impl Verifiable for EvmCredential {
 
     fn id(&self) -> CredentialId {
         self.signer.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-
         if self.signature.len() < 65 {
             return Err(AuthError::InvalidLength("Signature must be at least 65 bytes".to_string()));
         }
@@ -35,15 +29,12 @@ impl Credential for EvmCredential {
         if self.signer.len() != 20 {
             return Err(AuthError::InvalidLength("Signer must be 20 bytes".to_string()));
         }
-    
         Ok(())
     }
 
     fn verify(&self) -> Result<(), AuthError> {
-        self.validate()?;
-    
         let key_data = secp256k1_recover_pubkey(
-            &preamble_msg(&self.message), 
+            &preamble_msg_eth(&self.message), 
             &self.signature[..64], 
             get_recovery_param(self.signature[64])?
         )?;
@@ -59,11 +50,9 @@ impl Credential for EvmCredential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
-        self.validate()?;
-    
+    fn verify_api_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let key_data = api.secp256k1_recover_pubkey(
-            &preamble_msg(&self.message), 
+            &preamble_msg_eth(&self.message), 
             &self.signature[..64], 
             get_recovery_param(self.signature[64])?
         )?;
@@ -79,8 +68,3 @@ impl Credential for EvmCredential {
     }
 }
 
-
-
-#[cfg(test)]
-mod tests;
-pub mod utils;

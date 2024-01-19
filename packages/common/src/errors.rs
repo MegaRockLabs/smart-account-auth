@@ -3,6 +3,7 @@ use hex::FromHexError;
 use thiserror::Error;
 use bech32::Error as Bech32Error;
 
+
 #[wasm_serde]
 #[derive(Error)]
 pub enum AddressError {
@@ -61,15 +62,15 @@ pub enum AuthError {
 
     #[error("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here.")]
     RecoveryParam,
-
     
     #[error("Error recovering from the signature: Addresses do not match")]
     RecoveryMismatch,
 
+    #[error("{0}")]
+    Signature(String),
 
     #[error("{0}")]
     Recovery(String),
-
 
     #[error("{0}")]
     Generic(String),

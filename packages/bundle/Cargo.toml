@@ -6,7 +6,8 @@ version = { workspace = true }
 
 
 [dependencies]
-saa-evm                 = { workspace = true }
+saa-custom              = { workspace = true }
+saa-curves              = { workspace = true }
 saa-macros              = { workspace = true }
 saa-common              = { workspace = true }
 

@@ -365,6 +365,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
+
+[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1136,12 +1142,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "saa-evm"
+name = "saa-curves"
 version = "0.0.1"
 dependencies = [
  "bech32",
  "cosmwasm-crypto",
  "cosmwasm-std",
+ "hex",
+ "k256",
+ "saa-common",
+ "saa-custom",
+ "saa-macros",
+]
+
+[[package]]
+name = "saa-custom"
+version = "0.0.1"
+dependencies = [
+ "bech32",
+ "cosmwasm-crypto",
+ "cosmwasm-std",
+ "data-encoding",
  "hex",
  "k256",
  "saa-common",
@@ -1416,7 +1437,8 @@ name = "smart-account-auth"
 version = "0.0.1"
 dependencies = [
  "saa-common",
- "saa-evm",
+ "saa-curves",
+ "saa-custom",
  "saa-macros",
 ]
 

@@ -1,0 +1,22 @@
+[package]
+name = "saa-custom"
+edition = { workspace = true }
+authors = { workspace = true }
+version = { workspace = true }
+
+
+[dependencies]
+hex                     = { workspace = true }
+k256                    = { workspace = true }
+bech32                  = { workspace = true }
+data-encoding           = { workspace = true }
+
+saa-common              = { workspace = true }
+saa-macros              = { workspace = true }
+
+cosmwasm-std            = { workspace = true }
+cosmwasm-crypto         = { workspace = true }
+
+
+[features]
+cosmwasm    = []

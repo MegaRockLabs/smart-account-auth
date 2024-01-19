@@ -7,12 +7,10 @@ use saa_common::{
 
 pub fn preamble_msg(msg: &[u8]) -> [u8; 32] {
     const PREFIX: &str = "\x19Ethereum Signed Message:\n";
-
     let mut bytes = vec![];
     bytes.extend_from_slice(PREFIX.as_bytes());
     bytes.extend_from_slice(msg.len().to_string().as_bytes());
     bytes.extend_from_slice(msg);
-
     keccak256_fixed(&bytes)
 }
 
