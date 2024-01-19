@@ -22,7 +22,4 @@ cw-utils            = { workspace = true }
 
 [features]
 default     = []
-substrate   = []
-cosmwasm    = []
-solana      = []
-
+cosmwasm    = ["saa-schema/cosmwasm"]

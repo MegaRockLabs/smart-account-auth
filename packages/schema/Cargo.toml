@@ -18,7 +18,6 @@ borsh               = { workspace = true, features = ["derive"] }
 
 [features]
 default        = []
-substrate      = []
-cosmwasm       = []
-solana         = ["derive"]
-derive         = []
+substrate      = ["macros-proto/substrate"]
+cosmwasm       = ["macros-proto/cosmwasm"]
+solana         = ["macros-proto/solana", "borsh/derive"]

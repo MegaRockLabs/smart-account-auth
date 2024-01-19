@@ -14,6 +14,15 @@ saa-common              = { workspace = true }
 
 [features]
 default        = []
-substrate      = []
-cosmwasm       = []
-solana         = []
+solana         = [
+    "saa-schema/solana",
+]
+substrate      = [
+    "saa-schema/substrate",
+]
+cosmwasm       = [
+    "saa-schema/cosmwasm",
+    "saa-curves/cosmwasm",
+    "saa-custom/cosmwasm",
+    "saa-common/cosmwasm",
+]

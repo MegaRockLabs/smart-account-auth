@@ -18,5 +18,4 @@ cosmwasm-crypto         = { workspace = true }
 
 
 [features]
-default     = []
-cosmwasm    = []
+cosmwasm    = ["saa-schema/cosmwasm"]
