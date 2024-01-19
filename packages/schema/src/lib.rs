@@ -4,7 +4,10 @@ use macros_proto;
 pub use {serde, schemars};
 
 #[cfg(feature = "substrate")]
-pub use {scale, scale_info};
+pub use scale;
+
+#[cfg(feature = "std")]
+pub use scale_info;
 
 #[cfg(feature = "solana")]
 pub use borsh;

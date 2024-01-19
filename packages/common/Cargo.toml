@@ -5,7 +5,6 @@ authors = { workspace = true }
 version = { workspace = true }
 
 [dependencies]
-
 saa-schema          = { workspace = true }
 thiserror           = { workspace = true }
 hex                 = { workspace = true }
