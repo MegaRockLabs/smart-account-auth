@@ -19,4 +19,7 @@ cosmwasm-crypto         = { workspace = true }
 
 
 [features]
+default     = []
+substrate   = []
 cosmwasm    = []
+solana      = []
