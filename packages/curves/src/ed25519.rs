@@ -9,7 +9,7 @@ use saa_common::{
     hashes::sha256
 };
 
-use saa_macros::wasm_serde;
+use saa_schema::wasm_serde;
 
 
 #[wasm_serde]

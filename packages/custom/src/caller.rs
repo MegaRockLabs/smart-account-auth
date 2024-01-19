@@ -1,5 +1,5 @@
 use saa_common::{AuthError, CredentialId, Verifiable};
-use saa_macros::wasm_serde;
+use saa_schema::wasm_serde;
 
 
 

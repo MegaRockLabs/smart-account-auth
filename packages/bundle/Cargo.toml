@@ -8,8 +8,9 @@ version = { workspace = true }
 [dependencies]
 saa-custom              = { workspace = true }
 saa-curves              = { workspace = true }
-saa-macros              = { workspace = true }
+saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
+
 
 [features]
 default        = []

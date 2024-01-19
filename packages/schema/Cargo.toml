@@ -1,5 +1,5 @@
 [package]
-name    = "saa-macros"
+name    = "saa-schema"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
@@ -11,14 +11,14 @@ macros-proto        = { path = "../macros-proto" }
 scale               = { workspace = true }
 scale-info          = { workspace = true }
 # CosmWasm
-cosmwasm-schema     = { workspace = true }
+serde               = { workspace = true, features = ["derive"] }
+schemars            = { workspace = true, features = ["derive"] }
 # Solana
-borsh               = { workspace = true }
-
+borsh               = { workspace = true, features = ["derive"] }
 
 [features]
 default        = []
 substrate      = []
 cosmwasm       = []
-solana         = []
-
+solana         = ["derive"]
+derive         = []

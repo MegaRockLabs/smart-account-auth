@@ -1,4 +1,4 @@
-use saa_macros::wasm_serde;
+use saa_schema::wasm_serde;
 use hex::FromHexError;
 use thiserror::Error;
 use bech32::Error as Bech32Error;

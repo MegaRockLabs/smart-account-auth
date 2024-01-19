@@ -18,21 +18,21 @@ pub fn wasm_serde(
             )]
             #[cfg_attr(feature = "cosmwasm", 
                 derive(
-                    ::cosmwasm_schema::serde::Serialize,
-                    ::cosmwasm_schema::serde::Deserialize,
-                    ::cosmwasm_schema::schemars::JsonSchema
+                    ::saa_schema::serde::Serialize,
+                    ::saa_schema::serde::Deserialize,
+                    ::saa_schema::schemars::JsonSchema
                 ),
-                schemars(crate = "::cosmwasm_schema::schemars"),
-                serde(deny_unknown_fields, crate = "::cosmwasm_schema::serde")
+                schemars(crate = "::saa_schema::schemars"),
+                serde(deny_unknown_fields, crate = "::saa_schema::serde")
             )]
             #[cfg_attr(feature = "solana", derive(
-                ::borsh::derive::BorshSerialize, 
-                ::borsh::derive::BorshDeserialize
+                ::saa_schema::borsh::BorshSerialize, 
+                ::saa_schema::borsh::BorshDeserialize
             ))]
             #[cfg_attr(feature = "substrate", derive(
-                ::scale::Encode, 
-                ::scale::Decode, 
-                ::scale_info::TypeInfo)
+                ::saa_schema::scale::Encode, 
+                ::saa_schema::scale::Decode, 
+                ::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #input
@@ -45,21 +45,21 @@ pub fn wasm_serde(
             )]
             #[cfg_attr(feature = "cosmwasm", 
                 derive(
-                    ::cosmwasm_schema::serde::Serialize,
-                    ::cosmwasm_schema::serde::Deserialize,
-                    ::cosmwasm_schema::schemars::JsonSchema
+                    ::saa_schema::serde::Serialize,
+                    ::saa_schema::serde::Deserialize,
+                    ::saa_schema::schemars::JsonSchema
                 ),
-                schemars(crate = "::cosmwasm_schema::schemars"),
-                serde(deny_unknown_fields, rename_all = "snake_case", crate = "::cosmwasm_schema::serde")
+                schemars(crate = "::saa_schema::schemars"),
+                serde(deny_unknown_fields, rename_all = "snake_case", crate = "::saa_schema::serde")
             )]
             #[cfg_attr(feature = "solana", derive(
-                ::borsh::derive::BorshSerialize, 
-                ::borsh::derive::BorshDeserialize
+                ::saa_schema::borsh::BorshSerialize, 
+                ::saa_schema::borsh::BorshDeserialize
             ))]
             #[cfg_attr(feature = "substrate", derive(
-                ::scale::Encode, 
-                ::scale::Decode, 
-                ::scale_info::TypeInfo)
+                ::saa_schema::scale::Encode, 
+                ::saa_schema::scale::Decode, 
+                ::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #input

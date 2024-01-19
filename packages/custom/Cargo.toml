@@ -12,14 +12,9 @@ bech32                  = { workspace = true }
 data-encoding           = { workspace = true }
 
 saa-common              = { workspace = true }
-saa-macros              = { workspace = true }
-
-cosmwasm-std            = { workspace = true }
-cosmwasm-crypto         = { workspace = true }
+saa-schema              = { workspace = true }
 
 
 [features]
 default     = []
-substrate   = []
 cosmwasm    = []
-solana      = []

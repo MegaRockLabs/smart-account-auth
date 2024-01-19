@@ -10,7 +10,7 @@ hex                     = { workspace = true }
 k256                    = { workspace = true }
 bech32                  = { workspace = true }
 saa-common              = { workspace = true }
-saa-macros              = { workspace = true }
+saa-schema              = { workspace = true }
 saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true }
@@ -19,6 +19,4 @@ cosmwasm-crypto         = { workspace = true }
 
 [features]
 default     = []
-substrate   = []
 cosmwasm    = []
-solana      = []

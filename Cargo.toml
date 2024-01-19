@@ -12,6 +12,7 @@ repository      = "https://github.com/MegaRockLabs/smart-account-auth"
 authors         = [ "Kromsten <kromsten@megarock.labs>" ]
 
 
+
 [workspace.dependencies]
 k256                    = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 hex                     = { version = "0.4.3"  }
@@ -24,7 +25,7 @@ thiserror               = "1.0.56"
 saa-custom              = { path = "packages/custom" }
 saa-common              = { path = "packages/common" }
 saa-bundle              = { path = "packages/bundle" }
-saa-macros              = { path = "packages/macros" }
+saa-schema              = { path = "packages/schema" }
 saa-curves              = { path = "packages/curves" }
 
 
@@ -38,12 +39,11 @@ cw-utils                = { version = "1.0.3", default-features = false }
 scale               = { version = "3.6.9", package = "parity-scale-codec", default-features = false, features = ["derive"] }
 scale-info          = { version = "2.10.0", default-features = false, features = ["derive"] }
 # CosmWasm
-cosmwasm-schema      = "1.4.1"
 schemars             = "0.8.16"
 serde                = "1.0.195"
 # Solana
-borsh                = "1.3.1"
-borsh-derive         = "1.3.1"
+
+borsh               = { version = "1.3.1", features = ["derive"] }
 
 
 [profile.release]

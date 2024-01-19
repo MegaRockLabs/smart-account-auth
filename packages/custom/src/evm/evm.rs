@@ -1,12 +1,14 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Api, Env};
 
-use saa_common::{AuthError, Verifiable, CredentialId, hashes::keccak256_fixed};
-use cosmwasm_crypto::secp256k1_recover_pubkey;
-use saa_macros::wasm_serde;
+use saa_common::{
+    AuthError, Verifiable, CredentialId, 
+    cosmwasm_crypto::secp256k1_recover_pubkey,
+    hashes::keccak256_fixed, 
+};
 use super::utils::{get_recovery_param, preamble_msg_eth};
 
-#[wasm_serde]
+#[saa_schema::wasm_serde]
 pub struct EvmCredential {
     pub message:   Vec<u8>,
     pub signature: Vec<u8>,

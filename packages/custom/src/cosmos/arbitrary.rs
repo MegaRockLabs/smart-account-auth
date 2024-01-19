@@ -1,9 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Api, Env};
-use saa_macros::wasm_serde;
+use saa_schema::*;
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
-
 
 
 #[wasm_serde]
@@ -44,7 +43,7 @@ impl Verifiable for CosmosArbitrary {
             ).as_bytes()
         );
 
-        let res = cosmwasm_crypto::secp256k1_verify(
+        let res = saa_common::cosmwasm_crypto::secp256k1_verify(
             &digest,
             &self.signature,
             &self.pubkey

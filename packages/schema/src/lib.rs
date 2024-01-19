@@ -1,14 +1,13 @@
 use macros_proto;
 
 #[cfg(feature = "cosmwasm")]
-pub use cosmwasm_schema;
+pub use {serde, schemars};
 
 #[cfg(feature = "substrate")]
 pub use {scale, scale_info};
 
 #[cfg(feature = "solana")]
 pub use borsh;
-
 
 pub use macros_proto::wasm_serde;
 
