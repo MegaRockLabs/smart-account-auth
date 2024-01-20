@@ -18,6 +18,12 @@ cosmwasm-crypto     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw-utils            = { workspace = true }
 
+scale                   = { workspace = true }
+scale-info              = { workspace = true }
+serde                   = { workspace = true, features = ["derive"] }
+schemars                = { workspace = true, features = ["derive"] }
+borsh                   = { workspace = true, features = ["derive"] }
+
 
 [features]
 default     = []
