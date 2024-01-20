@@ -57,6 +57,9 @@ pub enum AuthError {
     #[error("{0}")]
     Address(#[from] AddressError),
 
+    #[error("No credentials provided or credentials are partially missing")]
+    NoCredentials,
+
     #[error("{0}")]
     InvalidLength(String),
 
