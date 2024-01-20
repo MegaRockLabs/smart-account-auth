@@ -16,6 +16,12 @@ saa-schema              = { workspace = true }
 
 cosmwasm-std            = { workspace = true }
 
+scale                   = { workspace = true }
+scale-info              = { workspace = true }
+serde                   = { workspace = true, features = ["derive"] }
+schemars                = { workspace = true, features = ["derive"] }
+borsh                   = { workspace = true, features = ["derive"] }
+
 
 [features]
 default = []

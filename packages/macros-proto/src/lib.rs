@@ -22,22 +22,23 @@ pub fn wasm_serde(
                     ::saa_schema::serde::Deserialize,
                     ::saa_schema::schemars::JsonSchema
                 ),
-                schemars(crate = "::saa_schema::schemars"),
-                serde(deny_unknown_fields, crate = "::saa_schema::serde")
+                serde(deny_unknown_fields, crate = "::saa_schema::serde"),
+                schemars(crate = "::saa_schema::schemars")
             )]
-            #[cfg_attr(feature = "solana", derive(
-                ::saa_schema::borsh::BorshSerialize, 
-                ::saa_schema::borsh::BorshDeserialize
-            ))]
             #[cfg_attr(feature = "substrate", derive(
                 ::saa_schema::scale::Encode, 
                 ::saa_schema::scale::Decode
             ))]
+            /* #[cfg_attr(feature = "solana", derive(
+                ::saa_schema::borsh::BorshSerialize, 
+                ::saa_schema::borsh::BorshDeserialize
+            ))]
+            
             #[cfg_attr(feature = "std", derive(
-                ::saa_schema::scale_info::TypeInfo)
+                saa_schema::scale_info::TypeInfo)
             )]
-            #[allow(clippy::derive_partial_eq_without_eq)]
-            #input
+            #[allow(clippy::derive_partial_eq_without_eq)] */
+            #input 
         },
         syn::Data::Enum(_) => parse_quote! {
             #[derive(
@@ -54,7 +55,7 @@ pub fn wasm_serde(
                 schemars(crate = "::saa_schema::schemars"),
                 serde(deny_unknown_fields, rename_all = "snake_case", crate = "::saa_schema::serde")
             )]
-            #[cfg_attr(feature = "solana", derive(
+            /* #[cfg_attr(feature = "solana", derive(
                 ::saa_schema::borsh::BorshSerialize, 
                 ::saa_schema::borsh::BorshDeserialize
             ))]
@@ -63,10 +64,10 @@ pub fn wasm_serde(
                 ::saa_schema::scale::Decode
             ))]
             #[cfg_attr(feature = "std", derive(
-                ::saa_schema::scale_info::TypeInfo)
-            )]
+                saa_schema::scale_info::TypeInfo)
+            )] */
             #[allow(clippy::derive_partial_eq_without_eq)]
-            #input
+            #input 
         },
         syn::Data::Union(_) => panic!("unions are not supported"),
     };

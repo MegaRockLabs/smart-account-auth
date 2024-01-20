@@ -8,16 +8,16 @@ version = { workspace = true }
 macros-proto        = { path = "../macros-proto" }
 
 # Substrate
-scale               = { workspace = true }
-scale-info          = { workspace = true }
+scale               = { workspace = true, default-features = false, features = ["derive"] }
+scale-info          = { workspace = true, default-features = false, features = ["derive"] }
 # CosmWasm
 serde               = { workspace = true, features = ["derive"] }
 schemars            = { workspace = true, features = ["derive"] }
 # Solana
-borsh               = { workspace = true, features = ["derive"] }
+borsh               = { workspace = true }
 
 [features]
-default        = []
+default        = ["borsh/derive"]
 std            = ["scale/std", "scale-info/std", "substrate"]
 solana         = ["macros-proto/solana", "borsh/derive"]
 substrate      = ["macros-proto/substrate"]

@@ -17,6 +17,7 @@ serde                   = { workspace = true, features = ["derive"] }
 schemars                = { workspace = true, features = ["derive"] }
 borsh                   = { workspace = true, features = ["derive"] }
 
+cosmwasm-schema         = { workspace = true }
 
 [features]
 default = []
