@@ -64,12 +64,12 @@ pub type Credentials = Vec<Credential>;
 
 
 #[wasm_serde]
-pub struct CredentiaData {
+pub struct CredentialData {
     pub credentials: Credentials,
     pub primary_index: Option<u8>
 }
 
-impl CredentiaData {
+impl CredentialData {
     pub fn new(
         credentials: Credentials, 
         primary_index: Option<u8>
@@ -102,7 +102,7 @@ impl CredentiaData {
 }
 
 
-impl Default for CredentiaData {
+impl Default for CredentialData {
     fn default() -> Self {
         Self { 
             credentials: vec![], 
@@ -111,7 +111,7 @@ impl Default for CredentiaData {
     }
 }
 
-impl Verifiable for CredentiaData {
+impl Verifiable for CredentialData {
     fn id(&self) -> CredentialId {
         self.primary().id()
     }
