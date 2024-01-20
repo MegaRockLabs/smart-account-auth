@@ -25,6 +25,7 @@ std = [
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",
+    "saa-curves/std",
     "scale/std",
     "scale-info/std",
     "substrate",
