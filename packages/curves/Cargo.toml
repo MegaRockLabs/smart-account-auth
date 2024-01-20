@@ -25,12 +25,6 @@ borsh                   = { workspace = true, features = ["derive"] }
 
 [features]
 default = []
-std = [
-    "saa-schema/std",
-    "saa-common/std",
-    "saa-custom/std",
-    "substrate"
-]
 solana = [
     "saa-schema/solana",
     "saa-common/solana",
@@ -45,4 +39,12 @@ cosmwasm = [
     "saa-schema/cosmwasm",
     "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
+]
+std = [
+    "saa-schema/std",
+    "saa-common/std",
+    "saa-custom/std",
+    "scale/std",
+    "scale-info/std",
+    "substrate",
 ]
