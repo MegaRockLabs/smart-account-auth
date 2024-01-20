@@ -88,6 +88,24 @@ impl CredentialData {
         }
     }
 
+    pub fn secondaries(&self) -> Credentials {
+        if self.primary_index.is_some() {
+            self.credentials
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i != self.primary_index.unwrap() as usize)
+                .map(|(_, c)| c.clone())
+                .collect()
+        } else {
+            match self.credentials.len() {
+                0 => return vec![],
+                1 => return vec![],
+                _ => self.credentials.iter().skip(1).map(|c| c.clone()).collect()
+                
+            }
+        }
+    }
+
     pub fn ids(&self) -> Vec<CredentialId> {
         self.credentials.iter().map(|c| c.id()).collect()
     }
