@@ -65,18 +65,27 @@ pub type Credentials = Vec<Credential>;
 
 #[wasm_serde]
 pub struct CredentialData {
-    pub credentials: Credentials,
-    pub primary_index: Option<u8>
+    pub credentials:  Credentials,
+    pub primary_index: Option<u8>,
+    pub with_caller:   Option<bool>
+}
+
+impl Default for CredentialData {
+    fn default() -> Self {
+        Self { credentials: vec![], primary_index: None, with_caller: None }
+    }
 }
 
 impl CredentialData {
     pub fn new(
         credentials: Credentials, 
-        primary_index: Option<u8>
+        primary_index: Option<u8>,
+        with_caller: Option<bool>
     ) -> Self {
         Self { 
             credentials, 
-            primary_index 
+            primary_index,
+            with_caller
         }
     }
 
@@ -140,17 +149,35 @@ impl CredentialData {
     pub fn values(&self) -> Vec<&dyn Verifiable> {
         self.credentials.iter().map(|c| c.value()).collect()
     }
-}
 
 
-impl Default for CredentialData {
-    fn default() -> Self {
-        Self { 
-            credentials: vec![], 
-            primary_index: None 
+    fn populate_caller<C: Into::<Caller>> (&mut self, cal: C) -> Result<(), AuthError> {
+        // replace caller if it exists with new data or push if it doesn't exist
+        let existing = self.credentials.iter().position(|c| c.name() == "caller");
+        if let Some(index) = existing {
+            self.credentials[index] = Credential::Caller(cal.into());
+        } else {
+            self.credentials.push(Credential::Caller(cal.into()));
         }
+       
+        Ok(())
+    }
+
+    #[cfg(feature = "substrate")]
+    pub fn with_caller_ink(&mut self, id: &saa_common::AccountId) -> Result<Self, AuthError> {
+        self.populate_caller(id)?;
+        Ok(self.clone())
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    pub fn with_caller_cosmwasm(&mut self, info: &saa_common::MessageInfo) -> Result<Self, AuthError> {
+        self.populate_caller(info)?;
+        Ok(self.clone())
     }
 }
+
+
+
 
 impl Verifiable for CredentialData {
     fn id(&self) -> CredentialId {

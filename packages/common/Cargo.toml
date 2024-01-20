@@ -18,11 +18,13 @@ cosmwasm-crypto     = { workspace = true }
 cosmwasm-std        = { workspace = true }
 cw-utils            = { workspace = true }
 
-scale                   = { workspace = true }
-scale-info              = { workspace = true }
-serde                   = { workspace = true, features = ["derive"] }
-schemars                = { workspace = true, features = ["derive"] }
-borsh                   = { workspace = true, features = ["derive"] }
+scale               = { workspace = true }
+scale-info          = { workspace = true }
+ink                 = { workspace = true }
+serde               = { workspace = true, features = ["derive"] }
+schemars            = { workspace = true, features = ["derive"] }
+borsh               = { workspace = true, features = ["derive"] }
+
 
 
 [features]
@@ -34,5 +36,6 @@ std = [
     "saa-schema/std",
     "scale/std",
     "scale-info/std",
+    "ink/std",
     "substrate",
 ]

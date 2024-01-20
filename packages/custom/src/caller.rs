@@ -1,11 +1,46 @@
-use saa_common::{AuthError, CredentialId, Verifiable};
+use saa_common::{AccountId, AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
 pub struct Caller {
     pub id: CredentialId
+
 }
+
+#[cfg(feature = "substrate")]
+impl From<&saa_common::AccountId> for Caller {
+    fn from(id: &AccountId) -> Self {
+        let r : &[u8; 32] = id.as_ref();
+        Caller {
+            id: r.to_vec()
+        }
+    }
+}
+
+#[cfg(feature = "substrate")]
+impl From<saa_common::AccountId> for Caller {
+    fn from(id: AccountId) -> Self {
+        Self::from(&id)
+    }
+}
+
+#[cfg(feature = "cosmwasm")]
+impl From<&saa_common::MessageInfo> for Caller {
+    fn from(info: &saa_common::MessageInfo) -> Self {
+        Caller {
+            id: info.sender.to_string().as_bytes().to_vec()
+        }
+    }
+}
+
+#[cfg(feature = "cosmwasm")]
+impl From<saa_common::MessageInfo> for Caller {
+    fn from(info: saa_common::MessageInfo) -> Self {
+        Self::from(&info)
+    }
+}
+
 
 
 impl Verifiable for Caller {
