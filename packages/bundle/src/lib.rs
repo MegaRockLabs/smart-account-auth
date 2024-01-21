@@ -6,9 +6,12 @@ pub use saa_schema::*;
 
 mod data;
 mod data_ink;
-mod data_trait;
+mod wrapper;
 mod credential;
+
 pub use credential::*;
+pub use wrapper::*;
+
 
 
 #[cfg(not(feature = "substrate"))]

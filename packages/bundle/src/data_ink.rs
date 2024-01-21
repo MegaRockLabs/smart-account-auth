@@ -3,7 +3,7 @@ use saa_common::{Api, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, Verifiable, Environment, DefaultEnvironment};
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
-use crate::{data_trait::CredentialWrapper, Credential, Credentials};
+use crate::{wrapper::CredentialWrapper, Credential, Credentials};
 
 
 #[wasm_serde]
