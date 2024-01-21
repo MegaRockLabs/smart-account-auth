@@ -23,7 +23,7 @@ pub use ink::{
 };
 
 #[cfg(feature = "substrate")]
-pub type EnvAccess = ink::EnvAccess<'static, DefaultEnvironment>;
+pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
 
 
 pub trait Verifiable {
