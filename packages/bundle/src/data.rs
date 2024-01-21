@@ -69,7 +69,7 @@ impl CredentialData {
         } else {
             self.clone()
         };
-        self.validate()?;
+        creds.validate()?;
 
         creds.credentials
             .iter()
@@ -87,7 +87,7 @@ impl CredentialData {
         } else {
             self.clone()
         };
-        self.validate()?;
+        creds.validate()?;
 
         creds.credentials
             .iter()
