@@ -30,17 +30,16 @@ impl CredentialData {
         }
     }
 
-    pub fn populate_caller<C: Into::<Caller>> (&mut self, cal: C) -> Result<(), AuthError> {
+    pub fn populate_caller<C: Into::<Caller>> (&mut self, cal: C)  {
         let existing = self.credentials.iter().position(|c| c.name() == "caller");
         if let Some(index) = existing {
             self.credentials[index] = Credential::Caller(cal.into());
         } else {
             self.credentials.push(Credential::Caller(cal.into()));
         }
-        Ok(())
     }
 
-    pub fn with_caller<C: Into::<Caller>> (&self, cal: C) -> Result<Self, AuthError> {
+    pub fn with_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
         let mut credentials = self.credentials().clone();
         let existing = credentials.iter().position(|c| c.name() == "caller");
         
@@ -49,24 +48,24 @@ impl CredentialData {
         } else {
             credentials.push(Credential::Caller(cal.into()));
         }
-        Ok(Self { credentials, ..self.clone()})
+        Self { credentials, ..self.clone()}
     }
 
     #[cfg(feature = "substrate")]
-    pub fn with_caller_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
+    pub fn with_caller_ink(&self, env: &saa_common::EnvAccess) -> Self {
         self.with_caller(env.clone().caller())
     }
     
 
     #[cfg(feature = "cosmwasm")]
-    pub fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Result<Self, AuthError> {
+    pub fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Self {
         self.with_caller(info)
     }
 
     #[cfg(feature = "substrate")]
     fn verified_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
         let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
-            self.with_caller_ink(env)?
+            self.with_caller_ink(env)
         } else {
             self.clone()
         };
@@ -84,7 +83,7 @@ impl CredentialData {
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {
         let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
-            self.with_caller_cosmwasm(info)?
+            self.with_caller_cosmwasm(info)
         } else {
             self.clone()
         };
