@@ -2,18 +2,18 @@
 use saa_common::{Api, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, Verifiable, Environment, DefaultEnvironment};
 use saa_custom::caller::Caller;
-use saa_schema::wasm_serde;
 use crate::{wrapper::CredentialWrapper, Credential, Credentials};
 
 
-#[wasm_serde]
+#[derive(Debug, PartialEq, scale::Encode, scale::Decode)]
+#[cfg_attr(feature = "std", derive(saa_schema::scale_info::TypeInfo))]
 pub struct CredentialData<E = DefaultEnvironment> 
 where E: Environment + Clone
 {
     pub credentials:   Credentials,
     pub primary_index: Option<u8>,
     pub with_caller:   Option<bool>,
-    pub ink_env:       Option<E>
+    _e   : std::marker::PhantomData<E>,
 }
 
 
@@ -21,7 +21,7 @@ impl<E> Default for CredentialData<E>
 where E: Environment + Clone
 {
     fn default() -> Self {
-        Self { credentials: vec![], primary_index: None, with_caller: None, ink_env: None }
+        Self { credentials: vec![], primary_index: None, with_caller: None, _e: std::marker::PhantomData }
     }
 }
 
@@ -34,13 +34,12 @@ where E: Environment + Clone
         credentials: Credentials, 
         primary_index: Option<u8>, 
         with_caller: Option<bool>,
-        ink_env: Option<E>
     ) -> Self {
         Self { 
             credentials, 
             primary_index,
             with_caller,
-            ink_env
+            _e: std::marker::PhantomData,
         }
     }
 
@@ -67,7 +66,7 @@ where E: Environment + Clone
             credentials, 
             primary_index: self.primary_index,
             with_caller: self.with_caller,
-            ink_env: self.ink_env.clone()
+            _e: std::marker::PhantomData,
         })
     }
 
