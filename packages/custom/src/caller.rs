@@ -28,6 +28,16 @@ impl From<saa_common::AccountId> for Caller {
     }
 }
 
+#[cfg(all(feature = "substrate"))]
+impl From<&saa_common::AccountId> for Caller {
+    fn from(id: &saa_common::AccountId) -> Self {
+        let r: &[u8] = id.as_ref();
+        Caller {
+            id: r.to_vec()
+        }
+    }
+}
+
 
 #[cfg(all(feature = "cosmwasm"))]
 impl From<&saa_common::MessageInfo> for Caller {

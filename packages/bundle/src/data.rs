@@ -52,8 +52,9 @@ impl CredentialData {
     }
 
     #[cfg(feature = "substrate")]
-    pub fn with_caller_ink(&self, env: &saa_common::EnvAccess) -> Self {
-        self.with_caller(env.clone().caller())
+    pub fn with_caller_ink(&self, id: &saa_common::AccountId) -> Self {
+
+        self.with_caller(id)
     }
     
 
@@ -65,7 +66,7 @@ impl CredentialData {
     #[cfg(feature = "substrate")]
     fn verified_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
         let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
-            self.with_caller_ink(env)
+            self.with_caller_ink(&env.clone().caller())
         } else {
             self.clone()
         };
