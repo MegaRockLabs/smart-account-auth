@@ -3,7 +3,7 @@ use saa_common::{Api, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
-use crate::{data_trait::CredData, Credential, Credentials};
+use crate::{data_trait::CredentialWrapper, Credential, Credentials};
 
 
 #[wasm_serde]
@@ -60,7 +60,7 @@ impl CredentialData {
 }
 
 
-impl CredData for CredentialData {  
+impl CredentialWrapper for CredentialData {  
     fn credentials(&self) -> &Vec<Credential> {
         &self.credentials
     }

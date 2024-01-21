@@ -3,7 +3,7 @@ use saa_common::{Api, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, Verifiable, Environment, DefaultEnvironment};
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
-use crate::{data_trait::CredData, Credential, Credentials};
+use crate::{data_trait::CredentialWrapper, Credential, Credentials};
 
 
 #[wasm_serde]
@@ -85,7 +85,7 @@ where E: Environment + Clone
 
 
 
-impl<E: Environment> CredData for CredentialData<E>
+impl<E: Environment> CredentialWrapper for CredentialData<E>
 where E: Environment + Clone
 {
     fn credentials(&self) -> &Vec<Credential> {

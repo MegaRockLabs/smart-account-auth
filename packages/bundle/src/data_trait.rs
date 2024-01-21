@@ -1,7 +1,7 @@
 use saa_common::{AuthError, CredentialId, Verifiable};
 use crate::{Credential, Credentials};
 
-pub trait CredData {
+pub trait CredentialWrapper {
 
     fn credentials(&self) -> &Vec<Credential>;
     
