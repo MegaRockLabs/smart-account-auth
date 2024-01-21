@@ -1,6 +1,6 @@
 #[cfg(feature = "cosmwasm")]
 use {
-    cosmwasm_std::{Api, Env}, 
+    saa_common::{Api, Env, MessageInfo}, 
     saa_custom::cosmos::arbitrary::CosmosArbitrary
 };
 
@@ -55,8 +55,10 @@ impl Verifiable for Secp256k1 {
         Ok(())
     }
 
+
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn Api, env: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&mut self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<(), AuthError> {
+
         let hash = sha256(&self.message);
 
         match api.secp256k1_verify(&hash, &self.signature, &self.pubkey) {
@@ -68,6 +70,6 @@ impl Verifiable for Secp256k1 {
             Err(_) => {},
         }
 
-        CosmosArbitrary::from(self.clone()).verify_api_cosmwasm(api, env)
+        CosmosArbitrary::from(self.clone()).verify_cosmwasm(api, env, info)
     }
 }

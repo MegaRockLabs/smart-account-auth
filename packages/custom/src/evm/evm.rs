@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env};
+use cosmwasm_std::{Api, Env, MessageInfo};
 
 use saa_common::{
     AuthError, Verifiable, CredentialId, 
@@ -52,7 +52,8 @@ impl Verifiable for EvmCredential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&mut self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<(), AuthError> {
+
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &self.signature[..64], 

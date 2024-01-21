@@ -37,8 +37,8 @@ cw-utils                = { version = "1.0.3", default-features = false }
 cosmwasm-schema     = { version = "1.5.2" }
 
 # Substrate
-scale               = { version = "3.6.9", package = "parity-scale-codec" }
-scale-info          = { version = "2.10.0"  }
+scale               = { version = "3.6.9", package = "parity-scale-codec", default-features = false }
+scale-info          = { version = "2.10.0", default-features = false }
 ink                 = { version = "4.3.0", default-features = false}
 # CosmWasm
 schemars             = "0.8.16"

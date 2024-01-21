@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::{Api, Env};
+use saa_common::{Api, Env, MessageInfo, to_json_binary};
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
 use saa_schema::*;
 
@@ -57,14 +57,20 @@ impl Verifiable for CosmosArbitrary {
         Ok(())
     }
 
+
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(
+        &mut self, 
+        api:  &dyn Api, 
+        _:  &Env,
+        _: &MessageInfo
+    ) -> Result<(), AuthError> {
         use super::utils::pubkey_to_canonical;
 
         let canonical = pubkey_to_canonical(&self.pubkey);
         let addr = api.addr_humanize(&canonical)?;
 
-        let data = cosmwasm_std::to_json_binary(&self.message)?.to_base64();
+        let data = to_json_binary(&self.message)?.to_base64();
 
         let digest = sha256(
             &preamble_msg_arb_036(

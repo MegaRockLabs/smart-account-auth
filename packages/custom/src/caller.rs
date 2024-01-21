@@ -1,6 +1,7 @@
-use saa_common::{AccountId, AuthError, CredentialId, Verifiable};
+#[cfg(feature = "cosmwasm")]
+use saa_common::{Api, Env, MessageInfo, from_json};
+use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;
-
 
 #[wasm_serde]
 pub struct Caller {
@@ -8,24 +9,16 @@ pub struct Caller {
 
 }
 
-#[cfg(feature = "substrate")]
-impl From<&saa_common::AccountId> for Caller {
-    fn from(id: &AccountId) -> Self {
-        let r : &[u8; 32] = id.as_ref();
+
+impl From<&[u8]> for Caller {
+    fn from(bytes: &[u8]) -> Self {
         Caller {
-            id: r.to_vec()
+            id: bytes.to_vec()
         }
     }
 }
 
-#[cfg(feature = "substrate")]
-impl From<saa_common::AccountId> for Caller {
-    fn from(id: AccountId) -> Self {
-        Self::from(&id)
-    }
-}
-
-#[cfg(feature = "cosmwasm")]
+#[cfg(all(feature = "cosmwasm"))]
 impl From<&saa_common::MessageInfo> for Caller {
     fn from(info: &saa_common::MessageInfo) -> Self {
         Caller {
@@ -61,8 +54,8 @@ impl Verifiable for Caller {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn cosmwasm_std::Api, _: &cosmwasm_std::Env) -> Result<(), AuthError> {
-        let addr : String = cosmwasm_std::from_json(&self.id)?;
+    fn verify_cosmwasm(&mut self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<(), AuthError> {
+        let addr : String = from_json(&self.id)?;
         api.addr_validate(&addr)?;
         Ok(())
     }

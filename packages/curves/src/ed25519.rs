@@ -1,3 +1,6 @@
+#[cfg(feature = "cosmwasm")]
+use saa_common::{Api, Env, MessageInfo};
+
 use saa_common::{
     AuthError, Verifiable, CredentialId, 
     hashes::sha256
@@ -41,8 +44,9 @@ impl Verifiable for Ed25519 {
         Ok(())
     }
 
+
     #[cfg(feature = "cosmwasm")]
-    fn verify_api_cosmwasm(&self, api: &dyn saa_common::Api, _: &saa_common::Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&mut self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<(), AuthError> {
         let res = api.ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
