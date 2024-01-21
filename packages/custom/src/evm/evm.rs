@@ -52,7 +52,7 @@ impl Verifiable for EvmCredential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<(), AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<Self, AuthError> {
 
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
@@ -64,7 +64,7 @@ impl Verifiable for EvmCredential {
         let recovered = &hash[12..];
     
         if self.signer == recovered {
-            Ok(())
+            Ok(self.clone())
         } else {
             Err(AuthError::RecoveryMismatch)
         }

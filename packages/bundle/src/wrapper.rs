@@ -77,7 +77,6 @@ pub trait CredentialWrapper {
 
     fn validate_credentials(&self) -> Result<(), AuthError> {
         let creds = self.credentials();
-
         if creds.len() == 0 {
             return Err(AuthError::NoCredentials);
         }
@@ -94,5 +93,7 @@ pub trait CredentialWrapper {
         self.validate_credentials()?;
         self.credentials().iter().map(|c| c.verify()).collect()
     }
+
+
 
 }

@@ -46,7 +46,7 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<(), AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<Self, AuthError> {
         let res = api.ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
@@ -55,6 +55,6 @@ impl Verifiable for Ed25519 {
         if !res {
             return Err(AuthError::Signature("Signature verification failed".to_string()));
         }
-        Ok(())
+        Ok(self.clone())
     }
 }

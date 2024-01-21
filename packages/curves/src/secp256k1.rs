@@ -57,19 +57,20 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<(), AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {
 
         let hash = sha256(&self.message);
 
         match api.secp256k1_verify(&hash, &self.signature, &self.pubkey) {
             Ok(status) => {
                 if status {
-                    return Ok(());
+                    return Ok(self.clone());
                 }
             },
             Err(_) => {},
         }
 
-        CosmosArbitrary::from(self.clone()).verify_cosmwasm(api, env, info)
+        CosmosArbitrary::from(self.clone()).verified_cosmwasm(api, env, info)?;
+        Ok(self.clone())
     }
 }

@@ -52,11 +52,52 @@ impl CredentialData {
         Ok(Self { credentials, ..self.clone()})
     }
 
-    #[cfg(feature = "cosmwasm")]
-    pub fn with_caller_cosmwasm(&mut self, info: &saa_common::MessageInfo) -> Result<Self, AuthError> {
-        self.with_caller(info)
+    #[cfg(feature = "substrate")]
+    pub fn with_caller_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
+        self.with_caller(env.clone().caller())
     }
     
+
+    #[cfg(feature = "cosmwasm")]
+    pub fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Result<Self, AuthError> {
+        self.with_caller(info)
+    }
+
+    #[cfg(feature = "substrate")]
+    fn verified_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
+        let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
+            self.with_caller_ink(env)?
+        } else {
+            self.clone()
+        };
+        self.validate()?;
+
+        creds.credentials
+            .iter()
+            .map(|c| c.verified_ink(&env)).
+            collect::<Result<Vec<Credential>, AuthError>>()?;
+
+        Ok(creds.clone())
+    }
+
+
+    #[cfg(feature = "cosmwasm")]
+    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {
+        let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
+            self.with_caller_cosmwasm(info)?
+        } else {
+            self.clone()
+        };
+        self.validate()?;
+
+        creds.credentials
+            .iter()
+            .map(|c| c.verified_cosmwasm(api, env, info)).
+            collect::<Result<Vec<Credential>, AuthError>>()?;
+
+        Ok(creds.clone())
+    }
+
 }
 
 
@@ -83,16 +124,6 @@ impl Verifiable for CredentialData {
 
     fn verify(&self) -> Result<(), AuthError> {
         self.verify_credentials()
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<(), AuthError> {
-        if self.with_caller.is_some() && self.with_caller.unwrap() {
-            self.populate_caller(info)?
-        };
-        self.validate()?;
-        self.credentials.iter_mut().map(|c| c.verify_cosmwasm(api, env, info)).collect()
     }
 }
 

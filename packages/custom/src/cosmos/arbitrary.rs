@@ -59,12 +59,12 @@ impl Verifiable for CosmosArbitrary {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(
-        &mut self, 
+    fn verified_cosmwasm(
+        &self, 
         api:  &dyn Api, 
         _:  &Env,
         _: &MessageInfo
-    ) -> Result<(), AuthError> {
+    ) -> Result<Self, AuthError> {
         use super::utils::pubkey_to_canonical;
 
         let canonical = pubkey_to_canonical(&self.pubkey);
@@ -89,6 +89,6 @@ impl Verifiable for CosmosArbitrary {
             return Err(AuthError::Signature("Signature verification failed".to_string()));
         }
 
-        Ok(())
+        Ok(self.clone())
     }
 }

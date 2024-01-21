@@ -1,14 +1,18 @@
 mod errors;
 pub mod hashes;
 pub use errors::*;
-pub type CredentialId = Vec<u8>;
 pub use cosmwasm_crypto;
+
+
+pub type CredentialId = Vec<u8>;
 
 #[cfg(feature = "cosmwasm")]
 pub use cosmwasm_std::{
     Api, Env, Binary, Addr, CanonicalAddr, MessageInfo,
     from_json, to_json_binary,
 };
+
+
 #[cfg(feature = "substrate")]
 pub use ink::{
     env::{
@@ -18,35 +22,29 @@ pub use ink::{
     primitives::AccountId
 };
 
+#[cfg(feature = "substrate")]
+pub type EnvAccess = ink::EnvAccess<'static, DefaultEnvironment>;
 
 
-#[cfg(not(feature = "substrate"))]
 pub trait Verifiable {
     fn id(&self) -> CredentialId;
     fn validate(&self) -> Result<(), AuthError>;
     fn verify(&self) -> Result<(), AuthError>;
 
 
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, _:  &dyn Api, _:  &Env, _: &MessageInfo) -> Result<(), AuthError> {
-        self.verify()
-    }
-}
-
-
-#[cfg(feature = "substrate")]
-pub trait Verifiable<InkEnv: Environment = DefaultEnvironment> {
-    fn id(&self) -> CredentialId;
-    fn validate(&self) -> Result<(), AuthError>;
-    fn verify(&self) -> Result<(), AuthError>;
-
     #[cfg(feature = "substrate")]
-    fn verify_ink(&mut self) -> Result<(), AuthError> {
-        self.verify()
+    fn verified_ink(&self, _: &EnvAccess) -> Result<Self, AuthError> 
+        where Self: Sized + Clone
+    {
+        self.verify()?;
+        Ok(self.clone())
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&mut self, _:  &dyn Api, _:  &Env, _: &MessageInfo) -> Result<(), AuthError> {
-        self.verify()
+    fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &MessageInfo) -> Result<Self, AuthError> 
+        where Self: Sized + Clone
+    {
+        self.verify()?;
+        Ok(self.clone())
     }
 }
