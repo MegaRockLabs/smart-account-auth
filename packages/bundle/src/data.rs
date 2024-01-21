@@ -63,6 +63,34 @@ impl CredentialData {
         self.with_caller(info)
     }
 
+}
+
+
+impl CredentialWrapper for CredentialData {  
+    fn credentials(&self) -> &Vec<Credential> {
+        &self.credentials
+    }
+
+    fn primary_index(&self) -> &Option<u8> {
+        &self.primary_index
+    }
+}
+
+
+impl Verifiable for CredentialData {
+
+    fn id(&self) -> CredentialId {
+        self.primary_id()
+    }
+    
+    fn validate(&self) -> Result<(), AuthError> {
+        self.validate_credentials()
+    }
+
+    fn verify(&self) -> Result<(), AuthError> {
+        self.verify_credentials()
+    }
+
     #[cfg(feature = "substrate")]
     fn verified_ink(&self, env: &saa_common::EnvAccess) -> Result<Self, AuthError> {
         let creds = if self.with_caller.is_some() && self.with_caller.unwrap() {
@@ -96,34 +124,6 @@ impl CredentialData {
             collect::<Result<Vec<Credential>, AuthError>>()?;
 
         Ok(creds.clone())
-    }
-
-}
-
-
-impl CredentialWrapper for CredentialData {  
-    fn credentials(&self) -> &Vec<Credential> {
-        &self.credentials
-    }
-
-    fn primary_index(&self) -> &Option<u8> {
-        &self.primary_index
-    }
-}
-
-
-impl Verifiable for CredentialData {
-
-    fn id(&self) -> CredentialId {
-        self.primary_id()
-    }
-    
-    fn validate(&self) -> Result<(), AuthError> {
-        self.validate_credentials()
-    }
-
-    fn verify(&self) -> Result<(), AuthError> {
-        self.verify_credentials()
     }
 }
 
