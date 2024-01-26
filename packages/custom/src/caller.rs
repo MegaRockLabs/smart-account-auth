@@ -1,13 +1,18 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo, from_json};
+
+
 use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;
+
 
 #[wasm_serde]
 pub struct Caller {
     pub id: CredentialId
 
 }
+
+
 
 
 impl From<&[u8]> for Caller {
@@ -18,30 +23,19 @@ impl From<&[u8]> for Caller {
     }
 }
 
-#[cfg(all(feature = "substrate"))]
-impl From<saa_common::AccountId> for Caller {
-    fn from(id: saa_common::AccountId) -> Self {
-        let r: &[u8] = id.as_ref();
+impl From<[u8; 32]> for Caller {
+    fn from(bytes: [u8; 32]) -> Self {
         Caller {
-            id: r.to_vec()
+            id: bytes.to_vec()
         }
     }
 }
 
-#[cfg(all(feature = "substrate"))]
-impl From<&saa_common::AccountId> for Caller {
-    fn from(id: &saa_common::AccountId) -> Self {
-        let r: &[u8] = id.as_ref();
-        Caller {
-            id: r.to_vec()
-        }
-    }
-}
 
 
 #[cfg(all(feature = "cosmwasm"))]
-impl From<&saa_common::MessageInfo> for Caller {
-    fn from(info: &saa_common::MessageInfo) -> Self {
+impl From<&MessageInfo> for Caller {
+    fn from(info: &MessageInfo) -> Self {
         Caller {
             id: info.sender.to_string().as_bytes().to_vec()
         }
@@ -49,8 +43,8 @@ impl From<&saa_common::MessageInfo> for Caller {
 }
 
 #[cfg(feature = "cosmwasm")]
-impl From<saa_common::MessageInfo> for Caller {
-    fn from(info: saa_common::MessageInfo) -> Self {
+impl From<MessageInfo> for Caller {
+    fn from(info: MessageInfo) -> Self {
         Self::from(&info)
     }
 }

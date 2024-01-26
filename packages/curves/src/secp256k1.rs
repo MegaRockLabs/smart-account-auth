@@ -19,6 +19,7 @@ pub struct Secp256k1 {
     pub signature: Vec<u8>,
 }
 
+
 #[cfg(feature = "cosmwasm")]
 impl From<Secp256k1> for CosmosArbitrary {
     fn from(v: Secp256k1) -> Self {

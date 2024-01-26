@@ -14,27 +14,33 @@ pub use cosmwasm_std::{
 
 
 #[cfg(feature = "substrate")]
-pub use ink::{
-    env::{
-        account_id, caller,
-        Environment, DefaultEnvironment
-    },
-    primitives::AccountId
+pub use {
+    ink::env as ink_env,
+    ink::env::Environment as InkEnvironment,
+    ink::EnvAccess as InkApi,
 };
 
+
 #[cfg(feature = "substrate")]
-pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
+pub mod ink_default {
+    use ink::env::Environment;
+    use ink::env::DefaultEnvironment;
+
+    pub type AccountId = <DefaultEnvironment as Environment>::AccountId;
+    pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
+}
 
 
-pub trait Verifiable {
+pub trait Verifiable  {
+
     fn id(&self) -> CredentialId;
     fn validate(&self) -> Result<(), AuthError>;
     fn verify(&self) -> Result<(), AuthError>;
 
 
     #[cfg(feature = "substrate")]
-    fn verified_ink(&self, _: &EnvAccess) -> Result<Self, AuthError> 
-        where Self: Sized + Clone
+    fn verified_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> 
+        where Self: Clone
     {
         self.verify()?;
         Ok(self.clone())
@@ -42,9 +48,11 @@ pub trait Verifiable {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &MessageInfo) -> Result<Self, AuthError> 
-        where Self: Sized + Clone
+        where Self: Clone
     {
         self.verify()?;
         Ok(self.clone())
     }
 }
+
+
