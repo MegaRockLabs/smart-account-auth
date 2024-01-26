@@ -67,13 +67,13 @@ impl CredentialData {
 
 
     #[cfg(feature = "substrate")]
-    fn with_caller_ink(&self, id: impl AsRef<[u8]>) -> Self {
+    pub fn with_caller_ink(&self, id: impl AsRef<[u8]>) -> Self {
         self.with_caller(id.as_ref())
     }
     
 
     #[cfg(feature = "cosmwasm")]
-    fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Self  {
+    pub fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Self  {
         self.with_caller(info)
     }
 
