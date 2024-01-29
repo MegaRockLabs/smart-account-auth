@@ -14,25 +14,27 @@ ripemd              = { version = "0.1.3", default-features = false }
 sha2                = { version = "0.10.8" } 
 tiny-keccak         = { version = "2", features = ["keccak"] }
 
-cosmwasm-crypto     = { workspace = true }
-cosmwasm-std        = { workspace = true }
 cw-utils            = { workspace = true }
+cosmwasm-crypto     = { workspace = true }
 
-scale               = { workspace = true }
-scale-info          = { workspace = true }
-ink                 = { workspace = true }
-borsh               = { workspace = true, features = ["derive"] }
-schemars            = { workspace = true, features = ["derive"] }
-serde                   = { workspace = true, default-features = false, features = ["derive"] }
+cosmwasm-std        = { workspace = true, optional = true  }
+
+ink                 = { workspace = true, optional = true  }
+scale               = { workspace = true, optional = true  }
+scale-info          = { workspace = true, optional = true  }
+borsh               = { workspace = true, features = ["derive"], optional = true }
+schemars            = { workspace = true, features = ["derive"], optional = true }
+serde               = { workspace = true, default-features = false, features = ["derive"], optional = true }
 
 
 
 [features]
 default     = ["std"]
-solana      = ["saa-schema/solana"]
-substrate   = ["saa-schema/substrate"]
-cosmwasm    = ["saa-schema/cosmwasm"]
+solana      = ["dep:borsh", "saa-schema/solana"]
+substrate   = ["dep:scale", "dep:ink", "saa-schema/substrate"]
+cosmwasm    = ["dep:schemars", "dep:serde", "dep:cosmwasm-std",  "saa-schema/cosmwasm"]
 std = [
+    "dep:scale-info",
     "saa-schema/std",
     "scale/std",
     "scale-info/std",

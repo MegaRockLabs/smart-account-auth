@@ -14,30 +14,36 @@ data-encoding           = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
 
-cosmwasm-std            = { workspace = true }
+cosmwasm-std            = { workspace = true, optional = true }
 
-scale                   = { workspace = true }
-scale-info              = { workspace = true }
-schemars                = { workspace = true, features = ["derive"] }
-borsh                   = { workspace = true, features = ["derive"] }
-serde                   = { workspace = true, default-features = false, features = ["derive"] }
+scale                   = { workspace = true, optional = true  }
+scale-info              = { workspace = true, optional = true  }
+borsh                   = { workspace = true, features = ["derive"], optional = true }
+schemars                = { workspace = true, features = ["derive"], optional = true }
+serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
 
 
 [features]
 default = []
 solana = [
+    "dep:borsh",
     "saa-schema/solana",
     "saa-common/solana",
 ]
 substrate = [
+    "dep:scale",
     "saa-schema/substrate",
     "saa-common/substrate",
 ]
 cosmwasm = [
+    "dep:cosmwasm-std",
+    "dep:schemars",
+    "dep:serde",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
 ]
 std = [
+    "dep:scale-info",
     "saa-schema/std",
     "saa-common/std",
     "scale/std",

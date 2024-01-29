@@ -11,17 +11,16 @@ saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
 
-scale                   = { workspace = true }
-scale-info              = { workspace = true }
-borsh                   = { workspace = true, features = ["derive"] }
-schemars                = { workspace = true, features = ["derive"] }
-serde                   = { workspace = true, default-features = false, features = ["derive"] }
-
-cosmwasm-schema         = { workspace = true }
+scale                   = { workspace = true, optional = true  }
+scale-info              = { workspace = true, optional = true  }
+borsh                   = { workspace = true, features = ["derive"], optional = true }
+schemars                = { workspace = true, features = ["derive"], optional = true }
+serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
 
 [features]
 default = []
 std = [
+    "dep:scale-info",
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",
@@ -38,12 +37,15 @@ solana = [
     "borsh/derive",
 ]
 substrate = [
+    "dep:scale",
     "saa-schema/substrate",
     "saa-common/substrate",
     "saa-curves/substrate",
     "saa-custom/substrate",
 ]
 cosmwasm = [
+    "dep:serde",
+    "dep:schemars",
     "saa-schema/cosmwasm",
     "saa-curves/cosmwasm",
     "saa-custom/cosmwasm",

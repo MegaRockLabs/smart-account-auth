@@ -1499,7 +1499,6 @@ name = "smart-account-auth"
 version = "0.3.1"
 dependencies = [
  "borsh",
- "cosmwasm-schema",
  "parity-scale-codec",
  "saa-common",
  "saa-curves",
