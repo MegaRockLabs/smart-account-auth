@@ -4,6 +4,11 @@ edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
 
+[lib]
+name        = "smart-account-auth"
+path        = "src/lib.rs"
+crate-type  = ["rlib"]
+
 
 [dependencies]
 saa-custom              = { workspace = true }
