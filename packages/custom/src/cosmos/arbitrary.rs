@@ -1,5 +1,10 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo, to_json_binary};
+
+#[cfg(feature = "substrate")]
+use saa_common::{Vec, String};
+
+
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
 use base64::{engine::general_purpose, Engine as _};
 use saa_schema::wasm_serde;

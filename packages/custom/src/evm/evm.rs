@@ -1,6 +1,10 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Api, Env, MessageInfo};
 
+#[cfg(feature = "substrate")]
+use saa_common::Vec;
+
+
 use saa_common::{
     AuthError, Verifiable, CredentialId, 
     crypto::secp256k1_recover_pubkey,

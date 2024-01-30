@@ -4,6 +4,10 @@ use {
     saa_custom::cosmos::arbitrary::CosmosArbitrary
 };
 
+#[cfg(feature = "substrate")]
+use saa_common::Vec;
+
+
 use saa_common::{
     AuthError, Verifiable, CredentialId,
     crypto::secp256k1_verify,

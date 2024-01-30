@@ -1,3 +1,6 @@
+#[cfg(feature = "substrate")]
+use saa_common::{String, vec};
+
 use bech32::{ToBase32, Variant};
 use saa_common::{
     hashes::{keccak256_fixed, ripemd160, sha256}, 

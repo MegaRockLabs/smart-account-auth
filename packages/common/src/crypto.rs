@@ -13,6 +13,9 @@ use k256::ecdsa::{
 use digest::{Digest, Update};
 use crate::{digest::Identity256, AuthError}; 
 
+#[cfg(feature = "substrate")]
+type Vec<T> = ink::prelude::vec::Vec<T>;
+
 
 fn read_hash(data: &[u8]) -> Result<[u8; 64], AuthError> {
     data.try_into().map_err(|_| AuthError::Crypto("Invalid hash".to_string()))

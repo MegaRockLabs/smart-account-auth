@@ -14,7 +14,6 @@ pub struct Caller {
 
 
 
-
 impl From<&[u8]> for Caller {
     fn from(bytes: &[u8]) -> Self {
         Caller {

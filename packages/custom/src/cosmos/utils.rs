@@ -1,6 +1,10 @@
 use saa_common::hashes::{ripemd160, sha256};
 use bech32::{ToBase32, Variant};
 
+#[cfg(feature = "substrate")]
+use saa_common::String;
+
+
 pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> String {
     let base32_addr = ripemd160(&sha256(pubkey)).to_base32();
     let account: String = bech32::encode(hrp, base32_addr, Variant::Bech32).unwrap();

@@ -3,6 +3,9 @@ use hex::FromHexError;
 use thiserror::Error;
 use bech32::Error as Bech32Error;
 
+#[cfg(feature = "substrate")]
+type String = ink::prelude::string::String;
+
 
 #[wasm_serde]
 #[derive(Error)]

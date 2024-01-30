@@ -7,7 +7,6 @@ pub mod hashes;
 pub mod crypto;
 
 pub use errors::*;
-pub type CredentialId = Vec<u8>;
 
 #[cfg(feature = "cosmwasm")]
 pub use cosmwasm_std::{
@@ -17,21 +16,28 @@ pub use cosmwasm_std::{
 
 
 #[cfg(feature = "substrate")]
-pub use {
-    ink::env as ink_env,
-    ink::env::Environment as InkEnvironment,
-    ink::EnvAccess as InkApi,
-};
+mod substrate {
+    pub use ink::env as ink_env;
+    pub use {
+        ink_env::Environment as InkEnvironment,
+        ink::EnvAccess as InkApi,
+        ink::prelude::{vec, format}
+    };
+    pub type Vec<T> = ink::prelude::vec::Vec<T>;
+    pub type String = ink::prelude::string::String;
 
-
-#[cfg(feature = "substrate")]
-pub mod ink_default {
-    use ink::env::Environment;
-    use ink::env::DefaultEnvironment;
-
-    pub type AccountId = <DefaultEnvironment as Environment>::AccountId;
-    pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
+    pub mod default {
+        use ink::env as ink_env;
+        pub use ink_env::DefaultEnvironment;
+        pub type AccountId = <DefaultEnvironment as ink_env::Environment>::AccountId;
+        pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
+    }
 }
+#[cfg(feature = "substrate")]
+pub use substrate::*;
+
+
+pub type CredentialId = Vec<u8>;
 
 
 pub trait Verifiable  {

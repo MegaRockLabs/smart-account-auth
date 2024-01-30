@@ -1,6 +1,9 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo};
 
+#[cfg(feature = "substrate")]
+use saa_common::Vec;
+
 use saa_common::{
     AuthError, Verifiable, CredentialId,
     crypto::ed25519_verify,
@@ -8,7 +11,6 @@ use saa_common::{
 };
 
 use saa_schema::wasm_serde;
-
 
 
 #[wasm_serde]
