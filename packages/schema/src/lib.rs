@@ -13,9 +13,14 @@ macro_rules! ensure {
 }
 
 
+#[cfg(feature = "cosmwasm")]
+pub use {serde, schemars};
 
-pub use scale;
-pub use scale_info;
+#[cfg(feature = "solana")]
 pub use borsh;
-pub use serde;
-pub use schemars;
+
+#[cfg(feature = "substrate")]
+pub use scale;
+
+#[cfg(feature = "std")]
+pub use scale_info;

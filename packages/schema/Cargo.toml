@@ -17,7 +17,6 @@ schemars            = { workspace = true, default-features = false, features = [
 borsh               = { workspace = true, default-features = false, features = ["derive"], optional = true }
 
 
-
 [features]
 default        = []
 std            = [
