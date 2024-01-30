@@ -14,8 +14,9 @@ saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
 
-scale                   = { workspace = true, optional = true  }
-scale-info              = { workspace = true, optional = true  }
+scale                   = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+scale-info              = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+
 borsh                   = { workspace = true, features = ["derive"], optional = true }
 schemars                = { workspace = true, features = ["derive"], optional = true }
 serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
@@ -45,7 +46,6 @@ cosmwasm = [
     "saa-common/cosmwasm",
 ]
 std = [
-    "dep:scale-info",
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",

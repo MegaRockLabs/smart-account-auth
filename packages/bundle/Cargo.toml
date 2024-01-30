@@ -16,8 +16,9 @@ saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
 
-scale                   = { workspace = true, optional = true  }
-scale-info              = { workspace = true, optional = true  }
+scale                   = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+scale-info              = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+
 borsh                   = { workspace = true, features = ["derive"], optional = true }
 schemars                = { workspace = true, features = ["derive"], optional = true }
 serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
@@ -25,7 +26,6 @@ serde                   = { workspace = true, default-features = false, features
 [features]
 default = []
 std = [
-    "dep:scale-info",
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",

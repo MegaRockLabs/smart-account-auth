@@ -21,9 +21,9 @@ digest              = { workspace = true }
 
 cosmwasm-std        = { workspace = true, optional = true  }
 
-ink                 = { workspace = true, optional = true  }
-scale               = { workspace = true, optional = true  }
-scale-info          = { workspace = true, optional = true  }
+ink                 = { workspace = true, optional = true, default-features = false  }
+scale               = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+scale-info          = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
 borsh               = { workspace = true, features = ["derive"], optional = true }
 schemars            = { workspace = true, features = ["derive"], optional = true }
 serde               = { workspace = true, default-features = false, features = ["derive"], optional = true }
@@ -31,7 +31,7 @@ serde               = { workspace = true, default-features = false, features = [
 
 
 [features]
-default     = ["std"]
+default     = []
 solana      = ["dep:borsh", "saa-schema/solana"]
 substrate   = ["dep:scale", "dep:ink", "saa-schema/substrate"]
 cosmwasm    = [
@@ -41,10 +41,9 @@ cosmwasm    = [
     "saa-schema/cosmwasm"
 ]
 std = [
-    "dep:scale-info",
     "saa-schema/std",
-    "scale/std",
     "scale-info/std",
+    "scale/std",
     "ink/std",
     "substrate",
 ]
