@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
 mod inner;
 mod errors;
 mod digest;
@@ -17,21 +15,24 @@ pub use cosmwasm_std::{
 
 
 #[cfg(feature = "substrate")]
-pub use {
-    ink::env as ink_env,
-    ink::env::Environment as InkEnvironment,
-    ink::EnvAccess as InkApi,
-};
+pub mod substrate {
+    #![cfg_attr(not(feature = "std"), no_std)]
+    pub use {
+        ink::env as ink_env,
+        ink::env::Environment as InkEnvironment,
+        ink::EnvAccess as InkApi,
+    };
+    pub mod ink_default {
+        use ink::env::Environment;
+        use ink::env::DefaultEnvironment;
+    
+        pub type AccountId = <DefaultEnvironment as Environment>::AccountId;
+        pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
+    }
 
-
-#[cfg(feature = "substrate")]
-pub mod ink_default {
-    use ink::env::Environment;
-    use ink::env::DefaultEnvironment;
-
-    pub type AccountId = <DefaultEnvironment as Environment>::AccountId;
-    pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
 }
+#[cfg(feature = "substrate")]
+pub use substrate::*;
 
 
 pub trait Verifiable  {

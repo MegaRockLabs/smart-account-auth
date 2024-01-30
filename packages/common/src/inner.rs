@@ -50,7 +50,7 @@ impl TryFrom<VerificationKeyBytes> for VerificationKey {
         //   twisted Edwards form of Curve25519, and non-canonical encodings MUST be accepted;
         let A = CompressedEdwardsY(bytes.0)
             .decompress()
-            .ok_or(AuthError::Crypto(String::from("Mailfrom public key")))?;
+            .ok_or(AuthError::Crypto("Mailfrom public key".into()))?;
 
 
         Ok(VerificationKey {
@@ -64,7 +64,7 @@ impl TryFrom<VerificationKeyBytes> for VerificationKey {
 impl TryFrom<[u8; 32]> for VerificationKey {
     type Error = AuthError;
     fn try_from(bytes: [u8; 32]) -> Result<Self, Self::Error> {
-        VerificationKeyBytes::from(bytes).try_into().map_err(|_| AuthError::Crypto("Invalid pubkey".to_string()))
+        VerificationKeyBytes::from(bytes).try_into().map_err(|_| AuthError::Crypto("Invalid pubkey".into()))
     }
 }
 
