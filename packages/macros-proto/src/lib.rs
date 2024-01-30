@@ -11,11 +11,11 @@ pub fn wasm_serde(
 
     let expanded : DeriveInput = match input.data {
         syn::Data::Struct(_) => parse_quote! {
-            #[cfg_attr(not(feature = "substrate"), derive(
-                ::std::clone::Clone,
-                ::std::fmt::Debug,
-                ::std::cmp::PartialEq
-            ))]
+            #[derive(
+                Clone,
+                Debug,
+                PartialEq
+            )]
             #[cfg_attr(feature = "cosmwasm", 
                 derive(
                     ::saa_schema::serde::Serialize,
@@ -26,7 +26,6 @@ pub fn wasm_serde(
                 schemars(crate = "::saa_schema::schemars")
             )]
             #[cfg_attr(feature = "substrate", derive(
-                Clone,
                 ::saa_schema::scale::Encode, 
                 ::saa_schema::scale::Decode
             ))]
@@ -43,9 +42,9 @@ pub fn wasm_serde(
         },
         syn::Data::Enum(_) => parse_quote! {
             #[derive(
-                ::std::clone::Clone,
-                ::std::fmt::Debug,
-                ::std::cmp::PartialEq
+                Clone,
+                Debug,
+                PartialEq
             )]
             #[cfg_attr(feature = "cosmwasm", 
                 derive(

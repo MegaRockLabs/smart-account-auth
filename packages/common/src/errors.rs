@@ -1,66 +1,31 @@
-use saa_schema::*;
-use hex::FromHexError;
-use thiserror::Error;
-use bech32::Error as Bech32Error;
+#[cfg(any(feature = "std", not(feature = "substrate")))]
+use {thiserror::Error, saa_schema::wasm_serde};
 
-#[cfg(feature = "substrate")]
+
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
 type String = ink::prelude::string::String;
 
 
-#[wasm_serde]
-#[derive(Error)]
-pub enum AddressError {
-    #[error("Address must not be empty")]
-    Empty,
-
-    #[error("Hex Decoding Error: {0}")]
-    Hex(String),
-
-    #[error("Bech32 Deriving Error: {0}")]
-    Bech32(String),
-
-    #[error("{0}")]
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+#[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+pub enum AuthError {
+    NoCredentials,
     InvalidLength(String),
-
-    #[error("Address error: {0}")]
+    RecoveryParam,
+    RecoveryMismatch,
+    Signature(String),
+    Recovery(String),
     Generic(String),
-
-    #[error("{0}")]
-    GenericNoPrefix(String),
-    
+    Crypto(String),
+    SemVer(String),
 }
 
 
-impl AddressError {
-    pub fn generic<M: Into<String>>(msg: M) -> Self {
-        AddressError::Generic(msg.into())
-    }
 
-    pub fn generic_no_prefix<M: Into<String>>(msg: M) -> Self {
-        AddressError::GenericNoPrefix(msg.into())
-    }
-}
-
-impl From<FromHexError> for AddressError {
-    fn from(err: FromHexError) -> Self {
-        Self::Hex(err.to_string())
-    }
-}
-
-impl From<Bech32Error> for AddressError {
-    fn from(err: Bech32Error) -> Self {
-        Self::Bech32(err.to_string())
-    }
-}
-
-
+#[cfg(any(feature = "std", not(feature = "substrate")))]
 #[wasm_serde]
 #[derive(Error)]
 pub enum AuthError {
-
-    #[error("{0}")]
-    Address(#[from] AddressError),
-
 
     #[error("No credentials provided or credentials are partially missing")]
     NoCredentials,
