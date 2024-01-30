@@ -50,5 +50,7 @@ std = [
 substrate   = [
     "dep:scale", 
     "dep:ink", 
-    "saa-schema/substrate"
+    "saa-schema/substrate",
+    "ink-as-dependency"
 ]
+ink-as-dependency = []
