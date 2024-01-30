@@ -34,7 +34,6 @@ serde               = { workspace = true, default-features = false, features = [
 [features]
 default     = []
 solana      = ["dep:borsh", "saa-schema/solana"]
-substrate   = ["dep:scale", "dep:ink", "saa-schema/substrate"]
 cosmwasm    = [
     "dep:schemars", 
     "dep:serde", 
@@ -47,4 +46,9 @@ std = [
     "scale/std",
     "ink/std",
     "substrate",
+]
+substrate   = [
+    "dep:scale", 
+    "dep:ink", 
+    "saa-schema/substrate"
 ]

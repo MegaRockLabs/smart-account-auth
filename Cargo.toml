@@ -35,7 +35,7 @@ saa-curves              = { path = "packages/curves" }
 cosmwasm-std            = { version = "1.5.2", default-features = false }
 
 # Substrate
-scale               = { version = "3.6.9", package = "parity-scale-codec", default-features = false }
+scale               = { version = "3.6.9", package = "parity-scale-codec", default-features = false, features = ["derive"]}
 scale-info          = { version = "2.10.0", default-features = false }
 ink                 = { version = "4.3.0",  default-features = false}
 # CosmWasm
