@@ -13,6 +13,7 @@ pub enum Credential {
     CosmosArbitrary(CosmosArbitrary)
 }
 
+
 impl Credential {
     pub fn name(&self) -> &'static str {
         match self {
