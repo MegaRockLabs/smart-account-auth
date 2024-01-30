@@ -8,17 +8,25 @@ version = { workspace = true }
 macros-proto        = { path = "../macros-proto" }
 
 # Substrate
-scale               = { workspace = true, default-features = false, features = ["derive"] }
-scale-info          = { workspace = true, default-features = false, features = ["derive"] }
+scale               = { workspace = true, default-features = false, features = ["derive"], optional = true }
+scale-info          = { workspace = true, default-features = false, features = ["derive"], optional = true }
 # CosmWasm
-serde               = { workspace = true, features = ["derive"] }
-schemars            = { workspace = true, features = ["derive"] }
+serde               = { workspace = true, default-features = false, features = ["derive"], optional = true }
+schemars            = { workspace = true, default-features = false, features = ["derive"], optional = true }
 # Solana
-borsh               = { workspace = true }
+borsh               = { workspace = true, default-features = false, features = ["derive"], optional = true }
+
+
 
 [features]
-default        = ["borsh/derive"]
-std            = ["scale/std", "scale-info/std", "substrate"]
-solana         = ["macros-proto/solana", "borsh/derive"]
-substrate      = ["macros-proto/substrate"]
-cosmwasm       = ["macros-proto/cosmwasm"]
+default        = []
+std            = [
+    "dep:scale-info", 
+    "dep:scale", 
+    "scale/std", 
+    "scale-info/std", 
+    "substrate"
+]
+solana         = ["dep:borsh",                 "macros-proto/solana"    ]
+substrate      = [                             "macros-proto/substrate" ]
+cosmwasm       = ["dep:serde", "dep:schemars", "macros-proto/cosmwasm"  ]
