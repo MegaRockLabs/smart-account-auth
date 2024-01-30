@@ -1,7 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo, to_json_binary};
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
-use saa_schema::*;
+use base64::{engine::general_purpose, Engine as _};
+use saa_schema::wasm_serde;
 
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 
@@ -40,7 +41,7 @@ impl Verifiable for CosmosArbitrary {
         let digest = sha256(
             &preamble_msg_arb_036(
                 addr.as_str(), 
-                &data_encoding::BASE64.encode(&self.message)
+                &general_purpose::STANDARD.encode(&self.message)
             ).as_bytes()
         );
 

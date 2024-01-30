@@ -361,12 +361,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "data-encoding"
-version = "2.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e962a19be5cfc3f3bf6dd8f61eb50107f356ad6270fbb3ed41476571db78be5"
-
-[[package]]
 name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1245,10 +1239,10 @@ dependencies = [
 name = "saa-custom"
 version = "0.3.1"
 dependencies = [
+ "base64",
  "bech32",
  "borsh",
  "cosmwasm-std",
- "data-encoding",
  "hex",
  "k256",
  "parity-scale-codec",

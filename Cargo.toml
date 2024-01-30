@@ -13,15 +13,16 @@ description     = "Utilities, types and verification logic for smart contract / 
 authors         = [ "Kromsten <kromsten@megarock.labs>" ]
 
 
-
 [workspace.dependencies]
 k256                    = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 ed25519-zebra           = { version = "4.0.3",  default-features = false }
 digest                  = { version = "0.10.7", default-features = false }
 
-hex                     = { version = "0.4.3",  default-features = false, features = ["alloc"] }
-data-encoding           = { version = "2.5.0",  default-features = false, features = ["alloc"] }
+hex                     = { version = "0.4.3",  default-features = false }
+data-encoding           = { version = "2.5.0",  default-features = false }
 bech32                  = { version = "0.9.1",  default-features = false }
+base64                  = { version = "0.21.7", default-features = false }
+
 
 semver                  = { version = "1.0.21", default-features = false }
 thiserror               = { version = "1.0.21", default-features = false }

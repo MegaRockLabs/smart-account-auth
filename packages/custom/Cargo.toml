@@ -9,7 +9,7 @@ version = { workspace = true }
 hex                     = { workspace = true }
 k256                    = { workspace = true }
 bech32                  = { workspace = true }
-data-encoding           = { workspace = true }
+base64                  = { workspace = true }
 
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
