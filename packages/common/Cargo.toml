@@ -9,7 +9,9 @@ saa-schema          = { workspace = true }
 thiserror           = { workspace = true }
 hex                 = { workspace = true }
 
-ed25519-zebra       = { workspace = true, default-features = false }
+
+ed25519             = { version = "2.2.0", default-features = false }
+curve25519-dalek    = { version = "4.1.0", default-features = false, features = ["digest", "zeroize", "precomputed-tables"] }
 k256                = { workspace = true }
 bech32              = { workspace = true }
 

@@ -1,3 +1,4 @@
+mod inner;
 mod errors;
 mod digest;
 pub mod hashes;

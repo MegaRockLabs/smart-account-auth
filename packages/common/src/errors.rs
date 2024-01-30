@@ -117,8 +117,8 @@ impl From<cosmwasm_std::VerificationError> for AuthError {
     }
 }
 
-impl From<ed25519_zebra::Error> for AuthError {
+/* impl From<ed25519_zebra::Error> for AuthError {
     fn from(err: ed25519_zebra::Error) -> Self {
         Self::Crypto(err.to_string())
     }
-}
+} */

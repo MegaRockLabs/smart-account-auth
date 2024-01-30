@@ -1,5 +1,5 @@
 
-use ed25519_zebra::{
+use crate::inner::{
     VerificationKey,
      Signature as Ed25519Signature
 };
