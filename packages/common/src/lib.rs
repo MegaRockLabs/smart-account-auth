@@ -21,10 +21,14 @@ mod substrate {
     pub use {
         ink_env::Environment as InkEnvironment,
         ink::EnvAccess as InkApi,
-        ink::prelude::{vec, format}
     };
-    pub type Vec<T> = ink::prelude::vec::Vec<T>;
-    pub type String = ink::prelude::string::String;
+
+    #[cfg(feature = "std")]
+    pub use ink::prelude::{
+        string::{ToString, String},
+        vec, vec::Vec, 
+        format, 
+    };
 
     pub mod default {
         use ink::env as ink_env;
