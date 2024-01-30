@@ -2,8 +2,8 @@ use ripemd::Ripemd160;
 use sha2::{Digest, Sha256};
 use tiny_keccak::{Hasher, Keccak};
 
-#[cfg(feature = "substrate")]
-type Vec<T> = ink::prelude::vec::Vec<T>;
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use crate::Vec;
 
 
 pub fn sha256(msg: &[u8]) -> Vec<u8> {
