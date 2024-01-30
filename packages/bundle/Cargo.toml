@@ -1,13 +1,13 @@
 [package]
-name = "smart-account-auth"
+name    = "smart-account-auth"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
 
 [lib]
-name        = "smart-account-auth"
+name        = "smart_account_auth"
 path        = "src/lib.rs"
-crate-type  = ["rlib"]
+crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]

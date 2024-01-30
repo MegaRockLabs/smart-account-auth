@@ -1,3 +1,5 @@
+#![cfg_attr(not(feature = "std"), no_std, no_main)]
+
 pub use saa_common::{Verifiable, AuthError, CredentialId};
 pub use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1};
 pub use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCredential};

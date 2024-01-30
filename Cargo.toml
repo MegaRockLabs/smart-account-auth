@@ -47,6 +47,7 @@ schemars             = "0.8.16"
 borsh               = { version = "1.3.1", features = ["derive"] }
 
 
+
 [profile.release]
 rpath            = false
 lto              = true
