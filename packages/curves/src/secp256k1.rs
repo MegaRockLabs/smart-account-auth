@@ -5,7 +5,8 @@ use {
 };
 
 use saa_common::{
-    AuthError, Verifiable, CredentialId, 
+    AuthError, Verifiable, CredentialId,
+    crypto::secp256k1_verify,
     hashes::sha256
 };
 
@@ -48,7 +49,7 @@ impl Verifiable for Secp256k1 {
     }
 
     fn verify(&self) -> Result<(), AuthError> {
-        cosmwasm_crypto::secp256k1_verify(
+        secp256k1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey

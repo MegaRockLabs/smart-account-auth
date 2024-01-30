@@ -24,6 +24,7 @@ pub enum AddressError {
 
     #[error("{0}")]
     GenericNoPrefix(String),
+    
 }
 
 
@@ -57,6 +58,7 @@ pub enum AuthError {
     #[error("{0}")]
     Address(#[from] AddressError),
 
+
     #[error("No credentials provided or credentials are partially missing")]
     NoCredentials,
 
@@ -77,6 +79,9 @@ pub enum AuthError {
 
     #[error("{0}")]
     Generic(String),
+
+    #[error("{0}")]
+    Crypto(String),
     
     #[error("Semver parsing error: {0}")]
     SemVer(String),
@@ -89,11 +94,7 @@ impl AuthError {
     }
 }
 
-impl From<cosmwasm_crypto::CryptoError> for AuthError {
-    fn from(err: cosmwasm_crypto::CryptoError) -> Self {
-        Self::Generic(err.to_string())
-    }
-}
+
 
 #[cfg(feature = "cosmwasm")] 
 impl From<cosmwasm_std::RecoverPubkeyError> for AuthError {
@@ -113,5 +114,11 @@ impl From<cosmwasm_std::StdError> for AuthError {
 impl From<cosmwasm_std::VerificationError> for AuthError {
     fn from(err: cosmwasm_std::VerificationError) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<ed25519_zebra::Error> for AuthError {
+    fn from(err: ed25519_zebra::Error) -> Self {
+        Self::Crypto(err.to_string())
     }
 }

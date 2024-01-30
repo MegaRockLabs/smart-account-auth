@@ -2,11 +2,13 @@
 use saa_common::{Api, Env, MessageInfo};
 
 use saa_common::{
-    AuthError, Verifiable, CredentialId, 
+    AuthError, Verifiable, CredentialId,
+    crypto::ed25519_verify,
     hashes::sha256
 };
 
 use saa_schema::wasm_serde;
+
 
 
 #[wasm_serde]
@@ -33,7 +35,7 @@ impl Verifiable for Ed25519 {
     }
 
     fn verify(&self) -> Result<(), AuthError> {
-        let res = cosmwasm_crypto::ed25519_verify(
+        let res = ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey

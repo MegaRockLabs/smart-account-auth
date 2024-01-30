@@ -3,7 +3,7 @@ use cosmwasm_std::{Api, Env, MessageInfo};
 
 use saa_common::{
     AuthError, Verifiable, CredentialId, 
-    cosmwasm_crypto::secp256k1_recover_pubkey,
+    crypto::secp256k1_recover_pubkey,
     hashes::keccak256_fixed, 
 };
 use saa_schema::wasm_serde;

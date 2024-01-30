@@ -1,9 +1,9 @@
 mod errors;
+mod digest;
 pub mod hashes;
+pub mod crypto;
+
 pub use errors::*;
-pub use cosmwasm_crypto;
-
-
 pub type CredentialId = Vec<u8>;
 
 #[cfg(feature = "cosmwasm")]

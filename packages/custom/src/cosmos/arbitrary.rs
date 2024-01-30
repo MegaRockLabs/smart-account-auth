@@ -44,7 +44,7 @@ impl Verifiable for CosmosArbitrary {
             ).as_bytes()
         );
 
-        let res = saa_common::cosmwasm_crypto::secp256k1_verify(
+        let res = saa_common::crypto::secp256k1_verify(
             &digest,
             &self.signature,
             &self.pubkey

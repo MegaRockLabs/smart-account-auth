@@ -7,20 +7,19 @@ version = { workspace = true }
 
 [dependencies]
 hex                     = { workspace = true }
-k256                    = { workspace = true }
 bech32                  = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
-cosmwasm-crypto         = { workspace = true }
 
 scale                   = { workspace = true, optional = true  }
 scale-info              = { workspace = true, optional = true  }
 borsh                   = { workspace = true, features = ["derive"], optional = true }
 schemars                = { workspace = true, features = ["derive"], optional = true }
 serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
+
 
 
 [features]
