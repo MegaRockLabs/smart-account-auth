@@ -7,7 +7,7 @@ type String = ink::prelude::string::String;
 
 
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
-#[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+#[derive(Debug, PartialEq, Eq, Clone, scale::Encode, scale::Decode)]
 pub enum AuthError {
     NoCredentials,
     InvalidLength(String),
