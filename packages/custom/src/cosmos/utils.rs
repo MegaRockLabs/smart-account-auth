@@ -1,8 +1,11 @@
 use saa_common::hashes::{ripemd160, sha256};
 use bech32::{ToBase32, Variant};
 
-#[cfg(feature = "substrate")]
-use saa_common::String;
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{String, format};
+
+#[cfg(feature = "cosmwasm")]
+use cosmwasm_std::{CanonicalAddr, Binary};
 
 
 pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> String {
@@ -12,8 +15,8 @@ pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> String {
 }
 
 #[cfg(feature = "cosmwasm")]
-pub fn pubkey_to_canonical(pubkey: &[u8]) -> cosmwasm_std::CanonicalAddr {
-    cosmwasm_std::CanonicalAddr(cosmwasm_std::Binary(ripemd160(&sha256(pubkey))))
+pub fn pubkey_to_canonical(pubkey: &[u8]) -> CanonicalAddr {
+    CanonicalAddr(Binary(ripemd160(&sha256(pubkey))))
 }
 
 

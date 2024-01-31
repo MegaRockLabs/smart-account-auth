@@ -23,13 +23,6 @@ mod substrate {
         ink::EnvAccess as InkApi,
     };
 
-    #[cfg(feature = "std")]
-    pub use ink::prelude::{
-        string::{ToString, String},
-        vec, vec::Vec, 
-        format, 
-    };
-
     pub mod default {
         use ink::env as ink_env;
         pub use ink_env::DefaultEnvironment;
@@ -39,6 +32,14 @@ mod substrate {
 }
 #[cfg(feature = "substrate")]
 pub use substrate::*;
+
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+pub use ink::prelude::{
+    string::{ToString, String},
+    vec, vec::Vec, 
+    format, 
+};
+
 
 
 pub type CredentialId = Vec<u8>;

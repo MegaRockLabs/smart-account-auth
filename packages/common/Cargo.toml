@@ -22,12 +22,12 @@ digest              = { version = "0.10.7", default-features = false }
 
 cosmwasm-std        = { workspace = true, optional = true  }
 
-ink                 = { workspace = true, optional = true, default-features = false  }
-scale               = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
-scale-info          = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
-borsh               = { workspace = true, features = ["derive"], optional = true }
-schemars            = { workspace = true, features = ["derive"], optional = true }
-serde               = { workspace = true, default-features = false, features = ["derive"], optional = true }
+ink                 = { workspace = true, optional = true, default-features = false, features = []}
+scale               = { workspace = true, optional = true }
+scale-info          = { workspace = true, optional = true }
+borsh               = { workspace = true, optional = true }
+schemars            = { workspace = true, optional = true }
+serde               = { workspace = true, optional = true }
 
 
 

@@ -4,8 +4,8 @@ use {
     saa_custom::cosmos::arbitrary::CosmosArbitrary
 };
 
-#[cfg(feature = "substrate")]
-use saa_common::Vec;
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{Vec, ToString};
 
 
 use saa_common::{

@@ -1,4 +1,4 @@
-#[cfg(feature = "substrate")]
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
 use saa_common::{Vec, vec};
 use saa_common::{CredentialId, Verifiable};
 

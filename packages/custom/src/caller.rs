@@ -1,6 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo, from_json};
 
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::ToString;
 
 use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;

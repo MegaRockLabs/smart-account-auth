@@ -52,7 +52,7 @@ impl Verifiable for Credential {
     }
 }
 
-#[cfg(feature = "substrate")]
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
 type Vec<T> = saa_common::Vec<T>;
 
 pub type Credentials = Vec<Credential>;

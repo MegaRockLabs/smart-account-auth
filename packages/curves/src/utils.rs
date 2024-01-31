@@ -1,5 +1,5 @@
-#[cfg(feature = "substrate")]
-use saa_common::{String, vec};
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{String, vec, ToString};
 
 use bech32::{ToBase32, Variant};
 use saa_common::{

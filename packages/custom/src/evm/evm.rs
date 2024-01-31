@@ -1,8 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Api, Env, MessageInfo};
 
-#[cfg(feature = "substrate")]
-use saa_common::Vec;
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{Vec, ToString};
 
 
 use saa_common::{

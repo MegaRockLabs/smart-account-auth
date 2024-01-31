@@ -1,5 +1,6 @@
-use macros_proto;
+#![cfg_attr(all(feature = "substrate", not(feature = "std")), no_std)]
 
+use macros_proto;
 
 pub use macros_proto::wasm_serde;
 

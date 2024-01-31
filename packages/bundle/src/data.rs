@@ -1,7 +1,9 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo};
 #[cfg(feature = "substrate")]
-use saa_common::{InkEnvironment, InkApi, Vec, vec};
+use saa_common::{InkEnvironment, InkApi};
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{Vec, vec, format};
 
 use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_custom::caller::Caller;

@@ -1,8 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::{Api, Env, MessageInfo, to_json_binary};
 
-#[cfg(feature = "substrate")]
-use saa_common::{Vec, String};
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+use saa_common::{Vec, String, ToString};
 
 
 use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
