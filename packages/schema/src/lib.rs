@@ -1,4 +1,4 @@
-#![cfg_attr(all(feature = "substrate", not(feature = "std")), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 use macros_proto;
 
@@ -23,5 +23,5 @@ pub use borsh;
 #[cfg(feature = "substrate")]
 pub use scale;
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", feature = "substrate"))]
 pub use scale_info;

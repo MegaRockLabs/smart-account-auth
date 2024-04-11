@@ -1,9 +1,7 @@
 #[cfg(any(feature = "std", not(feature = "substrate")))]
 use {thiserror::Error, saa_schema::wasm_serde};
 
-
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-type String = ink::prelude::string::String;
+use crate::String;
 
 
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
@@ -62,28 +60,43 @@ impl AuthError {
     }
 }
 
-
-
-#[cfg(feature = "cosmwasm")] 
-impl From<cosmwasm_std::RecoverPubkeyError> for AuthError {
-    fn from(err: cosmwasm_std::RecoverPubkeyError) -> Self {
-        Self::Recovery(err.to_string())
+impl From<cosmwasm_crypto::CryptoError> for AuthError {
+    fn from(err: cosmwasm_crypto::CryptoError) -> Self {
+        Self::Crypto(err.to_string())
     }
 }
 
-#[cfg(feature = "cosmwasm")] 
-impl From<cosmwasm_std::StdError> for AuthError {
-    fn from(err: cosmwasm_std::StdError) -> Self {
-        Self::Generic(err.to_string())
+impl From<bech32::primitives::hrp::Error> for AuthError {
+    fn from(err: bech32::primitives::hrp::Error) -> Self {
+        Self::Crypto(err.to_string())
     }
 }
 
+
+
 #[cfg(feature = "cosmwasm")] 
-impl From<cosmwasm_std::VerificationError> for AuthError {
-    fn from(err: cosmwasm_std::VerificationError) -> Self {
-        Self::Generic(err.to_string())
+mod implementation{
+    use crate::AuthError;
+
+    impl From<cosmwasm_std::RecoverPubkeyError> for AuthError {
+        fn from(err: cosmwasm_std::RecoverPubkeyError) -> Self {
+            Self::Recovery(err.to_string())
+        }
+    }
+
+    impl From<cosmwasm_std::StdError> for AuthError {
+        fn from(err: cosmwasm_std::StdError) -> Self {
+            Self::Generic(err.to_string())
+        }
+    }
+
+    impl From<cosmwasm_std::VerificationError> for AuthError {
+        fn from(err: cosmwasm_std::VerificationError) -> Self {
+            Self::Generic(err.to_string())
+        }
     }
 }
+
 
 /* impl From<ed25519_zebra::Error> for AuthError {
     fn from(err: ed25519_zebra::Error) -> Self {

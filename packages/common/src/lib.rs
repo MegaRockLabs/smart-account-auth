@@ -1,22 +1,52 @@
-#![cfg_attr(all(feature = "substrate", not(feature = "std")), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-mod inner;
+#[cfg(any(feature = "std", not(feature = "substrate")))]
+pub use std::{
+    string::{ToString, String},
+    vec, vec::Vec, 
+    format
+};
+
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
+pub use ink::prelude::{
+    string::{ToString, String},
+    vec, vec::Vec, 
+    format, 
+};
+
+#[macro_export]
+macro_rules! ensure {
+    ($cond:expr, $e:expr) => {
+        if !($cond) {
+            return Err(core::convert::From::from($e));
+        }
+    };
+}
+
+
+
 mod errors;
-mod digest;
 pub mod hashes;
-pub mod crypto;
-
 pub use errors::*;
 
+
+pub mod crypto {
+    pub use cosmwasm_crypto::*;
+} 
+
+
+
 #[cfg(feature = "cosmwasm")]
-pub use cosmwasm_std::{
-    Api, Env, Binary, Addr, CanonicalAddr, MessageInfo,
-    from_json, to_json_binary,
-};
+pub mod cosmwasm {
+    pub use cosmwasm_std::{
+        Api, Env, Binary, Addr, CanonicalAddr, MessageInfo,
+        from_json, to_json_binary, ensure, ensure_eq, ensure_ne
+    };
+}
 
 
 #[cfg(feature = "substrate")]
-mod substrate {
+pub mod substrate {
     pub use ink::env as ink_env;
     pub use {
         ink_env::Environment as InkEnvironment,
@@ -30,16 +60,11 @@ mod substrate {
         pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
     }
 }
+
+#[cfg(feature = "cosmwasm")]
+use cosmwasm::*;
 #[cfg(feature = "substrate")]
-pub use substrate::*;
-
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-pub use ink::prelude::{
-    string::{ToString, String},
-    vec, vec::Vec, 
-    format, 
-};
-
+use substrate::*;
 
 
 pub type CredentialId = Vec<u8>;

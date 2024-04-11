@@ -5,9 +5,5 @@ mod tests {
         assert!(true);
     }
 
-    #[test]
-    fn verify_signature() {
-    }
-
 
 }

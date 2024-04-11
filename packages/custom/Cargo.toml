@@ -16,16 +16,16 @@ saa-schema              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
 
-scale                   = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
-scale-info              = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+scale                   = { workspace = true, optional = true }
+scale-info              = { workspace = true, optional = true }
 
-borsh                   = { workspace = true, features = ["derive"], optional = true }
-schemars                = { workspace = true, features = ["derive"], optional = true }
-serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
+borsh                   = { workspace = true, optional = true }
+schemars                = { workspace = true, optional = true }
+serde                   = { workspace = true, optional = true }
 
 
 [features]
-default = []
+default = ["std"]
 solana = [
     "dep:borsh",
     "saa-schema/solana",
@@ -33,6 +33,7 @@ solana = [
 ]
 substrate = [
     "dep:scale",
+    "dep:scale-info",
     "saa-schema/substrate",
     "saa-common/substrate",
 ]
@@ -44,11 +45,12 @@ cosmwasm = [
     "saa-common/cosmwasm",
 ]
 std = [
+    "scale?/std",
+    "scale-info?/std",
+    "cosmwasm-std?/std",
+    "bech32/std",
     "saa-schema/std",
     "saa-common/std",
-    "scale/std",
-    "scale-info/std",
-    "substrate",
 ]
 
 

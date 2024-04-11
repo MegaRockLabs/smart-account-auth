@@ -1,14 +1,9 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::{Api, Env, MessageInfo, to_json_binary};
-
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{Vec, String, ToString};
-
-
-use saa_common::{hashes::sha256, AuthError, CredentialId, Verifiable};
-use base64::{engine::general_purpose, Engine as _};
+use saa_common::cosmwasm::{Api, Env, MessageInfo, to_json_binary};
+use saa_common::{Vec, String, ToString, hashes::sha256, AuthError, CredentialId, Verifiable, ensure};
 use saa_schema::wasm_serde;
 
+use base64::{engine::general_purpose, Engine as _};
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 
 
@@ -37,11 +32,9 @@ impl Verifiable for CosmosArbitrary {
     }
 
     fn verify(&self) -> Result<(), AuthError> {
-        if self.hrp.is_none() {
-            return Err(AuthError::Generic("Must provice prefix of the chain".to_string()));
-        }
+        ensure!(self.hrp.is_some(), AuthError::Generic("Must provice prefix of the chain".to_string()));
 
-        let addr = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap());
+        let addr = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
 
         let digest = sha256(
             &preamble_msg_arb_036(
@@ -56,9 +49,7 @@ impl Verifiable for CosmosArbitrary {
             &self.pubkey
         )?;
 
-        if !res {
-            return Err(AuthError::Signature("Signature verification failed".to_string()));
-        }
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
 
         Ok(())
     }

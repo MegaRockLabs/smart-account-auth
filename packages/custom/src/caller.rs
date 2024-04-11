@@ -1,10 +1,6 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::{Api, Env, MessageInfo, from_json};
-
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::ToString;
-
-use saa_common::{AuthError, CredentialId, Verifiable};
+use saa_common::cosmwasm::{Api, Env, MessageInfo, from_json};
+use saa_common::{AuthError, CredentialId, Verifiable, ToString};
 use saa_schema::wasm_serde;
 
 
@@ -13,7 +9,6 @@ pub struct Caller {
     pub id: CredentialId
 
 }
-
 
 
 impl From<&[u8]> for Caller {
@@ -34,7 +29,7 @@ impl From<[u8; 32]> for Caller {
 
 
 
-#[cfg(all(feature = "cosmwasm"))]
+#[cfg(feature = "cosmwasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {
         Caller {

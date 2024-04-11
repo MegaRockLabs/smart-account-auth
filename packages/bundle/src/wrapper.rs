@@ -1,10 +1,7 @@
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{Vec, vec};
-use saa_common::{CredentialId, Verifiable};
+use saa_common::{Vec, vec, CredentialId, Verifiable};
 
 pub trait CredentialsWrapper : Clone + Verifiable {
 
-    // anything that implement verifiable can be a credential
     type Credential         : Verifiable + Clone;
 
 

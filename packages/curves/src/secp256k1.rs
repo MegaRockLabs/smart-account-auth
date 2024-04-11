@@ -1,20 +1,18 @@
 #[cfg(feature = "cosmwasm")]
 use {
-    saa_common::{Api, Env, MessageInfo}, 
+    saa_common::cosmwasm::{Api, Env, MessageInfo}, 
     saa_custom::cosmos::arbitrary::CosmosArbitrary
 };
 
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{Vec, ToString};
-
+use saa_schema::wasm_serde;
 
 use saa_common::{
+    Vec, ToString,
     AuthError, Verifiable, CredentialId,
     crypto::secp256k1_verify,
     hashes::sha256
 };
 
-use saa_schema::wasm_serde;
 
 
 #[wasm_serde]

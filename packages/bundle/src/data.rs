@@ -1,10 +1,9 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::{Api, Env, MessageInfo};
+use saa_common::cosmwasm::{Api, Env, MessageInfo};
 #[cfg(feature = "substrate")]
-use saa_common::{InkEnvironment, InkApi};
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{Vec, vec, format};
+use saa_common::substrate::{InkEnvironment, InkApi};
 
+use saa_common::{Vec, vec, format};
 use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
@@ -75,7 +74,7 @@ impl CredentialData {
     
 
     #[cfg(feature = "cosmwasm")]
-    pub fn with_caller_cosmwasm(&self, info: &saa_common::MessageInfo) -> Self  {
+    pub fn with_caller_cosmwasm(&self, info: &saa_common::cosmwasm::MessageInfo) -> Self  {
         self.with_caller(info)
     }
 

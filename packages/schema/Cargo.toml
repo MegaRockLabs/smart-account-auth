@@ -18,12 +18,11 @@ borsh               = { workspace = true, default-features = false, features = [
 
 
 [features]
-default        = []
+default        = ["std"]
 std            = [
-    "scale/std", 
-    "scale-info/std", 
-    "substrate"
+    "scale?/std", 
+    "scale-info?/std", 
 ]
-solana         = ["dep:borsh",                 "macros-proto/solana"    ]
-substrate      = ["dep:scale",                 "macros-proto/substrate" ]
-cosmwasm       = ["dep:serde", "dep:schemars", "macros-proto/cosmwasm"  ]
+solana         = ["dep:borsh",                   "macros-proto/solana"    ]
+substrate      = ["dep:scale", "dep:scale-info", "macros-proto/substrate" ]
+cosmwasm       = ["dep:serde", "dep:schemars",   "macros-proto/cosmwasm"  ]

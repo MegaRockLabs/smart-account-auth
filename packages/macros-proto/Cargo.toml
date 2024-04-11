@@ -22,7 +22,8 @@ features = [
 ]
 
 [features]
-default        = []
-substrate      = []
-cosmwasm       = []
-solana         = []
+default        = ["std"]
+std            = [     ]
+substrate      = [     ]
+cosmwasm       = [     ]
+solana         = [     ]

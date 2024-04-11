@@ -34,7 +34,7 @@ pub fn wasm_serde(
                 ::saa_schema::borsh::BorshDeserialize
             ))]
             
-            #[cfg_attr(feature = "std", derive(
+            #[cfg_attr(all(feature = "std", feature="substrate"), derive(
                 saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
@@ -63,7 +63,7 @@ pub fn wasm_serde(
                 ::saa_schema::scale::Encode, 
                 ::saa_schema::scale::Decode
             ))]
-            #[cfg_attr(feature = "std", derive(
+            #[cfg_attr(all(feature = "std", feature = "substrate"), derive(
                 saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]

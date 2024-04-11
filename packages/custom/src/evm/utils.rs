@@ -1,7 +1,4 @@
-use saa_common::{hashes::keccak256_fixed, AuthError};
-
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{vec, format};
+use saa_common::{hashes::keccak256_fixed, AuthError, vec, format};
 
 pub fn preamble_msg_eth(msg: &[u8]) -> [u8; 32] {
     const PREFIX: &str = "\x19Ethereum Signed Message:\n";

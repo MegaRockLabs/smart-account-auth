@@ -1,22 +1,19 @@
-use saa_common::hashes::{ripemd160, sha256};
-use bech32::{ToBase32, Variant};
+use saa_common::{format, hashes::{ripemd160, sha256}, AuthError, String};
+use bech32::{hrp::Hrp, Bech32};
 
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-use saa_common::{String, format};
-
-#[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{CanonicalAddr, Binary};
-
-
-pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> String {
-    let base32_addr = ripemd160(&sha256(pubkey)).to_base32();
-    let account: String = bech32::encode(hrp, base32_addr, Variant::Bech32).unwrap();
-    account
+pub fn pubkey_to_account(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> {
+    let base32_addr = ripemd160(&sha256(pubkey));
+    let account: String = bech32::encode::<Bech32>(Hrp::parse(hrp)?, &base32_addr).unwrap();
+    Ok(account)
 }
 
 #[cfg(feature = "cosmwasm")]
-pub fn pubkey_to_canonical(pubkey: &[u8]) -> CanonicalAddr {
-    CanonicalAddr(Binary(ripemd160(&sha256(pubkey))))
+pub fn pubkey_to_canonical(pubkey: &[u8]) -> cosmwasm_std::CanonicalAddr {
+    cosmwasm_std::CanonicalAddr::from(
+        cosmwasm_std::Binary::new(
+            ripemd160(&sha256(pubkey))
+        )
+    )
 }
 
 
