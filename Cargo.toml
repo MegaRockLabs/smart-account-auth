@@ -17,13 +17,13 @@ authors         = [ "Kromsten <kromsten@megarock.labs>" ]
 k256                    = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
 
 hex                     = { version = "0.4.3",  default-features = false }
-data-encoding           = { version = "2.5.0",  default-features = false }
+data-encoding           = { version = "2.6.0",  default-features = false }
 bech32                  = { version = "0.11.0", default-features = false, features = ["alloc"] }
-base64                  = { version = "0.22.0", default-features = false, features = ["alloc"] }
+base64                  = { version = "0.22.1", default-features = false, features = ["alloc"] }
 
 
-semver                  = { version = "1.0.21", default-features = false }
-thiserror               = { version = "1.0.21", default-features = false }
+semver                  = { version = "1.0.22", default-features = false }
+thiserror               = { version = "1.0.59", default-features = false }
 
 smart-account-auth      = { path = "packages/bundle" }
 saa-custom              = { path = "packages/custom" }
@@ -32,15 +32,14 @@ saa-schema              = { path = "packages/schema" }
 saa-curves              = { path = "packages/curves" }
 
 
-cosmwasm-crypto         = { version = "2.0.1", default-features = false }
-cosmwasm-std            = { version = "2.0.1", default-features = false }
-getrandom               = { version = "0.2.3",  default-features = false, features = ["custom"] }
+cosmwasm-crypto         = { version = "2.0.2", default-features = false }
+cosmwasm-std            = { version = "2.0.2", default-features = false }
+getrandom               = { version = "0.2.14",  default-features = false, features = ["custom"] }
 
 # Substrate
 scale               = { version = "3.6.9", default-features = false, features = ["derive"], package = "parity-scale-codec"}
-scale-info          = { version = "2.10.0", default-features = false, features = ["derive"] }
+scale-info          = { version = "2.10.2", default-features = false, features = ["derive"] }
 ink                 = { version = "5.0.0",  default-features = false }
-
 # CosmWasm
 serde                = { version = "1.0.197", default-features = false, features = ["derive"] }
 schemars             = { version = "0.8.16",  default-features = false, features = ["derive"] }
@@ -49,11 +48,15 @@ borsh               = { version = "1.4.0", default-features = false, features = 
 
 
 
+[profile.release.package.smart-account-auth]
+codegen-units = 1
+incremental = false
+
 
 [profile.release]
-rpath            = false
-lto              = true
-overflow-checks  = true
-opt-level        = 3
-debug            = false
+rpath = false
+lto = true
+overflow-checks = true
+opt-level = 3
+debug = false
 debug-assertions = false
