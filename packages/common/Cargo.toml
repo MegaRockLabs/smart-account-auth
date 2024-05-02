@@ -54,6 +54,5 @@ std         = [
     "ink?/std",
     "scale?/std",
     "scale-info?/std",
-    "cosmwasm-std?/std",
     "saa-schema/std",
 ]

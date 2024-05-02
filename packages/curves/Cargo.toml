@@ -48,7 +48,6 @@ cosmwasm = [
 std = [
     "scale?/std",
     "scale-info?/std",
-    "cosmwasm-std?/std",
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",
