@@ -13,17 +13,20 @@ use crate::{Credential, Credentials, CredentialsWrapper};
 
 #[wasm_serde]
 pub struct CredentialData {
-    pub credentials:   Credentials,
-    pub primary_index: Option<u8>,
-    pub with_caller:   Option<bool>
+    pub credentials     :  Credentials,
+    pub with_caller     :  Option<bool>,
+    pub primary_index   :  Option<u8>,
+    pub secs_to_expire  :  Option<u64>
 }
+
 
 impl Default for CredentialData {
     fn default() -> Self {
         Self { 
-            credentials: vec![], 
-            primary_index: None, 
-            with_caller: None 
+            credentials     : vec![], 
+            with_caller     : None,
+            primary_index   : None, 
+            secs_to_expire  : None
         }
     }
 }
@@ -33,12 +36,14 @@ impl CredentialData {
     pub fn new(
         credentials: Credentials, 
         primary_index: Option<u8>, 
-        with_caller: Option<bool>
+        with_caller: Option<bool>,
+        secs_to_expire: Option<u64>
     ) -> Self {
         Self { 
             credentials, 
             primary_index,
             with_caller,
+            secs_to_expire
         }
     }
 
@@ -61,8 +66,9 @@ impl CredentialData {
         }
         Self {
             credentials,
+            with_caller: Some(true),
             primary_index: self.primary_index,
-            with_caller: Some(true)
+            secs_to_expire: self.secs_to_expire
         }
     }
 
@@ -85,6 +91,7 @@ impl CredentialData {
 
 impl CredentialsWrapper for CredentialData {
     type Credential = Credential;
+
     fn credentials(&self) -> &Vec<Credential> {
         &self.credentials
     }
@@ -100,9 +107,13 @@ impl Verifiable for CredentialData {
 
     fn validate(&self) -> Result<(), AuthError> {
         let creds = self.credentials();
+
         if creds.len() == 0 {
             return Err(AuthError::NoCredentials);
+        } else if creds.len() > 255 {
+            return Err(AuthError::Generic(format!("Too many credentials: {}", creds.len())));
         }
+
         if let Some(index) = self.primary_index() {
             if *index as usize >= creds.len() {
                 return Err(AuthError::Generic(format!("Primary index {} is out of bounds", index)));
