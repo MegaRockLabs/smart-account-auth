@@ -20,6 +20,7 @@ pub struct Secp256k1 {
     pub pubkey:    Vec<u8>,
     pub message:   Vec<u8>,
     pub signature: Vec<u8>,
+    pub hrp:       Option<String>
 }
 
 
@@ -30,7 +31,7 @@ impl From<Secp256k1> for CosmosArbitrary {
             pubkey:    v.pubkey,
             message:   v.message,
             signature: v.signature,
-            hrp:       None
+            hrp:       v.hrp
         }
     }
 }
