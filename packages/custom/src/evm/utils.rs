@@ -1,5 +1,6 @@
 use saa_common::{hashes::keccak256_fixed, AuthError, vec, format};
 
+
 pub fn preamble_msg_eth(msg: &[u8]) -> [u8; 32] {
     const PREFIX: &str = "\x19Ethereum Signed Message:\n";
     let mut bytes = vec![];
