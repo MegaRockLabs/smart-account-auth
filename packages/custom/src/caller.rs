@@ -7,7 +7,6 @@ use saa_schema::wasm_serde;
 #[wasm_serde]
 pub struct Caller {
     pub id: CredentialId
-
 }
 
 
@@ -18,6 +17,7 @@ impl From<&[u8]> for Caller {
         }
     }
 }
+
 
 impl From<[u8; 32]> for Caller {
     fn from(bytes: [u8; 32]) -> Self {

@@ -120,7 +120,7 @@ impl Verifiable for CredentialData {
 
     #[cfg(feature = "substrate")]
     fn verified_ink<'a>(&self, api: InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> {
-        let with_caller = self.with_caller.is_some() && self.with_caller.unwrap();
+        let with_caller = self.with_caller.unwrap_or(false);
         
         let creds = if with_caller {
             let caller = api.clone().caller();
@@ -142,7 +142,7 @@ impl Verifiable for CredentialData {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {   
-        let with_caller = self.with_caller.is_some() && self.with_caller.unwrap();
+        let with_caller = self.with_caller.unwrap_or(false);
 
         let creds = if with_caller {
             self.with_caller_cosmwasm(info)
