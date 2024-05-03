@@ -34,6 +34,7 @@ impl Credential {
             Credential::CosmosArbitrary(c) => c
         }
     }
+    
 }
 
 impl Verifiable for Credential {

@@ -54,7 +54,22 @@ impl CredentialData {
     pub fn values(&self) -> Vec<&dyn Verifiable> {
         self.credentials().iter().map(|c| c.value()).collect()
     }
-    
+
+    pub fn find_by_name(&self, name: &str) -> Option<Credential> {
+        self.credentials
+            .iter()
+            .find(|c| c.name() == name)
+            .cloned()
+    }
+
+    pub fn find_by_id(&self, id: &CredentialId) -> Option<Credential> {
+        self.credentials
+            .iter()
+            .find(|c| c.id() == *id)
+            .cloned()
+    }
+
+
 
     pub fn with_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
         let mut credentials = self.credentials.clone();
