@@ -29,7 +29,10 @@ pub enum AuthError {
     NoCredentials,
 
     #[error("{0}")]
-    InvalidLength(String),
+    MissingData(String),
+
+    #[error("Expected: {0};  Received: {1}")]
+    InvalidLength(u16, u16),
 
     #[error("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here.")]
     RecoveryParam,

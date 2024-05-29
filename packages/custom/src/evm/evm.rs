@@ -4,35 +4,32 @@ use cosmwasm_std::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    Vec, ToString,
-    AuthError, Verifiable, CredentialId, 
-    crypto::secp256k1_recover_pubkey,
-    hashes::keccak256_fixed, 
+    crypto::secp256k1_recover_pubkey, hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
 };
 
 use super::utils::{get_recovery_param, preamble_msg_eth};
 
 #[wasm_serde]
 pub struct EvmCredential {
-    pub message:   Vec<u8>,
-    pub signature: Vec<u8>,
-    pub signer:    Vec<u8>,
+    pub message:   Binary,
+    pub signature: Binary,
+    pub signer:    String,
 }
 
 
 impl Verifiable for EvmCredential {
 
     fn id(&self) -> CredentialId {
-        self.signer.clone()
+        self.signer.as_bytes().to_vec()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
         if self.signature.len() < 65 {
-            return Err(AuthError::InvalidLength("Signature must be at least 65 bytes".to_string()));
+            return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
         }
     
         if self.signer.len() != 20 {
-            return Err(AuthError::InvalidLength("Signer must be 20 bytes".to_string()));
+            return Err(AuthError::MissingData("Signer must be 20 bytes".to_string()));
         }
         Ok(())
     }
@@ -45,7 +42,9 @@ impl Verifiable for EvmCredential {
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
-        let recovered = &hash[12..];
+        let recovered = String::from_utf8(
+            hash[12..].to_vec()
+        ).map_err(|_| AuthError::RecoveryMismatch)?;
     
         if self.signer == recovered {
             Ok(())
@@ -64,7 +63,9 @@ impl Verifiable for EvmCredential {
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
-        let recovered = &hash[12..];
+        let recovered = String::from_utf8(
+            hash[12..].to_vec()
+        ).map_err(|_| AuthError::RecoveryMismatch)?;
     
         if self.signer == recovered {
             Ok(self.clone())

@@ -2,32 +2,29 @@
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 use saa_common::{
-    Vec, ToString,
-    AuthError, Verifiable, CredentialId,
-    crypto::ed25519_verify,
-    hashes::sha256
+    crypto::ed25519_verify, hashes::sha256, AuthError, Binary, CredentialId, ToString, Verifiable
 };
 
 
 #[wasm_serde]
 pub struct Ed25519 {
-    pub pubkey:    Vec<u8>,
-    pub message:   Vec<u8>,
-    pub signature: Vec<u8>,
+    pub pubkey:    Binary,
+    pub message:   Binary,
+    pub signature: Binary,
 }
 
 
 impl Verifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.clone()
+        self.pubkey.0.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.len() > 0 && 
             self.pubkey.len() > 0) {
-            return Err(AuthError::InvalidLength("Empty credential data".to_string()));
+            return Err(AuthError::MissingData("Empty credential data".to_string()));
         }
         Ok(())
     }

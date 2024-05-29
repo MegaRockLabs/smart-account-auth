@@ -33,7 +33,6 @@ pub fn wasm_serde(
                 ::saa_schema::borsh::BorshSerialize, 
                 ::saa_schema::borsh::BorshDeserialize
             ))]
-            
             #[cfg_attr(all(feature = "std", feature="substrate"), derive(
                 saa_schema::scale_info::TypeInfo)
             )]

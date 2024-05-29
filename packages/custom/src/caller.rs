@@ -55,7 +55,7 @@ impl Verifiable for Caller {
 
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.id.len() > 0) {
-            return Err(AuthError::InvalidLength("Caller must have an id".to_string()));
+            return Err(AuthError::MissingData("Caller must have an id".to_string()));
         }
         Ok(())
     }

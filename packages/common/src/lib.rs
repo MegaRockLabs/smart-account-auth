@@ -24,7 +24,7 @@ macro_rules! ensure {
 }
 
 
-
+mod binary;
 mod errors;
 pub mod hashes;
 pub use errors::*;
@@ -35,11 +35,12 @@ pub mod crypto {
 } 
 
 
+pub use binary::Binary;
 
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm {
     pub use cosmwasm_std::{
-        Api, Env, Binary, Addr, CanonicalAddr, MessageInfo,
+        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
         from_json, to_json_binary, ensure, ensure_eq, ensure_ne
     };
 }

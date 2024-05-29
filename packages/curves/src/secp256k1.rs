@@ -7,7 +7,7 @@ use {
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    Vec, ToString,
+    ToString, Binary,
     AuthError, Verifiable, CredentialId,
     crypto::secp256k1_verify,
     hashes::sha256
@@ -17,9 +17,9 @@ use saa_common::{
 
 #[wasm_serde]
 pub struct Secp256k1 {
-    pub pubkey:    Vec<u8>,
-    pub message:   Vec<u8>,
-    pub signature: Vec<u8>,
+    pub pubkey:    Binary,
+    pub message:   Binary,
+    pub signature: Binary,
     pub hrp:       Option<String>
 }
 
@@ -39,14 +39,14 @@ impl From<Secp256k1> for CosmosArbitrary {
 impl Verifiable for Secp256k1 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.clone()
+        self.pubkey.0.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.len() > 0 && 
             self.pubkey.len() > 0) {
-            return Err(AuthError::InvalidLength("Empty credential data".to_string()));
+            return Err(AuthError::MissingData("Empty credential data".to_string()));
         }
         Ok(())
     }

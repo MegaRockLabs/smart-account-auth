@@ -16,7 +16,6 @@ pub struct CredentialData {
     pub credentials     :  Credentials,
     pub with_caller     :  Option<bool>,
     pub primary_index   :  Option<u8>,
-    pub secs_to_expire  :  Option<u64>
 }
 
 
@@ -26,7 +25,6 @@ impl Default for CredentialData {
             credentials     : vec![], 
             with_caller     : None,
             primary_index   : None, 
-            secs_to_expire  : None
         }
     }
 }
@@ -37,13 +35,11 @@ impl CredentialData {
         credentials: Credentials, 
         primary_index: Option<u8>, 
         with_caller: Option<bool>,
-        secs_to_expire: Option<u64>
     ) -> Self {
         Self { 
             credentials, 
             primary_index,
             with_caller,
-            secs_to_expire
         }
     }
 
@@ -83,7 +79,6 @@ impl CredentialData {
             credentials,
             with_caller: Some(true),
             primary_index: self.primary_index,
-            secs_to_expire: self.secs_to_expire
         }
     }
 
@@ -123,7 +118,8 @@ impl Verifiable for CredentialData {
     fn validate(&self) -> Result<(), AuthError> {
         let creds = self.credentials();
 
-        if creds.len() == 0 {
+        let with_caller = self.with_caller.unwrap_or(false);
+        if !with_caller && creds.len() == 0 {
             return Err(AuthError::NoCredentials);
         } else if creds.len() > 255 {
             return Err(AuthError::Generic(format!("Too many credentials: {}", creds.len())));

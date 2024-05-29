@@ -1,6 +1,6 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo, to_json_binary};
-use saa_common::{Vec, String, ToString, hashes::sha256, AuthError, CredentialId, Verifiable, ensure};
+use saa_common::{ensure, hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
 use base64::{engine::general_purpose, Engine as _};
@@ -9,9 +9,9 @@ use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 
 #[wasm_serde]
 pub struct CosmosArbitrary {
-    pub pubkey:    Vec<u8>,
-    pub message:   Vec<u8>,
-    pub signature: Vec<u8>,
+    pub pubkey:    Binary,
+    pub message:   Binary,
+    pub signature: Binary,
     pub hrp:       Option<String>
 }
 
@@ -19,14 +19,14 @@ pub struct CosmosArbitrary {
 impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.clone()
+        self.pubkey.0.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.len() > 0 && 
             self.pubkey.len() > 0) {
-            return Err(AuthError::InvalidLength("Empty credential data".to_string()));
+            return Err(AuthError::MissingData("Empty credential data".to_string()));
         }
         Ok(())
     }
