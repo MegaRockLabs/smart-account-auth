@@ -21,9 +21,8 @@ data-encoding           = { version = "2.6.0",  default-features = false }
 bech32                  = { version = "0.11.0", default-features = false, features = ["alloc"] }
 base64                  = { version = "0.22.1", default-features = false, features = ["alloc"] }
 
-
-semver                  = { version = "1.0.22", default-features = false }
-thiserror               = { version = "1.0.59", default-features = false }
+semver                  = { version = "1.0.23", default-features = false }
+thiserror               = { version = "1.0.61", default-features = false }
 
 smart-account-auth      = { path = "packages/bundle" }
 saa-custom              = { path = "packages/custom" }
@@ -32,9 +31,9 @@ saa-schema              = { path = "packages/schema" }
 saa-curves              = { path = "packages/curves" }
 
 
-cosmwasm-crypto         = { version = "1.5.4", default-features = false }
-cosmwasm-std            = { version = "1.5.4", default-features = false }
-getrandom               = { version = "0.2.14",  default-features = false, features = ["custom"] }
+cosmwasm-crypto         = { version = "1.5.5", default-features = false }
+cosmwasm-std            = { version = "1.5.5", default-features = false }
+getrandom               = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
 # Substrate
 scale               = { version = "3.6.9", default-features = false, features = ["derive"], package = "parity-scale-codec"}

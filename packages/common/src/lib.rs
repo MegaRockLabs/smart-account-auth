@@ -37,6 +37,7 @@ pub mod crypto {
 
 pub use binary::Binary;
 
+
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm {
     pub use cosmwasm_std::{

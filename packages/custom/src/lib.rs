@@ -3,6 +3,7 @@
 pub mod evm;
 pub mod cosmos;
 pub mod caller;
+pub mod passkey;
 
 #[cfg(test)]
 mod tests;
