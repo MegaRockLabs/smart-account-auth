@@ -263,3 +263,17 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
         }
     }
 }
+
+#[cfg(feature = "cosmwasm")]
+impl From<Binary> for cosmwasm_std::Binary {
+    fn from(binary: Binary) -> Self {
+        cosmwasm_std::Binary(binary.0)
+    }
+}
+
+#[cfg(feature = "cosmwasm")]
+impl Into<Binary> for cosmwasm_std::Binary {
+    fn into(self) -> Binary {
+        Binary(self.0)
+    }
+}
