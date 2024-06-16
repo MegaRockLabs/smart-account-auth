@@ -4,7 +4,8 @@ use cosmwasm_std::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    crypto::secp256k1_recover_pubkey, hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
+    crypto::secp256k1_recover_pubkey, 
+    hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
 };
 
 use super::utils::{get_recovery_param, preamble_msg_eth};

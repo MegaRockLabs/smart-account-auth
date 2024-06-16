@@ -20,15 +20,15 @@ sha2                = { version = "0.10.8", default-features = false }
 digest              = { version = "0.10.7", default-features = false }
 
 cosmwasm-crypto     = { workspace = true }
-cosmwasm-std        = { workspace = true, optional = true  }
+cosmwasm-std        = { workspace = true, optional = true }
 getrandom           = { workspace = true}
 
 ink                 = { workspace = true, optional = true, default-features = false, features = []}
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
-schemars            = { workspace = true, optional = true }
-serde               = { workspace = true, optional = true }
+schemars            = { workspace = true }
+serde               = { workspace = true }
 
 
 
@@ -41,14 +41,12 @@ solana      = [
     "saa-schema/solana"
 ]
 cosmwasm    = [
-    "dep:serde", 
-    "dep:schemars", 
     "dep:cosmwasm-std",
     "saa-schema/cosmwasm"
 ]
 substrate   = [
-    "dep:scale", 
     "dep:ink", 
+    "dep:scale", 
     "saa-schema/substrate",
 ]
 std         = [

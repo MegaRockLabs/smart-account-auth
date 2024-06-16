@@ -1,9 +1,7 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo, to_json_binary};
+use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_common::{ensure, hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
 use saa_schema::wasm_serde;
-
-use base64::{engine::general_purpose, Engine as _};
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 
 
@@ -32,16 +30,11 @@ impl Verifiable for CosmosArbitrary {
     }
 
     fn verify(&self) -> Result<(), AuthError> {
-        ensure!(self.hrp.is_some(), AuthError::Generic("Must provice prefix of the chain".to_string()));
+        ensure!(self.hrp.is_some(), AuthError::Generic("Must ether provide prefix of the chain or use the API".to_string()));
 
-        let addr = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
-
-        let digest = sha256(
-            &preamble_msg_arb_036(
-                addr.as_str(), 
-                &general_purpose::STANDARD.encode(&self.message)
-            ).as_bytes()
-        );
+        let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
+        let data  = String::from_utf8(self.message.0.clone())?;
+        let digest = sha256(&preamble_msg_arb_036(addr.as_str(), &data).as_bytes());
 
         let res = saa_common::crypto::secp256k1_verify(
             &digest,
@@ -60,21 +53,16 @@ impl Verifiable for CosmosArbitrary {
         &self, 
         api:  &dyn Api, 
         _:  &Env,
-        _: &MessageInfo
+        _:  &MessageInfo
     ) -> Result<Self, AuthError> {
         use super::utils::pubkey_to_canonical;
 
-        let canonical = pubkey_to_canonical(&self.pubkey);
-        let addr = api.addr_humanize(&canonical)?;
-
-        let data = to_json_binary(&self.message)?.to_base64();
-
-        let digest = sha256(
-            &preamble_msg_arb_036(
-                addr.as_str(), 
-                data.as_str()
-            ).as_bytes()
-        );
+        let addr = match self.hrp.as_ref() {
+            Some(hrp) => pubkey_to_account(&self.pubkey, hrp)?,
+            None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
+        };
+        let data : String = cosmwasm_std::from_json(&self.message)?;
+        let digest = sha256(&preamble_msg_arb_036(addr.as_str(), &data).as_bytes());
 
         let res = api.secp256k1_verify(
             &digest,

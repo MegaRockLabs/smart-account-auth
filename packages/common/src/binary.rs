@@ -1,27 +1,25 @@
+use schemars::JsonSchema;
 use core::fmt;
 use core::ops::Deref;
-
 use base64::engine::{Engine, GeneralPurpose};
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::AuthError;
 
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[cfg_attr(feature = "cosmwasm", derive(
-    ::saa_schema::schemars::JsonSchema)
-)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
 #[cfg_attr(feature = "substrate", derive(
-    ::saa_schema::scale::Encode, 
-    ::saa_schema::scale::Decode
+    saa_schema::scale::Encode, 
+    saa_schema::scale::Decode
 ))]
 #[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, 
-    ::saa_schema::borsh::BorshDeserialize
+    saa_schema::borsh::BorshSerialize, 
+    saa_schema::borsh::BorshDeserialize
 ))]
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(
-    ::saa_schema::scale_info::TypeInfo)
+    saa_schema::scale_info::TypeInfo)
 )]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
+
 
 impl Binary {
     /// Base64 encoding engine used in conversion to/from base64.

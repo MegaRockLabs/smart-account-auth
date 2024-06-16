@@ -1,7 +1,7 @@
 #[cfg(any(feature = "std", not(feature = "substrate")))]
 use {thiserror::Error, saa_schema::wasm_serde};
 
-use crate::String;
+use {crate::String, std::string::FromUtf8Error};
 
 
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
@@ -72,6 +72,20 @@ impl From<cosmwasm_crypto::CryptoError> for AuthError {
 impl From<bech32::primitives::hrp::Error> for AuthError {
     fn from(err: bech32::primitives::hrp::Error) -> Self {
         Self::Crypto(err.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<&FromUtf8Error> for AuthError {
+    fn from(err: &FromUtf8Error) -> Self {
+        Self::Recovery(err.to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<FromUtf8Error> for AuthError {
+    fn from(err: FromUtf8Error) -> Self {
+        Self::Recovery(err.to_string())
     }
 }
 
