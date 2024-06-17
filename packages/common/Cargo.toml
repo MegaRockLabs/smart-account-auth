@@ -7,28 +7,27 @@ version = { workspace = true }
 [dependencies]
 saa-schema          = { workspace = true }
 thiserror           = { workspace = true }
-hex                 = { workspace = true }
 
-
-k256                = { workspace = true }
 bech32              = { workspace = true }
+base64              = { workspace = true }
 
-base64              = { version = "0.22.1" }
 tiny-keccak         = { version = "2.0.2",  default-features = false,  features = ["keccak"] }
 ripemd              = { version = "0.1.3",  default-features = false }
 sha2                = { version = "0.10.8", default-features = false } 
 digest              = { version = "0.10.7", default-features = false }
 
-cosmwasm-crypto     = { workspace = true }
-cosmwasm-std        = { workspace = true, optional = true }
-getrandom           = { workspace = true}
+cosmwasm-crypto     = { version = "1.5.5", default-features = false }
+ink                 = { version = "5.0.0", optional = true,  default-features = false }
 
-ink                 = { workspace = true, optional = true, default-features = false, features = []}
+cosmwasm-std        = { workspace = true, optional = true }
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
 schemars            = { workspace = true }
 serde               = { workspace = true }
+
+
+getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
 
 

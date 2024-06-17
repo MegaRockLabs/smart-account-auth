@@ -6,7 +6,6 @@ version = { workspace = true }
 
 
 [dependencies]
-hex                     = { workspace = true }
 bech32                  = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }

@@ -1,8 +1,8 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_common::{ensure, hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
-use saa_schema::wasm_serde;
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
+use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
