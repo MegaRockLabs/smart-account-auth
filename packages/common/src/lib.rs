@@ -88,7 +88,7 @@ pub trait Verifiable  {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &MessageInfo) -> Result<Self, AuthError> 
+    fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> 
         where Self: Clone
     {
         self.verify()?;

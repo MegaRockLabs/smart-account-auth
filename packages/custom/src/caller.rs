@@ -65,7 +65,7 @@ impl Verifiable for Caller {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(& self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<Self, AuthError> {
+    fn verified_cosmwasm(& self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
         let addr : String = from_json(&self.id)?;
         api.addr_validate(&addr)?;
         Ok(self.clone())

@@ -163,11 +163,10 @@ impl Verifiable for CredentialData {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {   
+    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &Option<MessageInfo>) -> Result<Self, AuthError> {
         let with_caller = self.with_caller.unwrap_or(false);
-
-        let creds = if with_caller {
-            self.with_caller_cosmwasm(info)
+        let creds = if with_caller && info.is_some() {
+            self.with_caller_cosmwasm(info.as_ref().unwrap())
         } else {
             self.clone()
         };

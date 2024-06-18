@@ -62,7 +62,7 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &MessageInfo) -> Result<Self, AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &Option<MessageInfo>) -> Result<Self, AuthError> {
 
         let hash = sha256(&self.message);
 

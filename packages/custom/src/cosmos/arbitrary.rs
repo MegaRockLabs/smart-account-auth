@@ -53,7 +53,7 @@ impl Verifiable for CosmosArbitrary {
         &self, 
         api:  &dyn Api, 
         _:  &Env,
-        _:  &MessageInfo
+        _:  &Option<MessageInfo>
     ) -> Result<Self, AuthError> {
         use super::utils::pubkey_to_canonical;
 

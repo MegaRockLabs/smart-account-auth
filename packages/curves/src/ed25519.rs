@@ -43,7 +43,7 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<Self, AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
         let res = api.ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 

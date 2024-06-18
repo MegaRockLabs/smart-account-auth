@@ -55,7 +55,7 @@ impl Verifiable for EvmCredential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &MessageInfo) -> Result<Self, AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
 
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 

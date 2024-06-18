@@ -910,7 +910,7 @@ dependencies = [
 
 [[package]]
 name = "macros-proto"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1193,7 +1193,7 @@ checksum = "f98d2aa92eebf49b69786be48e4477826b256916e84a57ff2a4f21923b48eb4c"
 
 [[package]]
 name = "saa-common"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1216,7 +1216,7 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "bech32 0.11.0",
  "borsh",
@@ -1232,7 +1232,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1248,7 +1248,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "borsh",
  "macros-proto",
@@ -1541,7 +1541,7 @@ checksum = "e6ecd384b10a64542d77071bd64bd7b231f4ed5940fba55e98c3de13824cf3d7"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.5.3"
+version = "0.6.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
