@@ -63,7 +63,7 @@ impl Verifiable for CosmosArbitrary {
             Some(hrp) => pubkey_to_account(&self.pubkey, hrp)?,
             None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
         };
-        let data : String = cosmwasm_std::from_json(&self.message)?;
+        let data  = String::from_utf8(self.message.0.clone())?;
         let digest = sha256(&preamble_msg_arb_036(addr.as_str(), &data).as_bytes());
 
         let res = api.secp256k1_verify(
