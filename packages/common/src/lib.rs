@@ -90,7 +90,7 @@ pub trait Verifiable   {
         #[cfg(feature = "native")]
         self.verify()?;
         #[cfg(feature = "native")]
-        return  Ok(self.clone());
+        return Ok(self.clone());
 
         #[cfg(not(feature = "native"))]
         return Err(AuthError::generic("Not implemented"));
@@ -106,7 +106,7 @@ pub trait Verifiable   {
         #[cfg(feature = "native")]
         self.verify()?;
         #[cfg(feature = "native")]
-        return  Ok(self.clone());
+        return Ok(self.clone());
 
         #[cfg(not(feature = "native"))]
         return Err(AuthError::generic("Not implemented"));
