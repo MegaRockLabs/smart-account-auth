@@ -63,12 +63,6 @@ impl AuthError {
     }
 }
 
-impl From<cosmwasm_crypto::CryptoError> for AuthError {
-    fn from(err: cosmwasm_crypto::CryptoError) -> Self {
-        Self::Crypto(err.to_string())
-    }
-}
-
 impl From<bech32::primitives::hrp::Error> for AuthError {
     fn from(err: bech32::primitives::hrp::Error) -> Self {
         Self::Crypto(err.to_string())
@@ -90,6 +84,12 @@ impl From<FromUtf8Error> for AuthError {
 }
 
 
+#[cfg(feature = "native")] 
+impl From<cosmwasm_crypto::CryptoError> for AuthError {
+    fn from(err: cosmwasm_crypto::CryptoError) -> Self {
+        Self::Crypto(err.to_string())
+    }
+}
 
 #[cfg(feature = "cosmwasm")] 
 mod implementation{

@@ -1,12 +1,15 @@
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{Api, Env, MessageInfo};
 
+#[cfg(feature = "native")] 
+use saa_common::crypto::secp256k1_recover_pubkey;
+
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    crypto::secp256k1_recover_pubkey, 
     hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
 };
+
 
 use super::utils::{get_recovery_param, preamble_msg_eth};
 
@@ -35,6 +38,7 @@ impl Verifiable for EvmCredential {
         Ok(())
     }
 
+    #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
         let key_data = secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 

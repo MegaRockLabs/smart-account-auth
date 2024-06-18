@@ -13,17 +13,19 @@ saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
 
-scale                   = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
-scale-info              = { workspace = true, optional = true, default-features = false, features = ["derive"]  }
+scale                   = { workspace = true, optional = true  }
+scale-info              = { workspace = true, optional = true  }
 
-borsh                   = { workspace = true, features = ["derive"], optional = true }
-schemars                = { workspace = true, features = ["derive"], optional = true }
-serde                   = { workspace = true, default-features = false, features = ["derive"], optional = true }
+borsh                   = { workspace = true, optional = true }
+schemars                = { workspace = true, optional = true }
+serde                   = { workspace = true, optional = true }
 
 
 
 [features]
-default = ["std"]
+default = [
+    "std"
+]
 solana = [
     "dep:borsh",
     "saa-schema/solana",
@@ -50,4 +52,8 @@ std = [
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",
+]
+native = [
+    "saa-common/native",
+    "saa-custom/native",
 ]

@@ -60,8 +60,9 @@ impl Verifiable for Caller {
         Ok(())
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        Ok(())
+        self.validate()
     }
 
     #[cfg(feature = "cosmwasm")]

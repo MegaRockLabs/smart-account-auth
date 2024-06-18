@@ -134,6 +134,7 @@ impl Verifiable for CredentialData {
     }
     
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         self.validate()?;
         self.credentials().iter().map(|c| c.verify()).collect()

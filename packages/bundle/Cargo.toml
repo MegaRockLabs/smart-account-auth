@@ -16,14 +16,17 @@ saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
 
-scale                   = { workspace = true, optional = true  }
-scale-info              = { workspace = true, optional = true  }
+scale                   = { workspace = true, optional = true }
+scale-info              = { workspace = true, optional = true }
 borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true, optional = true }
 
 [features]
-default = ["std"]
+
+default = [
+    "std"
+]
 std = [
     "scale?/std",
     "scale-info?/std",
@@ -53,4 +56,9 @@ cosmwasm = [
     "saa-curves/cosmwasm",
     "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
+]
+native = [
+    "saa-curves/native",
+    "saa-custom/native",
+    "saa-common/native",
 ]

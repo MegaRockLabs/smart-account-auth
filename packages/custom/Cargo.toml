@@ -23,7 +23,9 @@ serde                   = { workspace = true, optional = true }
 
 
 [features]
-default = ["std"]
+default = [
+    "std"
+]
 solana = [
     "dep:borsh",
     "saa-schema/solana",
@@ -49,5 +51,5 @@ std = [
     "saa-schema/std",
     "saa-common/std",
 ]
-
+native = []
 

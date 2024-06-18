@@ -4,6 +4,7 @@ use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCre
 use saa_schema::wasm_serde;
 
 
+
 #[wasm_serde]
 pub enum Credential {
     Caller(Caller),
@@ -47,10 +48,12 @@ impl Verifiable for Credential {
         self.value().validate()
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         self.validate()?;
         self.value().verify()
     }
+
 }
 
 pub type Credentials = saa_common::Vec<Credential>;

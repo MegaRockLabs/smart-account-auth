@@ -30,6 +30,7 @@ pub mod hashes;
 pub use errors::*;
 
 
+#[cfg(feature = "native")]
 pub mod crypto {
     pub use cosmwasm_crypto::*;
 } 
@@ -72,27 +73,43 @@ use substrate::*;
 pub type CredentialId = Vec<u8>;
 
 
-pub trait Verifiable  {
+pub trait Verifiable   {
 
     fn id(&self) -> CredentialId;
     fn validate(&self) -> Result<(), AuthError>;
+
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError>;
 
+   
 
     #[cfg(feature = "substrate")]
     fn verified_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> 
         where Self: Clone
     {
+        #[cfg(feature = "native")]
         self.verify()?;
-        Ok(self.clone())
+        #[cfg(feature = "native")]
+        return  Ok(self.clone());
+
+        #[cfg(not(feature = "native"))]
+        return Err(AuthError::generic("Not implemented"));
+
     }
 
+
+    
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> 
         where Self: Clone
     {
+        #[cfg(feature = "native")]
         self.verify()?;
-        Ok(self.clone())
+        #[cfg(feature = "native")]
+        return  Ok(self.clone());
+
+        #[cfg(not(feature = "native"))]
+        return Err(AuthError::generic("Not implemented"));
     }
 }
 

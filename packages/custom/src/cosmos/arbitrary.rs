@@ -1,6 +1,6 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
-use saa_common::{ensure, hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
+use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
 use super::utils::{preamble_msg_arb_036, pubkey_to_account};
 use saa_schema::wasm_serde;
 
@@ -29,8 +29,10 @@ impl Verifiable for CosmosArbitrary {
         Ok(())
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        ensure!(self.hrp.is_some(), AuthError::Generic("Must ether provide prefix of the chain or use the API".to_string()));
+        use saa_common::ensure;
+        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for native logic".to_string()));
 
         let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
         let data  = String::from_utf8(self.message.0.clone())?;
@@ -43,9 +45,9 @@ impl Verifiable for CosmosArbitrary {
         )?;
 
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-
         Ok(())
     }
+
 
 
     #[cfg(feature = "cosmwasm")]

@@ -9,7 +9,6 @@ use saa_schema::wasm_serde;
 use saa_common::{
     ToString, Binary,
     AuthError, Verifiable, CredentialId,
-    crypto::secp256k1_verify,
     hashes::sha256
 };
 
@@ -51,8 +50,9 @@ impl Verifiable for Secp256k1 {
         Ok(())
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        secp256k1_verify(
+        saa_common::crypto::secp256k1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey

@@ -1,9 +1,7 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
-use saa_common::{
-    crypto::ed25519_verify, hashes::sha256, AuthError, Binary, CredentialId, ToString, Verifiable
-};
+use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, ToString, Verifiable};
 
 
 #[wasm_serde]
@@ -29,8 +27,9 @@ impl Verifiable for Ed25519 {
         Ok(())
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let res = ed25519_verify(
+        let res = saa_common::crypto::ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
