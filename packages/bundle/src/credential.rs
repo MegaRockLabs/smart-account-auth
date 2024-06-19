@@ -3,7 +3,8 @@ use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1};
 use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCredential};
 use saa_schema::wasm_serde;
 
-
+#[cfg(feature = "cosmwasm")]
+use saa_common::cosmwasm;
 
 #[wasm_serde]
 pub enum Credential {
@@ -52,6 +53,20 @@ impl Verifiable for Credential {
     fn verify(&self) -> Result<(), AuthError> {
         self.validate()?;
         self.value().verify()
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    fn verified_cosmwasm(& self, api:  &dyn cosmwasm::Api, env:  &cosmwasm::Env, info: &Option<cosmwasm::MessageInfo>) -> Result<Self, AuthError> 
+        where Self: Clone
+    {
+        self.validate()?;
+        Ok(match self {
+            Credential::Caller(c) => Credential::Caller(c.verified_cosmwasm(api, env, info)?),
+            Credential::Evm(c) => Credential::Evm(c.verified_cosmwasm(api, env, info)?),
+            Credential::Secp256k1(c) => Credential::Secp256k1(c.verified_cosmwasm(api, env, info)?),
+            Credential::Ed25519(c) => Credential::Ed25519(c.verified_cosmwasm(api, env, info)?),
+            Credential::CosmosArbitrary(c) => Credential::CosmosArbitrary(c.verified_cosmwasm(api, env, info)?)
+        })
     }
 
 }

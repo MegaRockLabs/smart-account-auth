@@ -81,7 +81,6 @@ pub trait Verifiable   {
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError>;
 
-   
 
     #[cfg(feature = "substrate")]
     fn verified_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> 
@@ -94,7 +93,6 @@ pub trait Verifiable   {
 
         #[cfg(not(feature = "native"))]
         return Err(AuthError::generic("Not implemented"));
-
     }
 
 
