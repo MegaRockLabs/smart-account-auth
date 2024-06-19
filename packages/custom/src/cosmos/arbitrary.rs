@@ -8,8 +8,8 @@ use saa_schema::wasm_serde;
 #[wasm_serde]
 pub struct CosmosArbitrary {
     pub pubkey:    Binary,
-    pub message:   Binary,
     pub signature: Binary,
+    pub message:   String,
     pub hrp:       Option<String>
 }
 
@@ -35,8 +35,7 @@ impl Verifiable for CosmosArbitrary {
         ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for native logic".to_string()));
 
         let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
-        let data  = String::from_utf8(self.message.0.clone())?;
-        let digest = sha256(&preamble_msg_arb_036(addr.as_str(), &data).as_bytes());
+        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message).as_bytes());
 
         let res = saa_common::crypto::secp256k1_verify(
             &digest,
@@ -63,8 +62,8 @@ impl Verifiable for CosmosArbitrary {
             Some(hrp) => pubkey_to_account(&self.pubkey, hrp)?,
             None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
         };
-        let data  = String::from_utf8(self.message.0.clone())?;
-        let digest = sha256(&preamble_msg_arb_036(addr.as_str(), &data).as_bytes());
+        
+        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message).as_bytes());
 
         let res = api.secp256k1_verify(
             &digest,

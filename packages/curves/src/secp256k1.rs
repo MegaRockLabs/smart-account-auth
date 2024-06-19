@@ -1,8 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use {
-    saa_common::cosmwasm::{Api, Env, MessageInfo}, 
-    saa_custom::cosmos::arbitrary::CosmosArbitrary
-};
+use saa_common::cosmwasm::{Api, Env, MessageInfo};
 
 use saa_schema::wasm_serde;
 
@@ -23,17 +20,6 @@ pub struct Secp256k1 {
 }
 
 
-#[cfg(feature = "cosmwasm")]
-impl From<Secp256k1> for CosmosArbitrary {
-    fn from(v: Secp256k1) -> Self {
-        Self {
-            pubkey:    v.pubkey,
-            message:   v.message,
-            signature: v.signature,
-            hrp:       v.hrp
-        }
-    }
-}
 
 impl Verifiable for Secp256k1 {
 
@@ -62,20 +48,14 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, env: &Env, info: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
 
-        let hash = sha256(&self.message);
+        api.secp256k1_verify(
+            &sha256(&self.message), 
+            &self.signature, 
+            &self.pubkey
+        )?;
 
-        match api.secp256k1_verify(&hash, &self.signature, &self.pubkey) {
-            Ok(status) => {
-                if status {
-                    return Ok(self.clone());
-                }
-            },
-            Err(_) => {},
-        }
-
-        CosmosArbitrary::from(self.clone()).verified_cosmwasm(api, env, info)?;
         Ok(self.clone())
     }
 }
