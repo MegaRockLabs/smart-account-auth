@@ -109,7 +109,7 @@ mod implementation{
 
     impl From<cosmwasm_std::VerificationError> for AuthError {
         fn from(err: cosmwasm_std::VerificationError) -> Self {
-            Self::Generic(err.to_string())
+            Self::Crypto(err.to_string())
         }
     }
 }

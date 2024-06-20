@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo, from_json};
+use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, Verifiable, ToString};
 use saa_schema::wasm_serde;
 
@@ -67,7 +67,8 @@ impl Verifiable for Caller {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(& self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        let addr : String = from_json(&self.id)?;
+        self.validate()?;
+        let addr : String = String::from_utf8(self.id.clone())?;
         api.addr_validate(&addr)?;
         Ok(self.clone())
     }

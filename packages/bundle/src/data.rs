@@ -175,12 +175,16 @@ impl Verifiable for CredentialData {
 
         creds.validate()?;
 
-        creds.credentials()
+        let verified = creds.credentials()
                 .iter()
                 .map(|c| c.verified_cosmwasm(api, env, info)).
                 collect::<Result<Vec<Credential>, AuthError>>()?;
 
-        Ok(creds.clone())
+        Ok(Self {
+            credentials: verified,
+            with_caller: self.with_caller,
+            primary_index: creds.primary_index,
+        })
     }
 
 }
