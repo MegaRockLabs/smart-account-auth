@@ -10,8 +10,8 @@ use saa_common::{
     hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
 };
 
-
 use super::utils::{get_recovery_param, preamble_msg_eth};
+
 
 #[wasm_serde]
 pub struct EvmCredential {
@@ -31,7 +31,6 @@ impl Verifiable for EvmCredential {
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
         }
-    
         if self.signer.len() != 20 {
             return Err(AuthError::MissingData("Signer must be 20 bytes".to_string()));
         }

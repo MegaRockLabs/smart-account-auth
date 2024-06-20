@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
@@ -6,15 +8,15 @@ use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
-pub struct CosmosArbitrary {
+pub struct CosmosArbitrary<M: Display + Clone = Binary> {
     pub pubkey:    Binary,
     pub signature: Binary,
-    pub message:   String,
+    pub message:   M,
     pub hrp:       Option<String>
 }
 
 
-impl Verifiable for CosmosArbitrary {
+impl<M: Display + Clone> Verifiable for CosmosArbitrary<M> {
 
     fn id(&self) -> CredentialId {
         self.pubkey.0.clone()
@@ -22,7 +24,7 @@ impl Verifiable for CosmosArbitrary {
 
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
-            self.message.len() > 0 && 
+            self.message.to_string().len() > 0 && 
             self.pubkey.len() > 0) {
             return Err(AuthError::MissingData("Empty credential data".to_string()));
         }
@@ -35,7 +37,7 @@ impl Verifiable for CosmosArbitrary {
         ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for native logic".to_string()));
 
         let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
-        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message).as_bytes());
+        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
 
         let res = saa_common::crypto::secp256k1_verify(
             &digest,
@@ -63,7 +65,7 @@ impl Verifiable for CosmosArbitrary {
             None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
         };
 
-        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message).as_bytes());
+        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
 
         let res = api.secp256k1_verify(
             &digest,
