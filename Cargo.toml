@@ -6,7 +6,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.9.0"
+version         = "0.9.1"
 edition         = "2021"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
 description     = "Utilities, types and verification logic for smart contract / program based accounts for various blockchain-based virtual machines"

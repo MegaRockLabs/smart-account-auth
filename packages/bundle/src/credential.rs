@@ -41,7 +41,7 @@ impl<M: Display + Clone>  Credential<M> {
     
 }
 
-impl Verifiable for Credential {
+impl<M: Display + Clone> Verifiable for Credential<M> {
 
     fn id(&self) -> CredentialId {
         self.value().id()
