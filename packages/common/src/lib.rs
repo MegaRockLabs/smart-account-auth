@@ -1,33 +1,18 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(any(feature = "std", not(feature = "substrate")))]
+#[cfg(feature = "std")]
 pub use std::{
     string::{ToString, String},
     vec, vec::Vec, 
     format
 };
 
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
+#[cfg(not(feature = "std"))]
 pub use ink::prelude::{
     string::{ToString, String},
     vec, vec::Vec, 
     format, 
 };
-
-#[macro_export]
-macro_rules! ensure {
-    ($cond:expr, $e:expr) => {
-        if !($cond) {
-            return Err(core::convert::From::from($e));
-        }
-    };
-}
-
-
-mod binary;
-mod errors;
-pub mod hashes;
-pub use errors::*;
 
 
 #[cfg(feature = "native")]
@@ -36,7 +21,6 @@ pub mod crypto {
 } 
 
 
-pub use binary::Binary;
 
 
 #[cfg(feature = "cosmwasm")]
@@ -70,7 +54,24 @@ use cosmwasm::*;
 use substrate::*;
 
 
-pub type CredentialId = Vec<u8>;
+mod binary;
+mod errors;
+pub mod hashes;
+pub use errors::*;
+pub use binary::Binary;
+
+
+
+#[macro_export]
+macro_rules! ensure {
+    ($cond:expr, $e:expr) => {
+        if !($cond) {
+            return Err(core::convert::From::from($e));
+        }
+    };
+}
+
+
 
 
 pub trait Verifiable   {
@@ -110,5 +111,9 @@ pub trait Verifiable   {
         return Err(AuthError::generic("Not implemented"));
     }
 }
+
+
+pub type CredentialId = Vec<u8>;
+
 
 

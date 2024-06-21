@@ -1,3 +1,5 @@
+use core::fmt::Display;
+
 use saa_common::{Verifiable, AuthError, CredentialId};
 use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1};
 use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCredential};
@@ -7,16 +9,16 @@ use saa_schema::wasm_serde;
 use saa_common::cosmwasm;
 
 #[wasm_serde]
-pub enum Credential {
+pub enum Credential<M: Display + Clone = String> {
     Caller(Caller),
     Evm(EvmCredential),
     Secp256k1(Secp256k1),
     Ed25519(Ed25519),
-    CosmosArbitrary(CosmosArbitrary)
+    CosmosArbitrary(CosmosArbitrary<M>)
 }
 
 
-impl Credential {
+impl<M: Display + Clone>  Credential<M> {
     pub fn name(&self) -> &'static str {
         match self {
             Credential::Caller(_) => "caller",

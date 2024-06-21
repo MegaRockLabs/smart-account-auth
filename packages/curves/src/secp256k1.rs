@@ -4,7 +4,7 @@ use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    ToString, Binary,
+    ToString, Binary, ensure,
     AuthError, Verifiable, CredentialId,
     hashes::sha256
 };
@@ -38,24 +38,24 @@ impl Verifiable for Secp256k1 {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        saa_common::crypto::secp256k1_verify(
+        let res = saa_common::crypto::secp256k1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-
-        api.secp256k1_verify(
+        let res = api.secp256k1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(self.clone())
     }
 }

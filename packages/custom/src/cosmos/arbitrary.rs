@@ -8,7 +8,7 @@ use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
-pub struct CosmosArbitrary<M: Display + Clone = Binary> {
+pub struct CosmosArbitrary<M: Display + Clone = String> {
     pub pubkey:    Binary,
     pub signature: Binary,
     pub message:   M,
@@ -35,16 +35,13 @@ impl<M: Display + Clone> Verifiable for CosmosArbitrary<M> {
     fn verify(&self) -> Result<(), AuthError> {
         use saa_common::ensure;
         ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for native logic".to_string()));
-
         let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
         let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
-
         let res = saa_common::crypto::secp256k1_verify(
             &digest,
             &self.signature,
             &self.pubkey
         )?;
-
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
@@ -59,24 +56,19 @@ impl<M: Display + Clone> Verifiable for CosmosArbitrary<M> {
         _:  &Option<MessageInfo>
     ) -> Result<Self, AuthError> {
         use super::utils::pubkey_to_canonical;
-
         let addr = match self.hrp.as_ref() {
             Some(hrp) => pubkey_to_account(&self.pubkey, hrp)?,
             None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
         };
-
         let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
-
         let res = api.secp256k1_verify(
             &digest,
             &self.signature,
             &self.pubkey
         )?;
-
         if !res {
             return Err(AuthError::Signature("Signature verification failed".to_string()));
         }
-
         Ok(self.clone())
     }
 }
