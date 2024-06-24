@@ -31,7 +31,7 @@ impl Verifiable for EvmCredential {
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
         }
-        
+
         let signer_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
 
@@ -45,8 +45,8 @@ impl Verifiable for EvmCredential {
     fn verify(&self) -> Result<(), AuthError> {
         let key_data = secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
-            &self.signature[..64], 
-            get_recovery_param(self.signature[64])?
+            &self.signature.0[..64], 
+            get_recovery_param(self.signature.0[64])?
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
@@ -66,8 +66,8 @@ impl Verifiable for EvmCredential {
 
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
-            &self.signature[..64], 
-            get_recovery_param(self.signature[64])?
+            &self.signature.0[..64], 
+            get_recovery_param(self.signature.0[64])?
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
