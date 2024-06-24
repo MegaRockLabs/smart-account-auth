@@ -31,7 +31,11 @@ impl Verifiable for EvmCredential {
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
         }
-        if self.signer.len() != 20 {
+        
+        let signer_bytes = hex::decode(&self.signer[2..])
+            .map_err(|e| AuthError::generic(e.to_string()))?;
+
+        if signer_bytes.len() != 20 {
             return Err(AuthError::MissingData("Signer must be 20 bytes".to_string()));
         }
         Ok(())
@@ -67,6 +71,7 @@ impl Verifiable for EvmCredential {
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
+        
         let recovered = String::from_utf8(
             hash[12..].to_vec()
         ).map_err(|_| AuthError::RecoveryMismatch)?;
