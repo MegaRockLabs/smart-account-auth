@@ -71,12 +71,11 @@ impl Verifiable for EvmCredential {
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
+
+        let addr_bytes = hex::decode(&self.signer[2..])
+            .map_err(|e| AuthError::generic(e.to_string()))?;
         
-        let recovered = String::from_utf8(
-            hash[12..].to_vec()
-        ).map_err(|_| AuthError::RecoveryMismatch)?;
-    
-        if self.signer == recovered {
+        if addr_bytes == hash[12..] {
             Ok(self.clone())
         } else {
             Err(AuthError::RecoveryMismatch)
