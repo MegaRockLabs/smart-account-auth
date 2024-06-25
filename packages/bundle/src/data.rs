@@ -128,7 +128,8 @@ impl<M: Display + Clone> Verifiable for CredentialData<M> {
         }
 
         if let Some(index) = self.primary_index() {
-            if *index as usize >= creds.len() {
+            let len = creds.len() + if with_caller { 1 } else { 0 };
+            if *index as usize >= len {
                 return Err(AuthError::Generic(format!("Primary index {} is out of bounds", index)));
             }
         }
