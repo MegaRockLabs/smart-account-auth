@@ -63,7 +63,7 @@ impl Verifiable for PasskeyCredential {
         ensure!(self.authenticator_data.len() >= 37, AuthError::generic("Invalid authenticator data"));
         ensure!(self.signature.len() > 0, AuthError::generic("Empty signature"));
         ensure!(self.client_data.challenge.len() > 0, AuthError::generic("Empty challenge"));
-        ensure!(self.client_data.ty != "webauthn.get", AuthError::generic("Invalid client data type"));
+        ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
         Ok(())
     }
 
