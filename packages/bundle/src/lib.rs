@@ -9,7 +9,8 @@ pub use saa_custom::{
     cosmos::arbitrary::CosmosArbitrary, 
     evm::EvmCredential,
     cosmos::utils as cosmos_utils,
-    evm::utils as evm_utils
+    evm::utils as evm_utils,
+    passkey::{PasskeyCredential, ClientData}
 };
 
 pub use saa_schema::*;
