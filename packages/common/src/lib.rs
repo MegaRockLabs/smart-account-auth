@@ -1,5 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+
+mod identity;
+mod binary;
+mod errors;
+pub mod hashes;
+pub use errors::*;
+pub use binary::Binary;
+
+
+
 #[cfg(feature = "std")]
 pub use std::{
     string::{ToString, String},
@@ -15,11 +25,11 @@ pub use ink::prelude::{
 };
 
 
+
 #[cfg(feature = "native")]
 pub mod crypto {
-    pub use cosmwasm_crypto::*;
+    pub use cosmwasm_crypto::*;    
 } 
-
 
 
 
@@ -52,13 +62,6 @@ pub mod substrate {
 use cosmwasm::*;
 #[cfg(feature = "substrate")]
 use substrate::*;
-
-
-mod binary;
-mod errors;
-pub mod hashes;
-pub use errors::*;
-pub use binary::Binary;
 
 
 

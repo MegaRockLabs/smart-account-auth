@@ -9,7 +9,6 @@ version = { workspace = true }
 bech32                  = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
-saa-custom              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
 
@@ -20,6 +19,8 @@ borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true, optional = true }
 
+digest                  = { version = "0.10.7", default-features = false }
+p256                    = { version = "0.13.2" }
 
 
 [features]
@@ -30,20 +31,17 @@ solana = [
     "dep:borsh",
     "saa-schema/solana",
     "saa-common/solana",
-    "saa-custom/solana",
 ]
 substrate = [
     "dep:scale",
     "saa-schema/substrate",
     "saa-common/substrate",
-    "saa-custom/substrate",
 ]
 cosmwasm = [
     "dep:serde",
     "dep:schemars",
     "dep:cosmwasm-std",
     "saa-schema/cosmwasm",
-    "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
 ]
 std = [
@@ -51,9 +49,7 @@ std = [
     "scale-info?/std",
     "saa-schema/std",
     "saa-common/std",
-    "saa-custom/std",
 ]
 native = [
     "saa-common/native",
-    "saa-custom/native",
 ]

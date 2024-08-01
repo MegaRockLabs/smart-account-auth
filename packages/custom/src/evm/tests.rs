@@ -8,7 +8,7 @@ mod tests {
 
 
     #[test]
-    fn verifying_ethereum_signature() {
+    fn evm_cred_verifiable() {
         let deps = mock_dependencies();
         let env = mock_env();
 

@@ -11,6 +11,7 @@ base64                  = { workspace = true }
 
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
+saa-curves              = { workspace = true }
 
 cosmwasm-std            = { workspace = true, optional = true }
 
@@ -32,12 +33,14 @@ solana = [
     "dep:borsh",
     "saa-schema/solana",
     "saa-common/solana",
+    "saa-curves/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
     "saa-schema/substrate",
     "saa-common/substrate",
+    "saa-curves/substrate",
 ]
 cosmwasm = [
     "dep:cosmwasm-std",
@@ -45,6 +48,7 @@ cosmwasm = [
     "dep:serde",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
+    "saa-curves/cosmwasm",
 ]
 std = [
     "scale?/std",
@@ -52,6 +56,7 @@ std = [
     "bech32/std",
     "saa-schema/std",
     "saa-common/std",
+    "saa-curves/std",
 ]
 native = []
 

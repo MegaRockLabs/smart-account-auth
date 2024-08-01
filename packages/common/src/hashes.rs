@@ -52,3 +52,6 @@ pub fn ripemd160_fixed(bytes: &[u8]) -> [u8; 20] {
     result.copy_from_slice(hasher.finalize().as_slice());
     result
 }
+
+
+pub use crate::identity::Identity256;
