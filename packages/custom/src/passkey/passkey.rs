@@ -1,16 +1,38 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::ensure;
 use cosmwasm_std::{Api, Env, MessageInfo};
 
 use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable 
+    hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable, ensure
 };
 
 
-#[wasm_serde]
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+#[cfg_attr(feature = "cosmwasm", 
+    derive(::saa_schema::schemars::JsonSchema ),
+    schemars(crate = "::saa_schema::schemars")
+)]
+#[cfg_attr(feature = "substrate", derive(
+    ::saa_schema::scale::Encode, 
+    ::saa_schema::scale::Decode
+))]
+#[cfg_attr(feature = "solana", derive(
+    ::saa_schema::borsh::BorshSerialize, 
+    ::saa_schema::borsh::BorshDeserialize
+))]
+#[cfg_attr(all(feature = "std", feature="substrate"), derive(
+    saa_schema::scale_info::TypeInfo)
+)]
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub struct ClientData {
     #[serde(rename = "type")]
     pub ty: String,
@@ -45,6 +67,7 @@ impl Verifiable for PasskeyCredential {
         Ok(())
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         let hash = sha256(&self.authenticator_data);
         let res = secp256r1_verify(
@@ -58,7 +81,13 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        self.verify()?;
+        let hash = sha256(&self.authenticator_data);
+        let res = secp256r1_verify(
+            &hash,
+            &self.signature,
+            &self.id
+        )?;
+        ensure!(res, AuthError::generic("Signature verification failed"));
         Ok(self.clone())
     }
 }

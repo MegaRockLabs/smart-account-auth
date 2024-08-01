@@ -100,15 +100,12 @@ impl Verifiable for Secp256r1 {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        self.verify()?;
-        return Ok(self.clone());
-        
-        /* let res = api.secp256k1_verify(
+        let res = secp256r1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(self.clone()) */
+        Ok(self.clone())
     }
 }

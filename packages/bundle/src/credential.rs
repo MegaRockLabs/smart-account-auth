@@ -2,7 +2,7 @@ use core::fmt::Display;
 
 use saa_common::{Verifiable, AuthError, CredentialId};
 use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1};
-use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCredential};
+use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, evm::EvmCredential, passkey::PasskeyCredential};
 use saa_schema::wasm_serde;
 
 #[cfg(feature = "cosmwasm")]
@@ -14,7 +14,8 @@ pub enum Credential<M: Display + Clone = String> {
     Evm(EvmCredential),
     Secp256k1(Secp256k1),
     Ed25519(Ed25519),
-    CosmosArbitrary(CosmosArbitrary<M>)
+    CosmosArbitrary(CosmosArbitrary<M>),
+    Passkey(PasskeyCredential)
 }
 
 
@@ -25,7 +26,8 @@ impl<M: Display + Clone>  Credential<M> {
             Credential::Evm(_) => "evm",
             Credential::Secp256k1(_) => "secp256k1",
             Credential::Ed25519(_) => "ed25519",
-            Credential::CosmosArbitrary(_) => "cosmos-arbitrary"
+            Credential::CosmosArbitrary(_) => "cosmos-arbitrary",
+            Credential::Passkey(_) => "passkey"
         }
     }
 
@@ -35,7 +37,8 @@ impl<M: Display + Clone>  Credential<M> {
             Credential::Evm(c) => c,
             Credential::Secp256k1(c) => c,
             Credential::Ed25519(c) => c,
-            Credential::CosmosArbitrary(c) => c
+            Credential::CosmosArbitrary(c) => c,
+            Credential::Passkey(c) => c
         }
     }
     
@@ -67,7 +70,8 @@ impl<M: Display + Clone> Verifiable for Credential<M> {
             Credential::Evm(c) => Credential::Evm(c.verified_cosmwasm(api, env, info)?),
             Credential::Secp256k1(c) => Credential::Secp256k1(c.verified_cosmwasm(api, env, info)?),
             Credential::Ed25519(c) => Credential::Ed25519(c.verified_cosmwasm(api, env, info)?),
-            Credential::CosmosArbitrary(c) => Credential::CosmosArbitrary(c.verified_cosmwasm(api, env, info)?)
+            Credential::CosmosArbitrary(c) => Credential::CosmosArbitrary(c.verified_cosmwasm(api, env, info)?),
+            Credential::Passkey(c) => Credential::Passkey(c.verified_cosmwasm(api, env, info)?)
         })
     }
 

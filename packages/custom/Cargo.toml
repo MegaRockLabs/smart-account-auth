@@ -20,7 +20,7 @@ scale-info              = { workspace = true, optional = true }
 
 borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
-serde                   = { workspace = true, optional = true }
+serde                   = { workspace = true }
 
 hex                     = "0.4.3"
 
@@ -45,7 +45,6 @@ substrate = [
 cosmwasm = [
     "dep:cosmwasm-std",
     "dep:schemars",
-    "dep:serde",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
     "saa-curves/cosmwasm",
@@ -58,5 +57,8 @@ std = [
     "saa-common/std",
     "saa-curves/std",
 ]
-native = []
+native = [
+    "saa-common/native",
+    "saa-curves/native",
+]
 
