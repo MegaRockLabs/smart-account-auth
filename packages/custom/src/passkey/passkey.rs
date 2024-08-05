@@ -34,12 +34,13 @@ use saa_common::{
 )]
 #[allow(clippy::derive_partial_eq_without_eq)]
 pub struct ClientData {
+    // rename to type
     #[serde(rename = "type")]
     pub ty: String,
-    #[serde(rename = "crossOrigin")]
-    pub cross_origin: Option<bool>,
     pub challenge: String,
     pub origin: String,
+    #[serde(rename = "crossOrigin")]
+    pub cross_origin: bool
 }
 
 

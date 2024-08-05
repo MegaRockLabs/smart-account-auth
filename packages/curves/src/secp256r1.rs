@@ -37,7 +37,8 @@ fn check_pubkey(data: &[u8]) -> Result<(), AuthError> {
     }
 }
 
-
+/// taken from https://github.com/CosmWasm/cosmwasm/blob/main/packages/crypto/src/secp256r1.rs
+/// to be used directly when ported to cosmwasm 2.0
 pub fn secp256r1_verify(
     message_hash: &[u8],
     signature: &[u8],
@@ -88,6 +89,7 @@ impl Verifiable for Secp256r1 {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
+        
         let res = secp256r1_verify(
             &sha256(&self.message), 
             &self.signature, 

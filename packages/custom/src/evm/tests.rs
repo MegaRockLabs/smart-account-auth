@@ -31,6 +31,10 @@ mod tests {
             signature : Binary(sig),
         };
 
+        #[cfg(feature = "native")]
+        assert!(cred.verify().is_ok());
+
+        #[cfg(feature = "cosmwasm")]
         assert!(cred.verified_cosmwasm(deps.as_ref().api, &env, &None).is_ok())
     }
 }
