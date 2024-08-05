@@ -6,8 +6,7 @@ mod binary;
 mod errors;
 pub mod hashes;
 pub use errors::*;
-pub use binary::Binary;
-
+pub use binary::{Binary, to_json_binary, from_json};
 
 
 #[cfg(feature = "std")]

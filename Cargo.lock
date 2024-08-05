@@ -253,7 +253,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.5.2",
  "sha2 0.10.8",
  "static_assertions",
  "thiserror",
@@ -908,7 +908,7 @@ dependencies = [
 
 [[package]]
 name = "macros-proto"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1218,7 +1218,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "saa-common"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1234,6 +1234,7 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "serde-json-wasm 1.0.1",
  "sha2 0.10.8",
  "thiserror",
  "tiny-keccak",
@@ -1241,7 +1242,7 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "bech32 0.11.0",
  "borsh",
@@ -1258,7 +1259,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1272,11 +1273,12 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "sha2 0.10.8",
 ]
 
 [[package]]
 name = "saa-schema"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "borsh",
  "macros-proto",
@@ -1476,6 +1478,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-json-wasm"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f05da0d153dd4595bdffd5099dc0e9ce425b205ee648eb93437ff7302af8c9a5"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "serde_bytes"
 version = "0.11.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1570,7 +1581,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "borsh",
  "parity-scale-codec",

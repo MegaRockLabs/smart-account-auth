@@ -6,6 +6,8 @@ version = { workspace = true }
 
 
 [dependencies]
+hex                     = "0.4.3"
+sha2                    = { workspace = true } 
 bech32                  = { workspace = true }
 base64                  = { workspace = true }
 
@@ -22,7 +24,6 @@ borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
-hex                     = "0.4.3"
 
 
 [features]

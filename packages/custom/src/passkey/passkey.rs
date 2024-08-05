@@ -8,6 +8,7 @@ use saa_common::{
     hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable, ensure
 };
 
+use sha2::{Digest, Sha256};
 
 
 #[derive(
@@ -47,6 +48,7 @@ pub struct ClientData {
 #[wasm_serde]
 pub struct PasskeyCredential {
     pub id                   :       Binary,
+    pub public_key           :       Binary,
     pub signature            :       Binary,
     pub authenticator_data   :       Binary,
     pub client_data          :       ClientData,
@@ -70,7 +72,12 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let hash = sha256(&self.authenticator_data);
+        let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
+        let mut hasher = Sha256::new();
+        hasher.update(&self.authenticator_data);
+        hasher.update(&client_data_hash);
+        let hash = hasher.finalize();
+
         let res = secp256r1_verify(
             &hash,
             &self.signature,
@@ -82,7 +89,12 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        let hash = sha256(&self.authenticator_data);
+        let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
+        let mut hasher = Sha256::new();
+        hasher.update(&self.authenticator_data);
+        hasher.update(&client_data_hash);
+        let hash = hasher.finalize();
+        
         let res = secp256r1_verify(
             &hash,
             &self.signature,

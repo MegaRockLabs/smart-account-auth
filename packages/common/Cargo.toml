@@ -24,8 +24,9 @@ scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
 schemars            = { workspace = true }
-serde               = { workspace = true }
 
+serde               = { workspace = true }
+serde-json-wasm     = { version = "1.0.1", default-features = false }
 
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 

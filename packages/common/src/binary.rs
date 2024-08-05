@@ -1,8 +1,8 @@
-use schemars::JsonSchema;
 use core::fmt;
+use schemars::JsonSchema;
 use core::ops::Deref;
 use base64::engine::{Engine, GeneralPurpose};
-use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use serde::{de::{self, DeserializeOwned}, ser, Deserialize, Deserializer, Serialize};
 
 use crate::AuthError;
 
@@ -274,4 +274,18 @@ impl Into<Binary> for cosmwasm_std::Binary {
     fn into(self) -> Binary {
         Binary(self.0)
     }
+}
+
+
+pub fn to_json_binary<T>(data: &T) -> Result<Binary, AuthError>
+where
+    T: Serialize + ?Sized,
+{   
+    serde_json_wasm::to_vec(data).map_err(|e| AuthError::generic(e.to_string())).map(Binary)
+}
+
+
+pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> Result<T, AuthError> {
+    serde_json_wasm::from_slice(value.as_ref())
+        .map_err(|e| AuthError::generic(e.to_string()))
 }
