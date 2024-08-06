@@ -47,7 +47,7 @@ pub struct ClientData {
 
 #[wasm_serde]
 pub struct PasskeyCredential {
-    pub id                   :       Binary,
+    pub id                   :       String,
     pub signature            :       Binary,
     pub authenticator_data   :       Binary,
     pub client_data          :       ClientData,
@@ -62,7 +62,7 @@ pub struct PasskeyCredential {
 impl Verifiable for PasskeyCredential {
 
     fn id(&self) -> CredentialId {
-        self.id.clone().0
+        self.id.as_bytes().to_vec()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

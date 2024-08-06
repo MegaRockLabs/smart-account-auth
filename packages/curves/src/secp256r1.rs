@@ -11,7 +11,7 @@ use digest::{
     Digest, Update
 };
 
-use p256::ecdsa::{Signature, VerifyingKey,  signature::DigestVerifier};
+use p256::ecdsa::{Signature, VerifyingKey, signature::DigestVerifier};
 
 #[wasm_serde]
 pub struct Secp256r1 {
