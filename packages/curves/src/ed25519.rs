@@ -18,6 +18,10 @@ impl Verifiable for Ed25519 {
         self.pubkey.0.clone()
     }
 
+    fn human_id(&self) -> String {
+        self.pubkey.to_base64()
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.len() > 0 && 

@@ -79,6 +79,11 @@ macro_rules! ensure {
 pub trait Verifiable   {
 
     fn id(&self) -> CredentialId;
+
+    fn human_id(&self) -> String {
+        Binary(self.id()).to_base64()
+    }
+
     fn validate(&self) -> Result<(), AuthError>;
 
     #[cfg(feature = "native")]

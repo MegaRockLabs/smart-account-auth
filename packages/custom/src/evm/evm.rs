@@ -27,6 +27,10 @@ impl Verifiable for EvmCredential {
         self.signer.as_bytes().to_vec()
     }
 
+    fn human_id(&self) -> String {
+        self.signer.clone()
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
