@@ -24,9 +24,9 @@ Rust crates for smart contract authentication supporting most of the existing au
 use smart_acccount_auth::{Verifiable, EvmCredential, Binary};
 
 let evm_credential = EvmCredential {
-    pub message:   Binary,
-    pub signature: Binary,
-    pub signer:    String,
+    message:   Binary::from_base64( ** your message ** ),
+    signature: Binary::from_base64( ** your signature **),
+    signer:    String::from("0x...") // your eth address
 }
 
 # native rust code
