@@ -6,7 +6,7 @@ Rust crates for smart contract authentication supporting most of the existing au
 
 ### Single Credential
 ```rust
-use smart_acccount_auth::{Verifiable, EvmCredential};
+use smart_acccount_auth::{Verifiable, EvmCredential, Binary};
 
 let evm_credential = EvmCredential {
     pub message:   Binary,
