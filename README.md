@@ -2,6 +2,21 @@
 
 Rust crates for smart contract authentication supporting most of the existing authentication mechanisms
 
+
+# Supported Credentials
+- Ethereum (EVM) personal sign
+- Cosmos Arbitrary (036)
+- Passkeys / Webauthn
+- Secp256k1 / Secp256r1 / Ed25519 Curves
+- (WIP) JWT / Oauth / Social Sign
+
+# Virtual Machine Support
+- Cosmwasm [1.x]  -  Complete
+- Cosmwasm [2.x]  -  Partial
+- Ink / Substrate -  Partial
+- Solana Seahorse -  Partial
+
+
 # Usage 
 
 ### Single Credential
@@ -41,16 +56,3 @@ let primary_credential = verified.primary();
 ...
 
 ```
-
-## Supported Credentials
-- Ethereum (EVM) personal sign
-- Cosmos Arbitrary (036)
-- Passkeys / Webauthn
-- Secp256k1 / Secp256r1 / Ed25519 Curves
-- (WIP) JWT / Oauth / Social Sign
-
-## Virtual Machine Support
-- Cosmwasm [1.x]  -  Complete
-- Cosmwasm [2.x]  -  Partial
-- Ink / Substrate -  Partial
-- Solana Seahorse -  Partial
