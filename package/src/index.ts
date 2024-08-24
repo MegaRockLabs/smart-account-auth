@@ -1,3 +1,2 @@
-export * from "./cosmwasm/messages";
-export * from "./credentials/types";
-export * from "./credentials/cosmos";
+export * from "./credentials";
+export * from "./cosmwasm";

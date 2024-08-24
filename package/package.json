@@ -24,15 +24,21 @@
   "author": "Kromsten <kromsten@megarock.app>",
   "devDependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
+    "@cosmos-kit/core": "^2.13.1",
     "@keplr-wallet/types": "^0.12.123",
+    "@solar-republic/neutrino": "^1.5.3",
     "@types/bun": "^1.1.6",
+    "@types/uuid": "^10.0.0",
     "bun-plugin-dts": "^0.2.3",
+    "ethers": "^6.13.2",
     "secretjs": "^1.12.5",
-    "typescript": "^5.5.4",
-    "@cosmos-kit/core": "^2.13.1"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "@cosmjs/amino": "^0.32.4",
-    "@cosmjs/encoding": "^0.32.4"
+    "@cosmjs/encoding": "^0.32.4",
+    "cbor": "^9.0.2",
+    "cbor-x": "^1.6.0",
+    "uuid": "^10.0.0"
   }
 }
