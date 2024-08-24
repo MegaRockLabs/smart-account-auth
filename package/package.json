@@ -1,0 +1,38 @@
+{
+  "name": "smart-account-auth",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "description": "",
+  "scripts": {
+    "build": "bun run build.mjs",
+    "prepublishOnly": "bun run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "bun"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": "",
+  "author": "Kromsten <kromsten@megarock.app>",
+  "devDependencies": {
+    "@cosmjs/cosmwasm-stargate": "^0.32.4",
+    "@keplr-wallet/types": "^0.12.123",
+    "@types/bun": "^1.1.6",
+    "bun-plugin-dts": "^0.2.3",
+    "secretjs": "^1.12.5",
+    "typescript": "^5.5.4",
+    "@cosmos-kit/core": "^2.13.1"
+  },
+  "dependencies": {
+    "@cosmjs/amino": "^0.32.4",
+    "@cosmjs/encoding": "^0.32.4"
+  }
+}
