@@ -17,9 +17,9 @@ export interface CosmosArbitrary {
 }
 
 export interface ClientData {
+    type: string;
     challenge: string;
     origin: string;
-    type: string;
     crossOrigin: boolean;
 }
 

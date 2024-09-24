@@ -121,21 +121,59 @@ export const getPasskeyCredential = async (
     const credential = await navigator.credentials.get(credentialRequestOptions);
     const getCredential = assertPublicKeyCredential(credential);
     const response = assertAssertionResponse(getCredential.response);
-
+    const parsed = JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData
 
     const cred : AuthCredential = {
         passkey: {
             id,
-            signature: toBase64(new Uint8Array(response.signature)),
+            pubkey,
+            signature: toBase64Sig(new Uint8Array(response.signature)),
             authenticator_data: toBase64(new Uint8Array(response.authenticatorData)),
-            client_data: JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData,
-            pubkey
+            client_data: parsed,
         }
     }
     return cred;
 }
 
 
+
+const toBase64Sig = (data : Uint8Array): string => {
+  let l = data.length;
+
+  if (l < 2 || data[0] != 0x30) throw new Error('Invalid signature tag');
+  if (data[1] !== l - 2) throw new Error('Invalid signature: incorrect length');
+
+  const { d: r, l: sBytes } = parseInt(data.subarray(2));
+  const { d: s, l: rBytesLeft } = parseInt(sBytes);
+
+  if (r.length !== 32 || s.length !== 32) { 
+    throw new Error('Invalid signature: invalid length of r or s values'); 
+  }
+  if (rBytesLeft.length) {
+    throw new Error('Invalid signature: left bytes after parsing');
+  }
+  const sig = new Uint8Array(64);
+  sig.set(r, 32 - r.length);
+  sig.set(s, 64 - s.length);
+  return toBase64(sig);
+}
+
+
+
+
+const parseInt = (data: Uint8Array): { d: Uint8Array; l: Uint8Array } => {
+  if (data.length < 2 || data[0] !== 0x02) throw new Error('Invalid signature integer tag');
+  const len = data[1];
+  const res = data.subarray(2, len + 2);
+  if (!len || res.length !== len) {
+    throw new Error('Invalid signature integer: wrong length');
+  }
+  if (res[0] === 0x00 && res[1] <= 0x7f) {
+    throw new Error('Invalid signature integer: trailing length');
+  }
+  const d = res.length == 33 && res[0] == 0x00 ? res.subarray(1) : res; 
+  return { d, l: data.subarray(len + 2) }; // d is data, l is left
+}
 
 
 
@@ -233,12 +271,12 @@ export const decodeAttestationObject = (
 };
 
 
-  const assertPublicKeyCredential = (
-    credential: Credential | PublicKeyCredential | null
-  ): PublicKeyCredential => {
-    if (!credential) throw new Error(`No Credential`);
-    if (credential && "rawId" in credential) return credential;
-    throw new Error(`Invalid Create Credential`);
+const assertPublicKeyCredential = (
+  credential: Credential | PublicKeyCredential | null
+): PublicKeyCredential => {
+  if (!credential) throw new Error(`No Credential`);
+  if (credential && "rawId" in credential) return credential;
+  throw new Error(`Invalid Create Credential`);
 };
   
 
