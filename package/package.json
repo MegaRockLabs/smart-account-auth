@@ -5,7 +5,7 @@
   "types": "dist/index.d.ts",
   "description": "",
   "scripts": {
-    "build": "bun run build.mjs",
+    "build": "rm -rf dist && bun run build.mjs",
     "prepublishOnly": "bun run build"
   },
   "homepage": "",

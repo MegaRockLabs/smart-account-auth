@@ -1,12 +1,20 @@
 import type { WalletClient } from "@cosmos-kit/core";
 import type { AminoWallet } from "secretjs/dist/wallet_amino";
 import type { Credential, CosmosArbitrary, MsgSignData } from "./types";
-import type { OfflineAminoSigner, StdSignDoc } from "@cosmjs/amino"
+import type { AminoMsg, OfflineAminoSigner, StdFee, StdSignDoc } from "@cosmjs/amino"
 import { toBase64 } from "@cosmjs/encoding";
+import { Keplr } from "@keplr-wallet/types";
 
 
-// @ts-ignore
-function makeSignDoc(msgs, fee, chainId, memo, accountNumber, sequence, timeout_height?) {
+export const makeSignDoc = (
+    msgs: readonly AminoMsg[], 
+    fee: StdFee, 
+    chainId: string, 
+    memo: string | undefined, 
+    accountNumber: number | string, 
+    sequence: number | string, 
+    timeout_height?: bigint
+): StdSignDoc => {
     return {
         chain_id: chainId,
         account_number: accountNumber.toString(),
@@ -42,13 +50,14 @@ export const getArb36SignDoc = (
 
 
 export const getCosmosArbitraryCredential = async (
-    signer          :    OfflineAminoSigner | WalletClient | AminoWallet,
+    signer          :    OfflineAminoSigner | WalletClient | AminoWallet | Keplr,
     chainId         :    string,
     message         :    string | Uint8Array, 
     signerAddress?  :    string,
     hrp?            :    string,
 ) : Promise<Credential> => {
-    
+
+
     let 
         pubkey : string = "", 
         signature : string = "";
@@ -57,13 +66,23 @@ export const getCosmosArbitraryCredential = async (
         signerAddress ??= signer.address;
         pubkey = toBase64(signer.publicKey);
     } else {
+        console.log("not secret signer")
         if ("getOfflineSignerAmino" in signer) {
             signer = await signer.getOfflineSignerAmino!(chainId);
         }
-        const accounts = await (signer as OfflineAminoSigner).getAccounts();
-        const firstAccount = accounts[0];
-        signerAddress ??= firstAccount.address;
-        pubkey = toBase64(firstAccount.pubkey);
+
+        if ("getAccounts" in signer) {
+            const accounts = await (signer as OfflineAminoSigner).getAccounts();
+            const firstAccount = accounts[0];
+            signerAddress ??= firstAccount.address;
+            pubkey = toBase64(firstAccount.pubkey);
+        } else if ("getKey" in signer) {
+            const key = await signer.getKey(chainId);
+            signerAddress ??= key.bech32Address;
+            pubkey = toBase64(key.pubKey);
+        } else {
+            throw new Error("not suppoerted signer");
+        }
     }
 
     hrp ??= signerAddress.split("1")[0];
