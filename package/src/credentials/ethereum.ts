@@ -24,12 +24,12 @@ export const getEthPersonalCredential = async (
         "params": [toHex(message), signerAddress]
     });
 
-    const hex = fromHex(signature.slice(2));
+    const sigBytes = fromHex(signature.slice(2));
 
     return {
         evm: {
             signer: signerAddress,
-            signature: toBase64(hex),
+            signature: toBase64(sigBytes),
             message: toBase64(message)
         }
     }

@@ -62,11 +62,11 @@ export const registerPasskey = async (
     };
 
     if (saveToLocalStorage) {
-        const wrapper = saveToLocalStorage === true ? "passkeys" : saveToLocalStorage;
-        const passkeys = localStorage.getItem(wrapper) || "{}";
+        const storageKey = saveToLocalStorage === true ? "passkeys" : saveToLocalStorage;
+        const passkeys = localStorage.getItem(storageKey) || "{}";
         const parsed = JSON.parse(passkeys) as Record<string, string>;
         parsed[registered.id] = registered.pubkey;
-        localStorage.setItem(wrapper, JSON.stringify(parsed));
+        localStorage.setItem(storageKey, JSON.stringify(parsed));
     }   
 
     return registered;
@@ -75,13 +75,34 @@ export const registerPasskey = async (
 
 
 export const getPasskeyCredential = async (
-    message       :  string | Uint8Array,
-    id            :  string,
-    options?      :  PublicKeyCredentialRequestOptions,
-    pubkey?       :  string,
+    message          :  string | Uint8Array,
+    id?              :  string,
+    pubkey?          :  string,
+    options?         :  PublicKeyCredentialRequestOptions,
+    loadFromStorage  :  boolean | string = true,
+    name?            :  string,
 ) : Promise<AuthCredential>  => {
 
     const challenge = typeof message === "string" ? toUtf8(message) : message
+
+    if (!id || !pubkey) {
+        if (loadFromStorage) {
+            const storageKey = loadFromStorage === true ? "passkeys" : loadFromStorage;
+            const passkeys = localStorage.getItem(storageKey) || "{}";
+            const parsed = JSON.parse(passkeys) as Record<string, string>;
+            const keys = Object.keys(parsed);
+            if (keys.length === 0) throw new Error(`No Passkeys Found`);
+            id = keys[0];
+            pubkey = parsed[id];
+        } else if (name) {
+          const res = await registerPasskey(name);
+          id = res.id;
+          pubkey = res.pubkey;
+        } else {
+            throw new Error(`No Passkey Provided`);
+        }
+    }
+
 
     const credentialRequestOptions: CredentialRequestOptions = {
         publicKey: {
