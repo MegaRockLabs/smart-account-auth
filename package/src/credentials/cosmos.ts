@@ -1,10 +1,22 @@
 import type { WalletClient } from "@cosmos-kit/core";
 import type { AminoWallet } from "secretjs/dist/wallet_amino";
 import type { Credential, CosmosArbitrary, MsgSignData } from "./types";
-import { makeSignDoc, type OfflineAminoSigner, type StdSignDoc } from "@cosmjs/amino"
+import type { OfflineAminoSigner, StdSignDoc } from "@cosmjs/amino"
 import { toBase64 } from "@cosmjs/encoding";
 
 
+// @ts-ignore
+function makeSignDoc(msgs, fee, chainId, memo, accountNumber, sequence, timeout_height?) {
+    return {
+        chain_id: chainId,
+        account_number: accountNumber.toString(),
+        sequence: sequence.toString(),
+        fee: fee,
+        msgs: msgs,
+        memo: memo || "",
+        ...(timeout_height && { timeout_height: timeout_height.toString() }),
+    };
+}
 
 export const getArb36SignData = (
     signerAddress: string,

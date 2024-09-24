@@ -1,4 +1,4 @@
-import { AminoMsg } from "@cosmjs/amino";
+import type { AminoMsg } from "@cosmjs/amino";
 import type { Window as KeplrWindow } from "@keplr-wallet/types";
 import type { Eip1193Provider } from "ethers";
 

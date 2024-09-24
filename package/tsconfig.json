@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "esnext",
-    "strict": true,
+    "target": "ES6",
+    "lib": ["ES6", "DOM"],
+    "module": "commonjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
     "esModuleInterop": true,
-    "moduleResolution": "node",
-    "skipLibCheck": true,
-    "noUnusedLocals": true,
-    "noImplicitAny": true,
-    "allowJs": true,
-    "noEmit": true,
-    "outDir": "dist",
-    "resolveJsonModule": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules", "dist", "scripts", "test"]
 }

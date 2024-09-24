@@ -1,11 +1,11 @@
 import type { Credential as AuthCredential, ClientData } from "./types";
 import { toUtf8 } from "secretjs";
-import { v4 } from "uuid";
 import { decode } from "cbor-x";
+import { v4 } from "uuid";
 
-import { random_32 } from "@solar-republic/neutrino";
-import { fromUtf8, toBase64 } from "@cosmjs/encoding";
 import { COSEKey } from "./types";
+import { fromUtf8, toBase64 } from "@cosmjs/encoding";
+import { random_32 } from "@solar-republic/neutrino";
 
 
 export const registerPasskey = async (
