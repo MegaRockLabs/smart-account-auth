@@ -103,7 +103,6 @@ export const getPasskeyCredential = async (
         }
     }
 
-
     const credentialRequestOptions: CredentialRequestOptions = {
         publicKey: {
             allowCredentials: [
@@ -155,6 +154,7 @@ const toBase64Sig = (data : Uint8Array): string => {
   const sig = new Uint8Array(64);
   sig.set(r, 32 - r.length);
   sig.set(s, 64 - s.length);
+
   return toBase64(sig);
 }
 
@@ -176,9 +176,6 @@ const parseInt = (data: Uint8Array): { d: Uint8Array; l: Uint8Array } => {
 }
 
 
-
-
-
 const decodeCredentialPublicKey = (res: Uint8Array): COSEKey => {
     const decoded = decode(res);
     return {
@@ -193,8 +190,6 @@ const decodeCredentialPublicKey = (res: Uint8Array): COSEKey => {
       "Base IV": decoded[5],
     };
 };
-
-
 
 
 const getBase64PublicKey = (coseKey: COSEKey): string => {

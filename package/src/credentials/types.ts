@@ -97,7 +97,7 @@ export interface CBORSignature {
     readonly authenticatorData: string;
     readonly clientDataJSON: string;
     readonly signature: string;
-  }
+}
   
 
 export enum AuthenticatorDataFlags {

@@ -1,5 +1,5 @@
 [package]
-name    = "macros-proto"
+name    = "saa-macros-proto"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
