@@ -4,10 +4,13 @@ use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    ToString, Binary, ensure,
+    ToString, Binary,
     AuthError, Verifiable, CredentialId,
-    hashes::sha256
+    
 };
+
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
+use saa_common::{ensure, hashes::sha256};
 
 
 
