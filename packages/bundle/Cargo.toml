@@ -1,8 +1,10 @@
 [package]
 name    = "smart-account-auth"
+description = "Authentication library for smart accounts on various blockchains and their virtual machines"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
+license = { workspace = true }
 
 [lib]
 name        = "smart_account_auth"
