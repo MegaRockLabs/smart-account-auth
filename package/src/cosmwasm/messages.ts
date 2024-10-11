@@ -55,7 +55,6 @@ export type BurnCoins = {
 };
 
 
-
 export type Delegate = {
     delegate: {
         amount: Coin;

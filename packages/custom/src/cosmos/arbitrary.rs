@@ -1,5 +1,3 @@
-use core::fmt::Display;
-
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
@@ -8,15 +6,15 @@ use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
-pub struct CosmosArbitrary<M: Display + Clone = String> {
+pub struct CosmosArbitrary {
     pub pubkey:    Binary,
     pub signature: Binary,
-    pub message:   M,
+    pub message:   Binary,
     pub hrp:       Option<String>
 }
 
 
-impl<M: Display + Clone> Verifiable for CosmosArbitrary<M> {
+impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
         self.pubkey.0.clone()
