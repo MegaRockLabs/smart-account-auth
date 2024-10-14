@@ -1,5 +1,3 @@
-use core::fmt::Display;
-
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 #[cfg(feature = "substrate")]
@@ -14,14 +12,14 @@ use crate::{Credential, CredentialsWrapper};
 
 
 #[wasm_serde]
-pub struct CredentialData<M: Display + Clone = String> {
-    pub credentials     :  Vec<Credential<M>>,
+pub struct CredentialData {
+    pub credentials     :  Vec<Credential>,
     pub with_caller     :  Option<bool>,
     pub primary_index   :  Option<u8>,
 }
 
 
-impl<M: Display + Clone> Default for CredentialData<M> {
+impl Default for CredentialData {
     fn default() -> Self {
         Self { 
             credentials     : vec![], 
@@ -31,10 +29,10 @@ impl<M: Display + Clone> Default for CredentialData<M> {
     }
 }
 
-impl<M: Display + Clone> CredentialData<M> {
+impl CredentialData {
 
     pub fn new(
-        credentials: Vec<Credential<M>>, 
+        credentials: Vec<Credential>, 
         primary_index: Option<u8>, 
         with_caller: Option<bool>,
     ) -> Self {
@@ -53,14 +51,14 @@ impl<M: Display + Clone> CredentialData<M> {
         self.credentials.iter().map(|c| c.value()).collect()
     }
 
-    pub fn find_by_name(&self, name: &str) -> Option<Credential<M>> {
+    pub fn find_by_name(&self, name: &str) -> Option<Credential> {
         self.credentials
             .iter()
             .find(|c| c.name() == name)
             .cloned()
     }
 
-    pub fn find_by_id(&self, id: &CredentialId) -> Option<Credential<M>> {
+    pub fn find_by_id(&self, id: &CredentialId) -> Option<Credential> {
         self.credentials
             .iter()
             .find(|c| c.id() == *id)
@@ -101,8 +99,8 @@ impl<M: Display + Clone> CredentialData<M> {
 
 
 
-impl<M: Display + Clone> CredentialsWrapper for CredentialData<M> {
-    type Credential = Credential<M>;
+impl CredentialsWrapper for CredentialData {
+    type Credential = Credential;
 
     fn credentials(&self) -> &Vec<Self::Credential> {
         &self.credentials
@@ -111,7 +109,7 @@ impl<M: Display + Clone> CredentialsWrapper for CredentialData<M> {
 
 
 
-impl<M: Display + Clone> Verifiable for CredentialData<M> {
+impl Verifiable for CredentialData {
 
     fn id(&self) -> CredentialId {
         self.primary_id()
@@ -160,7 +158,7 @@ impl<M: Display + Clone> Verifiable for CredentialData<M> {
         creds.credentials()
             .iter()
             .map(|c| c.verified_ink(api.clone())).
-            collect::<Result<Vec<Credential<M>>, AuthError>>()?;
+            collect::<Result<Vec<Credential>, AuthError>>()?;
 
         Ok(creds.clone())
     }
@@ -181,7 +179,7 @@ impl<M: Display + Clone> Verifiable for CredentialData<M> {
         let verified = creds.credentials()
                 .iter()
                 .map(|c| c.verified_cosmwasm(api, env, info)).
-                collect::<Result<Vec<Credential<M>>, AuthError>>()?;
+                collect::<Result<Vec<Credential>, AuthError>>()?;
 
         Ok(Self {
             credentials: verified,

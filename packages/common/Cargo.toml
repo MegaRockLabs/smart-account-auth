@@ -1,8 +1,11 @@
 [package]
 name = "saa-common"
+description = "Common types and utilities for smart account auth"
 edition = { workspace = true }
 authors = { workspace = true }
 version = { workspace = true }
+license = { workspace = true }
+
 
 [dependencies]
 saa-schema          = { workspace = true }
