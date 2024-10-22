@@ -85,7 +85,7 @@ export const getPasskeyCredential = async (
 
     const challenge = typeof message === "string" ? toUtf8(message) : message
 
-    if (!id || !pubkey) {
+    if (!id) {
         if (loadFromStorage) {
             const storageKey = loadFromStorage === true ? "passkeys" : loadFromStorage;
             const passkeys = localStorage.getItem(storageKey) || "{}";
