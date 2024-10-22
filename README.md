@@ -8,7 +8,6 @@ Rust crates for smart contract authentication supporting most of the existing au
 - Cosmos Arbitrary (036)
 - Passkeys / Webauthn
 - Secp256k1 / Secp256r1 / Ed25519 Curves
-- (WIP) JWT / Oauth / Social Sign
 
 # Virtual Machine Support
 - Cosmwasm [1.x]  -  Complete
@@ -33,6 +32,7 @@ let evm_credential = EvmCredential {
 evm_credential.verify()?:
 
 # cosmwasm (feature) api code
+# third argument is for deriving a prefix which is not needed for ethereum
 evm_credential.verified_cosmwasm(deps.api, &env, &None)?;
 ```
 
@@ -43,10 +43,11 @@ use smart_acccount_auth::{Verifiable, CredentialsWrapper, CredentialData};
 
 let credential_data = CredentialData {
     credentials         :  vec![ ** your credentials here **  ],
-    // whether to allow current sender address to be an authority 
+    // whether to allow the sender address to be an authority over account
+    // set to false if calling using a relayer 
     with_caller         :  Some(true),
-    // index of "main" credential if one exist 
-    pub primary_index   :  Some(0)
+    // index of "main" credential it exist 
+    primary_index   :  Some(0)
 }
 
 let verified = credential_data..verified_cosmwasm(deps.api, &env, &Some(info)?;
