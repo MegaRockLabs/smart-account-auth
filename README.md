@@ -46,14 +46,12 @@ let credential_data = CredentialData {
     // whether to allow the sender address to be an authority over account
     // set to false if calling using a relayer 
     with_caller         :  Some(true),
-    // index of "main" credential it exist 
+    // index of "main" credential if it exists
     primary_index   :  Some(0)
 }
 
-let verified = credential_data..verified_cosmwasm(deps.api, &env, &Some(info)?;
+let verified = credential_data.verified_cosmwasm(deps.api, &env, &Some(info)?;
 
 let primary_credential = verified.primary();
-
-...
 
 ```
