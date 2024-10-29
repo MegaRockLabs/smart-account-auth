@@ -1,10 +1,22 @@
 use saa_common::{Verifiable, AuthError, CredentialId};
-use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
-use saa_custom::{caller::Caller, cosmos::arbitrary::CosmosArbitrary, eth::EthPersonalSign, passkey::PasskeyCredential};
+use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
+
+#[cfg(feature = "curves")]
+use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
+
+#[cfg(feature = "passkeys")]
+use saa_custom::passkey::PasskeyCredential;
+
+#[cfg(feature = "ethereum")]
+use saa_custom::eth::EthPersonalSign;
+
+#[cfg(feature = "cosmos")]
+use saa_custom::cosmos::arbitrary::CosmosArbitrary;
 
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm;
+
 
 #[wasm_serde]
 pub enum Credential {
@@ -21,8 +33,10 @@ pub enum Credential {
 
     #[cfg(feature = "curves")]
     Secp256k1(Secp256k1),
+
     #[cfg(feature = "curves")]
     Secp256r1(Secp256r1),
+    
     #[cfg(feature = "curves")]
     Ed25519(Ed25519),
 }
