@@ -1220,7 +1220,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "saa-common"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1244,7 +1244,7 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "bech32 0.11.0",
  "borsh",
@@ -1261,7 +1261,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1280,7 +1280,7 @@ dependencies = [
 
 [[package]]
 name = "saa-macros-proto"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1289,7 +1289,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -1598,7 +1598,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.11.1"
+version = "0.12.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -1692,18 +1692,18 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "thiserror"
-version = "1.0.64"
+version = "1.0.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d50af8abc119fb8bb6dbabcfa89656f46f84aa0ac7688088608076ad2b459a84"
+checksum = "5d11abd9594d9b38965ef50805c5e469ca9cc6f197f883f717e0269a3057b3d5"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.64"
+version = "1.0.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08904e7672f5eb876eaaf87e0ce17857500934f4981c4a0ab2b4aa98baac7fc3"
+checksum = "ae71770322cbd277e69d762a16c444af02aa0575ac0d174f0b9562d3b37f8602"
 dependencies = [
  "proc-macro2",
  "quote",

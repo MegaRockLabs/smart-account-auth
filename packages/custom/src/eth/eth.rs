@@ -14,14 +14,14 @@ use super::utils::{get_recovery_param, preamble_msg_eth};
 
 
 #[wasm_serde]
-pub struct EvmCredential {
+pub struct EthPersonalSign {
     pub message:   Binary,
     pub signature: Binary,
     pub signer:    String,
 }
 
 
-impl Verifiable for EvmCredential {
+impl Verifiable for EthPersonalSign {
 
     fn id(&self) -> CredentialId {
         self.signer.as_bytes().to_vec()

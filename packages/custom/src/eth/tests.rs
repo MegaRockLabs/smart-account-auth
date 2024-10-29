@@ -4,7 +4,7 @@ mod tests {
     use cosmwasm_std::{testing::{mock_dependencies, mock_env}, Uint256};
     use saa_common::{Binary, Verifiable};
 
-    use crate::evm::EvmCredential;
+    use crate::eth::EthPersonalSign;
 
 
     #[test]
@@ -25,7 +25,7 @@ mod tests {
         sig.push(v);
         assert_eq!(sig.len(), 65);
 
-        let cred  =  EvmCredential  {
+        let cred  =  EthPersonalSign  {
             message : Binary(message.as_bytes().to_vec()),
             signer : address.to_string(),
             signature : Binary(sig),

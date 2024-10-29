@@ -25,9 +25,11 @@ schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true, optional = true }
 
 [features]
-
 default = [
-    "std"
+    "std", 
+    "ethereum", 
+    "cosmos", 
+    "passkeys"
 ]
 std = [
     "scale?/std",
@@ -64,3 +66,7 @@ native = [
     "saa-custom/native",
     "saa-common/native",
 ]
+curves    = []
+passkeys  = []
+ethereum  = []
+cosmos    = []

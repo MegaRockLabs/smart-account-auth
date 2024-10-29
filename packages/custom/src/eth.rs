@@ -1,6 +1,6 @@
 pub mod utils;
-mod evm;
-pub use evm::*;
+mod eth;
+pub use eth::*;
 
 #[cfg(test)]
 mod tests;
