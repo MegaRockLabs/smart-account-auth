@@ -1,8 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use macros_proto;
+use saa_macros_proto;
 
-pub use macros_proto::wasm_serde;
+pub use saa_macros_proto::wasm_serde;
 
 
 #[cfg(feature = "cosmwasm")]
