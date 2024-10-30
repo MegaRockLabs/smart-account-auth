@@ -8,12 +8,10 @@ pub mod utils;
 pub mod storage;
 pub mod messages;
 pub mod hashes;
-pub mod constants;
 pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 use saa_schema::wasm_serde;
 use serde::Serialize;
-use constants::{IS_INJECTIVE, IS_REPLAY_PROTECTION_ON};
 
 
 #[cfg(feature = "std")]
@@ -104,10 +102,13 @@ pub trait Verifiable   {
 
     fn is_cosmos_derivable(&self) -> bool {
         let name = self.info().name;
-        name == CredentialName::CosmosArbitrary ||
-        name == CredentialName::Secp256k1 ||
-        name == CredentialName::Caller ||
-            (IS_INJECTIVE && name == CredentialName::EthPersonalSign)
+        let ok = name == CredentialName::CosmosArbitrary ||
+                            name == CredentialName::Secp256k1 ||
+                            name == CredentialName::Caller;
+
+        #[cfg(feature = "injective")]
+        let ok = ok || (name == CredentialName::EthPersonalSign);
+        ok
     }
 
 
@@ -158,14 +159,14 @@ pub trait Verifiable   {
 
     #[cfg(feature = "cosmwasm")]
     fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        match self.info().hrp {
-            Some(hrp) => utils::pubkey_to_address(&self.id(), &hrp),
+        Ok(match self.info().hrp {
+            Some(hrp) => Addr::unchecked(utils::pubkey_to_address(&self.id(), &hrp)?),
             None => {
                 let canon = utils::pubkey_to_canonical(&self.id());
                 let addr = api.addr_humanize(&canon)?;
-                Ok(addr)
+                addr
             }
-        }
+        })
     }
 
 
@@ -181,7 +182,8 @@ pub trait Verifiable   {
     {
         use storage::*;
         let verified = self.verified_cosmwasm(api, env, info)?;
-        if IS_REPLAY_PROTECTION_ON {
+        #[cfg(feature = "replay")]
+        if true {
             let nonce = self.validate_signed_data(storage, env)?;
             NONCES.save(storage, nonce, &true)?;
         }

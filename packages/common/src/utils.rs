@@ -2,10 +2,10 @@ use crate::{hashes::{ripemd160, sha256}, AuthError, String};
 use bech32::{hrp::Hrp, Bech32};
 
 
-pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<cosmwasm_std::Addr, AuthError> {
+pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> {
     let base32_addr = ripemd160(&sha256(pubkey));
     let account: String = bech32::encode::<Bech32>(Hrp::parse(hrp)?, &base32_addr).unwrap();
-    Ok(cosmwasm_std::Addr::unchecked(account))
+    Ok(account)
 }
 
 

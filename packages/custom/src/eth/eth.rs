@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env, MessageInfo};
+use cosmwasm_std::{Api, Env, MessageInfo, Addr};
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;
@@ -102,12 +102,14 @@ impl Verifiable for EthPersonalSign {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn cosmos_address(&self, _: &dyn Api) -> Result<cosmwasm_std::Addr, AuthError> {
-        if saa_common::constants::IS_INJECTIVE {
-            saa_common::utils::pubkey_to_address(self.signer.as_bytes(), "inj")
-        } else {
-            Err(AuthError::generic("Can't generate a cosmos address from Eth credential"))
+    fn cosmos_address(&self, _: &dyn Api) -> Result<Addr, AuthError> {
+        #[cfg(feature = "injective")]
+        if true {
+            return Ok(Addr::unchecked(
+                saa_common::utils::pubkey_to_address(self.signer.as_bytes(), "inj")?
+            ))
         }
+        Err(AuthError::generic("Can't generate a cosmos address from Eth credential"))
     }
     
 

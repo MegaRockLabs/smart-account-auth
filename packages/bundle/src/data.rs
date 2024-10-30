@@ -92,12 +92,12 @@ impl CredentialData {
                     if name == CredentialName::Caller {
                         return true;
                     }
-                    if saa_common::constants::IS_INJECTIVE {
-                        name == CredentialName::EthPersonalSign
-                    } else {
-                        name == CredentialName::CosmosArbitrary ||
-                        name == CredentialName::Secp256k1
+                    #[cfg(feature = "injective")]
+                    if true {
+                        return name == CredentialName::EthPersonalSign;
                     }
+                    name == CredentialName::CosmosArbitrary ||
+                    name == CredentialName::Secp256k1
                 }
             ) 
         )
@@ -264,7 +264,8 @@ impl Verifiable for CredentialData {
         self.validate()?;
         let verified = self.verified_cosmwasm(api, env, info)?;
 
-        if saa_common::constants::IS_REPLAY_PROTECTION_ON {
+        #[cfg(feature = "replay")]
+        if true {
             let nonce = verified.validate_signed_data(storage, env)?;
             NONCES.save(storage, nonce, &true)?;
         }  
