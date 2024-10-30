@@ -1,6 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub use saa_common::{Verifiable, AuthError, CredentialId, Binary, hashes, utils, messages};
+pub use saa_common::{
+    Verifiable, AuthError, Binary, hashes, utils, messages,
+    CredentialId, CredentialName, CredentialInfo
+};
 pub use saa_custom::caller::Caller;
 pub use saa_schema::*;
 

@@ -296,8 +296,13 @@ pub fn construct_credential(
                 _ => return Err(AuthError::generic("Unsupported curve")),
             }
         }
-        #[cfg(not(feature = "curves"))]
-        _ => return Err(AuthError::generic("Curve support is not enabled")),
+        #[cfg(any(
+            not(feature = "curves"), 
+            not(feature = "passkeys"), 
+            not(feature = "cosmos"), 
+            not(feature = "ethereum"))
+        )]
+        _ => return Err(AuthError::generic("Credential is not enabled")),
     };
 
     Ok(credential)
