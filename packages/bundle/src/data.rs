@@ -51,21 +51,6 @@ impl CredentialData {
         self.credentials.iter().map(|c| c.value()).collect()
     }
 
-    pub fn find_by_name(&self, name: CredentialName) -> Option<Credential> {
-        self.credentials
-            .iter()
-            .find(|c| c.name() == name)
-            .cloned()
-    }
-
-    pub fn find_by_id(&self, id: &CredentialId) -> Option<Credential> {
-        self.credentials
-            .iter()
-            .find(|c| c.id() == *id)
-            .cloned()
-    }
-
-
 
     pub fn with_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
         let mut credentials = self.credentials.clone();
@@ -252,6 +237,11 @@ impl Verifiable for CredentialData {
             self.is_cosmos_derivable(), 
             AuthError::generic("No credentials derivaable into a cosmos address")
         );
+        if self.primary_index.is_some() {
+            if self.primary().is_cosmos_derivable() {
+                return self.primary().cosmos_address(api);
+            }
+        }
         let cred = self.credentials
             .iter()
             .find(|c| c.is_cosmos_derivable());
@@ -269,7 +259,7 @@ impl Verifiable for CredentialData {
     ) -> Result<Self, AuthError> 
         where Self: Clone 
     {
-        use saa_common::storage::*;;
+        use saa_common::storage::*;
 
         self.validate()?;
         let verified = self.verified_cosmwasm(api, env, info)?;

@@ -62,9 +62,11 @@ std         = [
 native     = [
     "dep:cosmwasm-crypto",
 ]
+replay     = [
+    "storage"
+]
 storage    = [
     "dep:cw-storage-plus",
 ]
-replay     = []
 cosmos     = []
 injective  = []
