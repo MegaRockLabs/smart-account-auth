@@ -35,6 +35,8 @@ default = [
     "replay",
 ]
 std = [
+    "scale?/std",
+    "scale-info?/std",
     "saa-schema/std",
     "saa-common/std",
     "saa-custom/std",
@@ -49,6 +51,7 @@ solana = [
 ]
 substrate = [
     "dep:scale",
+    "dep:scale-info",
     "saa-schema/substrate",
     "saa-common/substrate",
     "saa-curves/substrate",
@@ -72,11 +75,9 @@ injective = [
     "saa-custom/injective",
     "saa-common/injective",
 ]
-replay    = [
-    "saa-common/replay",
-]
-storage   = []
-curves    = []
+replay    = ["saa-common/replay",]
 passkeys  = []
 ethereum  = []
 cosmos    = []
+storage   = []
+curves    = []

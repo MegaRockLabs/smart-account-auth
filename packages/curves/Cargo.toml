@@ -37,6 +37,7 @@ solana = [
 ]
 substrate = [
     "dep:scale",
+    "dep:scale-info",
     "saa-schema/substrate",
     "saa-common/substrate",
 ]

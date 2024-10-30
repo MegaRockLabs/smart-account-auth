@@ -13,7 +13,7 @@ pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 use saa_schema::wasm_serde;
 use serde::Serialize;
-use constants::{IS_INJECTIVE, IS_NATIVE, IS_REPLAY_PROTECTION_ON};
+use constants::{IS_INJECTIVE, IS_REPLAY_PROTECTION_ON};
 
 
 #[cfg(feature = "std")]
@@ -133,25 +133,26 @@ pub trait Verifiable   {
     fn verified_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> 
         where Self: Clone
     {
-        if IS_NATIVE {
+        #[cfg(feature = "native")]
+        if true {
             self.verify()?;
             return Ok(self.clone());
-        } else {
-            return Err(AuthError::generic("Not implemented"));
-        }
+        } 
+        Err(AuthError::generic("Not implemented"))
     }
 
     
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> 
         where Self: Clone
-    {
-        if constants::IS_NATIVE {
+    {   
+        #[cfg(feature = "native")]
+        if true {
             self.verify()?;
             return Ok(self.clone());
-        } else {
-            return Err(AuthError::generic("Not Implemented"));
-        }
+        } 
+        
+        Err(AuthError::generic("Not Implemented"))
     }
 
 

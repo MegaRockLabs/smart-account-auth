@@ -1,6 +1,6 @@
 
 use saa_common::{
-    ensure, format, vec, Binary, 
+    format, vec, Binary, 
     CredentialId, CredentialInfo, CredentialName, 
     Vec, Verifiable, AuthError
 };
@@ -8,7 +8,7 @@ use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
 
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo, Storage};
+use saa_common::cosmwasm::{Api, Env, MessageInfo, Storage, ensure};
 #[cfg(feature = "substrate")]
 use saa_common::substrate::{InkEnvironment, InkApi};
 
