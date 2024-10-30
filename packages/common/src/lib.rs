@@ -116,12 +116,8 @@ pub trait Verifiable   {
     fn validate_signed_data(&self, storage: &dyn cosmwasm_std::Storage, env: &cosmwasm_std::Env) -> Result<String, AuthError> {
         self.validate()?;
         let signed : messages::SignedData<cosmwasm_std::Empty> = from_json(&self.message()).unwrap(); 
-        let data = signed.data.clone();
-        ensure_eq!(env.block.chain_id, data.chain_id, AuthError::ChainIdMismatch);
-        ensure_eq!(env.contract.address, data.contract_address, AuthError::ContractMismatch);
-        ensure!(data.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        ensure!(storage::NONCES.has(storage, data.nonce.clone()), AuthError::NonceUsed);
-        Ok(data.nonce)
+        signed.validate_cosmwasm(storage, env)?;
+        Ok(signed.data.nonce)
     }
 
 

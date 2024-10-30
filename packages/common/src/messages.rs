@@ -4,7 +4,10 @@ use saa_schema::wasm_serde;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{ensure, AuthError, Binary, CredentialId, CredentialName};
+use crate::{ensure, storage, AuthError, Binary, CredentialId, CredentialName};
+
+#[cfg(feature = "cosmwasm")]
+use cosmwasm_std::{CustomMsg, Storage, Env};
 
 
 #[wasm_serde]
@@ -38,7 +41,7 @@ impl<E : Serialize> AuthPayload<E> {
     #[cfg(feature = "cosmwasm")]
     pub fn validate_cosmwasm(
         &self, 
-        storage: &dyn cosmwasm_std::Storage
+        store: &dyn Storage
     ) -> Result<(), AuthError> {
         use crate::CredentialName;
 
@@ -48,7 +51,7 @@ impl<E : Serialize> AuthPayload<E> {
         if self.credential_id.is_some() {
 
             let info_res = crate::storage::CREDENTIAL_INFOS.load(
-                storage, self.credential_id.clone().unwrap()
+                store, self.credential_id.clone().unwrap()
             );
     
             ensure!(info_res.is_ok(), AuthError::generic("Credential not found"));
@@ -79,8 +82,8 @@ impl<E : Serialize> IndexedAuthPayload<E> {
     }
 
     #[cfg(feature = "cosmwasm")]
-    pub fn validate_cosmwasm(&self, storage: &dyn cosmwasm_std::Storage) -> Result<(), AuthError> {
-        self.payload.validate_cosmwasm(storage)
+    pub fn validate_cosmwasm(&self, store: &dyn Storage) -> Result<(), AuthError> {
+        self.payload.validate_cosmwasm(store)
     }
 }
 
@@ -102,6 +105,16 @@ pub struct SignedData<M : JsonSchema> {
     pub signature: Binary,
 }
 
+#[cfg(all(feature = "cosmwasm", feature = "replay"))]
+impl<M : JsonSchema> SignedData<M> {
+    pub fn validate_cosmwasm(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
+        ensure!(self.data.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
+        ensure!(self.data.contract_address == env.contract.address, AuthError::ContractMismatch);
+        ensure!(self.data.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
+        ensure!(!storage::NONCES.has(store, self.data.nonce.clone()), AuthError::DifferentNonce);
+        Ok(())
+    }
+}
 
 
 
@@ -126,6 +139,6 @@ pub struct AccountCredentials<E : Serialize + Clone = Binary> {
 
 
 #[cfg(feature = "cosmwasm")]
-impl<A> cosmwasm_std::CustomMsg for SignedData<A> 
+impl<A> CustomMsg for SignedData<A> 
     where A : JsonSchema + Debug + Clone + PartialEq + Serialize
 {}

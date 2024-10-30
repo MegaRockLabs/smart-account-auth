@@ -158,8 +158,9 @@ impl Verifiable for CredentialData {
         use saa_common::messages::SignedData;
         let first = self.credentials().first().unwrap();
         let signed : SignedData<String> = saa_common::from_json(&first.message())?;
+        signed.validate_cosmwasm(storage, env)?;
         let data = &signed.data;
-        let nonce = Verifiable::validate_signed_data(first, storage, env)?;
+        let nonce = data.nonce.clone();
         
         self.credentials().iter().skip(1).map(|c| {
             let signed : SignedData<String> = saa_common::from_json(&c.message())?;
