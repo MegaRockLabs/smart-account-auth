@@ -340,6 +340,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw-storage-plus"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9b6f91c0b94481a3e9ef1ceb183c37d00764f8751e39b45fc09f4d9b970d469"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "darling"
 version = "0.14.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1220,13 +1231,14 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "saa-common"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
  "borsh",
  "cosmwasm-crypto",
  "cosmwasm-std",
+ "cw-storage-plus",
  "digest 0.10.7",
  "getrandom",
  "ink",
@@ -1244,7 +1256,7 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "bech32 0.11.0",
  "borsh",
@@ -1261,7 +1273,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1280,7 +1292,7 @@ dependencies = [
 
 [[package]]
 name = "saa-macros-proto"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1289,7 +1301,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -1598,7 +1610,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",

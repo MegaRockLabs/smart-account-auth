@@ -40,6 +40,21 @@ pub enum AuthError {
     #[error("Error recovering from the signature: Addresses do not match")]
     RecoveryMismatch,
 
+    #[error("The provided credential was meant for a different chain")]
+    ChainIdMismatch,
+
+    #[error("The provided credential was meant for a different contract address")]
+    ContractMismatch,
+
+    #[error("The provided nonce has already been used")]
+    NonceUsed,
+
+    #[error("At least one of the credential must be usable for verifications")]
+    NoVerifying,
+
+    #[error("The list of credentials musy have the same nonce")]
+    DifferentNonce,
+
     #[error("{0}")]
     Signature(String),
 

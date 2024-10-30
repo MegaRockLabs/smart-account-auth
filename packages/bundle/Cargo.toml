@@ -31,7 +31,9 @@ default = [
     "std", 
     "ethereum", 
     "cosmos", 
-    "passkeys"
+    "passkeys",
+    "storage",
+    "replay",
 ]
 std = [
     "scale?/std",
@@ -67,6 +69,17 @@ native = [
     "saa-curves/native",
     "saa-custom/native",
     "saa-common/native",
+]
+storage   = [
+    "saa-common/storage",
+]
+injective = [
+    "saa-custom/injective",
+    "saa-common/injective",
+]
+
+replay    = [
+    "saa-common/replay",
 ]
 curves    = []
 passkeys  = []

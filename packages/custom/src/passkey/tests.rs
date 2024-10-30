@@ -25,7 +25,7 @@ mod tests {
             authenticator_data, 
             client_data: ClientData {
                 ty: "webauthn.get".to_string(),
-                challenge: "Q3JlYXRlIFRCQSBhY2NvdW50dA".into(),
+                challenge: Binary::from_base64("Q3JlYXRlIFRCQSBhY2NvdW50dA").unwrap(),
                 origin: "http://localhost:5173".into(),
                 cross_origin: false,
             }, 
@@ -37,7 +37,6 @@ mod tests {
         println!("Res: {:?}", res);
         assert!(res.is_ok());
     }
-
 
 
     #[test]
@@ -59,7 +58,7 @@ mod tests {
             authenticator_data, 
             client_data: ClientData {
                 ty: "webauthn.get".to_string(),
-                challenge: "Q3JlYXRpbmcgVEJBIGFjY291bnQ".into(),
+                challenge: Binary::from_base64("Q3JlYXRpbmcgVEJBIGFjY291bnQ").unwrap(),
                 origin: "http://localhost:5173".into(),
                 cross_origin: false,
             }, 

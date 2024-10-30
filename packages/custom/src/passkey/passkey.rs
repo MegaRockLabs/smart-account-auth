@@ -5,7 +5,7 @@ use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable, ensure
+    ensure, hashes::sha256, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, Verifiable
 };
 
 use sha2::{Digest, Sha256};
@@ -38,18 +38,34 @@ pub struct ClientData {
     // rename to type
     #[serde(rename = "type")]
     pub ty: String,
-    pub challenge: String,
+    pub challenge: Binary,
     pub origin: String,
     #[serde(rename = "crossOrigin")]
     pub cross_origin: bool
 }
 
 
+
+#[wasm_serde]
+pub struct PasskeyExtension {
+    /// webauthn Authenticator data
+    pub authenticator_data: Binary,
+    /// Client data containg challenge, origin and type
+    pub client_data: ClientData,
+    /// Optional user handle reserved for future use
+    pub user_handle: Option<String>,
+}
+
+
 #[wasm_serde]
 pub struct PasskeyCredential {
+    /// Passkey id
     pub id                   :       String,
+    /// Secp256r1 signature
     pub signature            :       Binary,
+    /// webauthn Authenticator data
     pub authenticator_data   :       Binary,
+    /// Client data containg challenge, origin and type
     pub client_data          :       ClientData,
     /// Optional user handle reserved for future use
     pub user_handle          :       Option<String>,
@@ -65,9 +81,22 @@ impl Verifiable for PasskeyCredential {
         self.id.as_bytes().to_vec()
     }
 
-    fn human_id(&self) -> String {
-        self.id.clone()
+    fn message(&self) -> Binary {
+        self.client_data.challenge.clone()
     }
+
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::Passkey,
+            hrp: None,
+            extension: Some(saa_common::to_json_binary(&PasskeyExtension {
+                authenticator_data: self.authenticator_data.clone(),
+                client_data: self.client_data.clone(),
+                user_handle: self.user_handle.clone()
+            }).unwrap())
+        }
+    }
+
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(self.authenticator_data.len() >= 37, AuthError::generic("Invalid authenticator data"));
@@ -77,17 +106,21 @@ impl Verifiable for PasskeyCredential {
         ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
         Ok(())
     }
-
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
+    
+    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
         let mut hasher = Sha256::new();
         hasher.update(&self.authenticator_data);
         hasher.update(&client_data_hash);
         let hash = hasher.finalize();
+        Ok(hash.to_vec())
+    }
 
+    #[cfg(feature = "native")]
+    fn verify(&self) -> Result<(), AuthError> {
+        self.validate()?;
         let res = secp256r1_verify(
-            &hash,
+            &self.message_digest()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
@@ -95,16 +128,12 @@ impl Verifiable for PasskeyCredential {
         Ok(())
     }
 
+
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
-        let mut hasher = Sha256::new();
-        hasher.update(&self.authenticator_data);
-        hasher.update(&client_data_hash);
-        let hash = hasher.finalize();
-
+        self.validate()?;
         let res = secp256r1_verify(
-            &hash,
+            &self.message_digest()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;

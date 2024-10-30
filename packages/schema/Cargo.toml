@@ -7,7 +7,7 @@ version = { workspace = true }
 license = { workspace = true }
 
 [dependencies]
-macros-proto        = { path = "../macros-proto", version = "0.12.1", package = "saa-macros-proto" }
+macros-proto        = { path = "../macros-proto", version = "0.13.0", package = "saa-macros-proto" }
 
 # Substrate
 scale               = { workspace = true, default-features = false, features = ["derive"], optional = true }

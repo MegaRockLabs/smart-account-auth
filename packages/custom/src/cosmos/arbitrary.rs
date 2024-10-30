@@ -1,8 +1,12 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
-use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, ToString, Verifiable};
-use super::utils::{preamble_msg_arb_036, pubkey_to_account};
+
+use saa_common::{
+    ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, ToString, Verifiable
+};
+
 use saa_schema::wasm_serde;
+use super::utils::preamble_msg_arb_036;
 
 
 #[wasm_serde]
@@ -20,6 +24,22 @@ impl Verifiable for CosmosArbitrary {
         self.pubkey.0.clone()
     }
 
+    fn human_id(&self) -> String {
+        self.pubkey.to_base64()
+    }
+
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::Secp256k1,
+            hrp: self.hrp.clone(),
+            extension: None,
+        }
+    }
+
+    fn message(&self) -> Binary {
+        self.message.clone()
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.to_string().len() > 0 && 
@@ -29,21 +49,25 @@ impl Verifiable for CosmosArbitrary {
         Ok(())
     }
 
+
+    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for the public key".to_string()));
+        Ok(sha256(&preamble_msg_arb_036(
+            pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
+            &self.message.to_string()
+        ).as_bytes()))
+    }
+
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        use saa_common::ensure;
-        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for native logic".to_string()));
-        let addr  = pubkey_to_account(&self.pubkey, &self.hrp.as_ref().unwrap())?;
-        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
-        let res = saa_common::crypto::secp256k1_verify(
-            &digest,
+        let success = saa_common::crypto::secp256k1_verify(
+            &self.message_digest()?,
             &self.signature,
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
-
 
 
     #[cfg(feature = "cosmwasm")]
@@ -53,20 +77,13 @@ impl Verifiable for CosmosArbitrary {
         _:  &Env,
         _:  &Option<MessageInfo>
     ) -> Result<Self, AuthError> {
-        use super::utils::pubkey_to_canonical;
-        let addr = match self.hrp.as_ref() {
-            Some(hrp) => pubkey_to_account(&self.pubkey, hrp)?,
-            None => api.addr_humanize(&pubkey_to_canonical(&self.pubkey))?.to_string()
-        };
-        let digest = sha256(&preamble_msg_arb_036(&addr, &self.message.to_string()).as_bytes());
-        let res = api.secp256k1_verify(
-            &digest,
+        let success = api.secp256k1_verify(
+            &self.message_digest()?,
             &self.signature,
             &self.pubkey
         )?;
-        if !res {
-            return Err(AuthError::Signature("Signature verification failed".to_string()));
-        }
+        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(self.clone())
     }
+
 }

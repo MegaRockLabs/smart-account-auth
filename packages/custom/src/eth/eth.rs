@@ -7,7 +7,9 @@ use saa_common::crypto::secp256k1_recover_pubkey;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    hashes::keccak256_fixed, AuthError, Binary, CredentialId, ToString, String, Verifiable 
+    hashes::keccak256_fixed, ensure,
+    CredentialInfo, CredentialName, CredentialId, 
+    AuthError, Binary, String, ToString, Verifiable 
 };
 
 use super::utils::{get_recovery_param, preamble_msg_eth};
@@ -31,6 +33,20 @@ impl Verifiable for EthPersonalSign {
         self.signer.clone()
     }
 
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::EthPersonalSign,
+            hrp: None,
+            extension: None,
+        }
+    }
+
+    fn message(&self) -> Binary {
+        self.message.clone()
+    }
+
+
+
     fn validate(&self) -> Result<(), AuthError> {
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
@@ -45,33 +61,35 @@ impl Verifiable for EthPersonalSign {
         Ok(())
     }
 
+
+    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        Ok(preamble_msg_eth(&self.message).into())
+    }
+
     #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
+        let signature = &self.signature.0;
         let key_data = secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
-            &self.signature.0[..64], 
-            get_recovery_param(self.signature.0[64])?
+            &signature[..64], 
+            get_recovery_param(signature[64])?
         )?;
-    
         let hash = keccak256_fixed(&key_data[1..]);
         let recovered = String::from_utf8(
             hash[12..].to_vec()
         ).map_err(|_| AuthError::RecoveryMismatch)?;
     
-        if self.signer == recovered {
-            Ok(())
-        } else {
-            Err(AuthError::RecoveryMismatch)
-        }
+        ensure!(self.signer == recovered, AuthError::RecoveryMismatch);
+        Ok(())
     }
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-
+        let signature = &self.signature.0;
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
-            &self.signature.0[..64], 
-            get_recovery_param(self.signature.0[64])?
+            &signature[..64], 
+            get_recovery_param(signature[64])?
         )?;
     
         let hash = keccak256_fixed(&key_data[1..]);
@@ -79,11 +97,19 @@ impl Verifiable for EthPersonalSign {
         let addr_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
         
-        if addr_bytes == hash[12..] {
-            Ok(self.clone())
+        ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
+        Ok(Self::clone(&self))
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    fn cosmos_address(&self, _: &dyn Api) -> Result<cosmwasm_std::Addr, AuthError> {
+        if saa_common::constants::IS_INJECTIVE {
+            saa_common::utils::pubkey_to_address(self.signer.as_bytes(), "inj")
         } else {
-            Err(AuthError::RecoveryMismatch)
+            Err(AuthError::generic("Can't generate a cosmos address from Eth credential"))
         }
     }
+    
+
 }
 

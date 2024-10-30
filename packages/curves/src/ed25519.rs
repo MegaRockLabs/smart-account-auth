@@ -1,7 +1,7 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
-use saa_common::{AuthError, Binary, CredentialId, ToString, Verifiable};
+use saa_common::{CredentialInfo, CredentialName, AuthError, Binary, CredentialId, ToString, Verifiable, ensure};
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
 use saa_common::hashes::sha256;
@@ -24,6 +24,19 @@ impl Verifiable for Ed25519 {
         self.pubkey.to_base64()
     }
 
+
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::Ed25519,
+            extension: None,
+            hrp: None
+        }
+    }
+
+    fn message(&self) -> Binary {
+        self.message.clone()
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         if !(self.signature.len() > 0 &&
             self.message.len() > 0 && 
@@ -35,28 +48,25 @@ impl Verifiable for Ed25519 {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let res = saa_common::crypto::ed25519_verify(
+        let success = saa_common::crypto::ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        if !res {
-            return Err(AuthError::Signature("Signature verification failed".to_string()));
-        }
+        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 
 
     #[cfg(feature = "cosmwasm")]
     fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
-        let res = api.ed25519_verify(
+        let success = api.ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        if !res {
-            return Err(AuthError::Signature("Signature verification failed".to_string()));
-        }
+        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(self.clone())
     }
+
 }

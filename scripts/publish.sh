@@ -1,4 +1,4 @@
-%cd packages/macros-proto && cargo publish && cd ../..
+cd packages/macros-proto && cargo publish && cd ../..
 sleep 10
 cd packages/schema && cargo publish && cd ../..
 sleep 10

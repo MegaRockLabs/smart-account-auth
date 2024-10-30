@@ -64,4 +64,6 @@ native = [
     "saa-common/native",
     "saa-curves/native",
 ]
-
+injective = [
+    "saa-common/injective",
+]

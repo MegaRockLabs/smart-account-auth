@@ -1,13 +1,8 @@
+use saa_schema::wasm_serde;
+use saa_common::{CredentialInfo, CredentialName, AuthError, Binary, CredentialId, ToString, Verifiable};
+
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
-
-use saa_schema::wasm_serde;
-
-use saa_common::{
-    ToString, Binary,
-    AuthError, Verifiable, CredentialId,
-    
-};
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
 use saa_common::{ensure, hashes::sha256};
@@ -32,6 +27,19 @@ impl Verifiable for Secp256k1 {
 
     fn human_id(&self) -> String {
         self.pubkey.to_base64()
+    }
+
+
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::Secp256k1,
+            hrp: self.hrp.clone(),
+            extension: None,
+        }
+    }
+
+    fn message(&self) -> Binary {
+        self.message.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

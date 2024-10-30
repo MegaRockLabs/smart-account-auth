@@ -34,9 +34,14 @@ pub trait CredentialsWrapper : Clone + Verifiable {
 
         } else {
             match creds.len() {
+                // no ids at all
                 0 => return vec![],
+                // only primary id
                 1 => return vec![],
-                _ => creds.iter().skip(1).map(|c| c.clone()).collect()
+                // skop primary and take the rest
+                _ => creds.iter().skip(1).map(
+                    |c| c.clone()
+                ).collect()
             }
         }
     }
@@ -45,25 +50,6 @@ pub trait CredentialsWrapper : Clone + Verifiable {
         self.primary().id()
     }
 
-    fn secondary_ids(&self) -> Vec<CredentialId> {
-        let creds = self.credentials();
-
-        if self.primary_index().is_some() {
-            creds
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| *i != self.primary_index().unwrap() as usize)
-                .map(|(_, c)| c.id())
-                .collect()
-        } else {
-            match creds.len() {
-                0 => return vec![],
-                1 => return vec![],
-                _ => creds.iter().skip(1).map(|c| c.id()).collect()
-                
-            }
-        }
-    }
 
     fn ids(&self) -> Vec<CredentialId> {
         self.credentials().iter().map(|c| c.id()).collect()

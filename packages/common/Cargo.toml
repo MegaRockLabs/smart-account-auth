@@ -22,22 +22,23 @@ cosmwasm-crypto     = { version = "1.5.5", optional = true, default-features = f
 ink                 = { version = "5.0.0", optional = true, default-features = false }
 
 cosmwasm-std        = { workspace = true, optional = true }
+cw-storage-plus     = { version = "0.16.0", optional = true }
+
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
-schemars            = { workspace = true }
+
 sha2                = { workspace = true } 
-
 serde               = { workspace = true }
+schemars            = { workspace = true }
 serde-json-wasm     = { version = "1.0.1", default-features = false }
-
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
 
 
 [features]
 default     = [
-    "std"
+    "std", "storage"
 ]
 solana      = [
     "dep:borsh", 
@@ -61,3 +62,9 @@ std         = [
 native     = [
     "dep:cosmwasm-crypto",
 ]
+storage    = [
+    "dep:cw-storage-plus",
+]
+replay     = []
+cosmos     = []
+injective  = []

@@ -4,7 +4,7 @@ use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    AuthError, hashes::Identity256, Binary, CredentialId, ToString, Verifiable
+    hashes::Identity256, CredentialInfo, CredentialName, AuthError, Binary, CredentialId, ToString, Verifiable
 };
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
@@ -79,6 +79,22 @@ impl Verifiable for Secp256r1 {
 
     fn id(&self) -> CredentialId {
         self.pubkey.0.clone()
+    }
+
+    fn human_id(&self) -> String {
+        self.pubkey.to_base64()
+    }
+
+    fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: CredentialName::Secp256r1,
+            extension: None,
+            hrp: None
+        }
+    }
+
+    fn message(&self) -> Binary {
+        self.message.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
