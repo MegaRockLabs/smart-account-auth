@@ -1,4 +1,4 @@
 mod cosmwasm;
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(feature = "cosmwasm")]
 pub use cosmwasm::*;

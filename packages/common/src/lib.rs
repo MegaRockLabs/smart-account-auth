@@ -5,13 +5,15 @@ mod binary;
 mod errors;
 mod identity;
 pub mod utils;
-pub mod storage;
 pub mod messages;
 pub mod hashes;
 pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 use saa_schema::wasm_serde;
 use schemars::JsonSchema;
+
+#[cfg(feature = "storage")]
+pub mod storage;
 
 
 #[cfg(feature = "std")]

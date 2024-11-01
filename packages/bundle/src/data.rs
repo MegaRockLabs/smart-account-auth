@@ -14,6 +14,7 @@ use saa_common::substrate::{InkEnvironment, InkApi};
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
 use saa_common::{storage::*, messages::*};
+use schemars::JsonSchema;
 
 
 use crate::{Credential, CredentialsWrapper};
@@ -42,7 +43,7 @@ impl Default for CredentialData {
 
 
 #[wasm_serde]
-pub enum UpdateOperation<A: Verifiable = CredentialData> {
+pub enum UpdateOperation<A: JsonSchema = CredentialData> {
     Add(A),
     Remove(A),
 }
