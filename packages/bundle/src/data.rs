@@ -173,10 +173,7 @@ impl CredentialData {
         match op {
             UpdateOperation::Add(data) => {
                 for cred in data.credentials() {
-                    CREDENTIAL_INFOS.save(storage, cred.id(), &cred.info())?;
-                    if data.with_caller.unwrap_or(false) && info.is_some() {
-                        CALLER.save(storage, &Some(info.as_ref().unwrap().sender.to_string()))?;
-                    }
+                    cred.save_cosmwasm::<D>(api, storage, env, info)?;
                     if data.primary_index.is_some() {
                         let primary = data.primary();
                         if let Credential::Caller(_) = primary {} else {

@@ -216,9 +216,6 @@ pub trait Verifiable  {
         where Self : Clone, D: JsonSchema + DeserializeOwned
     {
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
-        if self.info().name != CredentialName::Caller {
-            VERIFYING_CRED_ID.save(storage, &self.id())?;
-        }
 
         #[cfg(feature = "replay")]
         if true {
