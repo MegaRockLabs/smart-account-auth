@@ -42,7 +42,7 @@ impl Default for CredentialData {
 
 
 #[wasm_serde]
-pub enum UpdateOperation<A: serde::Serialize = CredentialData> {
+pub enum UpdateOperation<A = CredentialData> {
     Add(A),
     Remove(A),
 }

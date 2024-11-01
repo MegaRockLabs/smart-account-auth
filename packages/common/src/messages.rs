@@ -21,7 +21,7 @@ pub struct AuthPayload<E : Serialize = Binary> {
 
 impl<E : Serialize> AuthPayload<E> {
 
-    fn validate(&self) -> Result<(), AuthError> {
+    pub fn validate(&self) -> Result<(), AuthError> {
         let error : &str = "Only one of the 'address' or 'hrp' can be provided";
 
         if self.hrp.is_some() {
@@ -33,7 +33,7 @@ impl<E : Serialize> AuthPayload<E> {
         if self.address.is_some() {
             ensure!(self.hrp.is_none(), AuthError::generic(error));
             let addr = self.address.clone().unwrap();
-            ensure!(addr.len() > 3 && addr.contains("1") , AuthError::generic("Invalid address"));
+            ensure!(addr.len() > 3, AuthError::generic("Invalid address"));
         }
         Ok(())
     }
