@@ -1,11 +1,15 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use saa_common::{
-    Verifiable, AuthError, Binary, hashes, utils, messages,
-    CredentialId, CredentialName, CredentialInfo
+    Verifiable, AuthError, Binary, 
+    CredentialId, CredentialName, CredentialInfo,
+    hashes, utils, messages, 
 };
+
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+pub use saa_common::storage;
 pub use saa_custom::caller::Caller;
-pub use saa_schema::*;
+pub use saa_schema::wasm_serde;
 
 mod data;
 mod wrapper;

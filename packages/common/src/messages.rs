@@ -4,7 +4,7 @@ use saa_schema::wasm_serde;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::{ensure, storage, AuthError, Binary, CredentialId, CredentialName};
+use crate::{ensure, AuthError, Binary, CredentialId, CredentialName};
 
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{CustomMsg, Storage, Env};
@@ -111,7 +111,7 @@ impl<M : JsonSchema> SignedData<M> {
         ensure!(self.data.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
         ensure!(self.data.contract_address == env.contract.address, AuthError::ContractMismatch);
         ensure!(self.data.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        ensure!(!storage::NONCES.has(store, &self.data.nonce), AuthError::DifferentNonce);
+        ensure!(!crate::storage::NONCES.has(store, &self.data.nonce), AuthError::DifferentNonce);
         Ok(())
     }
 }

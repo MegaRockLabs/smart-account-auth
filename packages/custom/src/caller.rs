@@ -1,9 +1,7 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo, Addr, ensure};
-#[cfg(feature = "storage")]
-use saa_common::storage::*;
-#[cfg(feature = "storage")]
-use saa_common::cosmwasm::Storage;
+use saa_common::cosmwasm::{Api, Env, MessageInfo, Addr};
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+use saa_common::{storage::*, cosmwasm::Storage, ensure};
 
 use saa_common::{AuthError, Binary, ToString, Verifiable, CredentialId, CredentialInfo, CredentialName};
 use saa_schema::wasm_serde;

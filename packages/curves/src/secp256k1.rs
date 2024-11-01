@@ -1,7 +1,7 @@
 use saa_common::{
     CredentialInfo, CredentialName,CredentialId,  
     AuthError, Binary, ToString, Verifiable,
-    ensure, hashes::sha256
+    ensure
 };
 
 use saa_schema::wasm_serde;
@@ -57,7 +57,7 @@ impl Verifiable for Secp256k1 {
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         let res = saa_common::crypto::secp256k1_verify(
-            &sha256(&self.message), 
+            &saa_common::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
@@ -69,7 +69,7 @@ impl Verifiable for Secp256k1 {
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let res = api.secp256k1_verify(
-            &sha256(&self.message), 
+            &saa_common::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;

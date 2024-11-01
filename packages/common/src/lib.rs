@@ -12,7 +12,6 @@ pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 use saa_schema::wasm_serde;
 use schemars::JsonSchema;
-use serde::de::DeserializeOwned;
 
 
 #[cfg(feature = "std")]
@@ -67,7 +66,7 @@ pub mod substrate {
 use cosmwasm::*;
 #[cfg(feature = "substrate")]
 use substrate::*;
-#[cfg(feature = "storage")]
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
 use crate::{storage::*, messages::*};
 
 
@@ -167,7 +166,7 @@ pub trait Verifiable  {
         env     :  &Env, 
         _       :  &Option<MessageInfo>
     ) -> Result<String, AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: JsonSchema + serde::de::DeserializeOwned
     {   
         ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
         self.verify_cosmwasm(api, env)?;
@@ -195,7 +194,7 @@ pub trait Verifiable  {
         env     :  &Env, 
         info    :  &Option<MessageInfo>
     ) -> Result<(), AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: JsonSchema + serde::de::DeserializeOwned
     {
         let nonce = self.assert_query_cosmwasm::<D>(api, storage, env, info)?;
         if !nonce.is_empty() {
@@ -213,7 +212,8 @@ pub trait Verifiable  {
         env: &Env, 
         info: &Option<MessageInfo>
     ) -> Result<Self, AuthError> 
-        where Self : Clone, D: JsonSchema + DeserializeOwned
+        where Self : Clone, 
+            D: JsonSchema + serde::de::DeserializeOwned
     {
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
 
