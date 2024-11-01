@@ -42,9 +42,9 @@ impl Default for CredentialData {
 
 
 #[wasm_serde]
-pub enum UpdateOperation {
-    Add(CredentialData),
-    Remove(CredentialData),
+pub enum UpdateOperation<A: Verifiable = CredentialData> {
+    Add(A),
+    Remove(A),
 }
 
 
