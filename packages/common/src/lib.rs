@@ -42,7 +42,7 @@ pub mod crypto {
 #[cfg(feature = "cosmwasm")]
 pub mod cosmwasm {
     pub use cosmwasm_std::{
-        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary, Storage,
+        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary, Storage, Order,
         from_json, to_json_binary, ensure, ensure_eq, ensure_ne
     };
 }
@@ -168,14 +168,14 @@ pub trait Verifiable  {
         env     :  &Env, 
         _       :  &Option<MessageInfo>
     ) -> Result<String, AuthError> 
-        where D: JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {   
         ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
         self.verify_cosmwasm(api, env)?;
 
         #[cfg(feature = "replay")]
         if true {
-            let signed : SignedData<D> = from_json(&self.message()).unwrap(); 
+            let signed : SignedData<D> = from_json(&self.message())?; 
             signed.validate_cosmwasm(storage, env)?;
             let nonce = signed.data.nonce.clone();
             ensure!(!NONCES.has(storage, &nonce), AuthError::NonceUsed);
@@ -196,7 +196,7 @@ pub trait Verifiable  {
         env     :  &Env, 
         info    :  &Option<MessageInfo>
     ) -> Result<(), AuthError> 
-        where D: JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         let nonce = self.assert_query_cosmwasm::<D>(api, storage, env, info)?;
         if !nonce.is_empty() {
@@ -215,7 +215,7 @@ pub trait Verifiable  {
         info: &Option<MessageInfo>
     ) -> Result<Self, AuthError> 
         where Self : Clone, 
-            D: JsonSchema + serde::de::DeserializeOwned
+            D: serde::Serialize + serde::de::DeserializeOwned
     {
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
 

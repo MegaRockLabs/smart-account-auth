@@ -87,6 +87,12 @@ impl From<bech32::primitives::hrp::Error> for AuthError {
     }
 }
 
+impl From<bech32::EncodeError> for AuthError {
+    fn from(err: bech32::EncodeError) -> Self {
+        Self::Crypto(err.to_string())
+    }
+}
+
 #[cfg(feature = "std")]
 impl From<&FromUtf8Error> for AuthError {
     fn from(err: &FromUtf8Error) -> Self {

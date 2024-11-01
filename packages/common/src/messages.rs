@@ -70,27 +70,9 @@ impl<E : Serialize> AuthPayload<E> {
 }
 
 
-#[wasm_serde]
-pub struct IndexedAuthPayload<E : Serialize = Binary> {
-    pub payload: AuthPayload<E>,
-    pub index: u8,
-}
-
-impl<E : Serialize> IndexedAuthPayload<E> {
-    pub fn validate(&self) -> Result<(), AuthError> {
-        self.payload.validate()
-    }
-
-    #[cfg(feature = "cosmwasm")]
-    pub fn validate_cosmwasm(&self, store: &dyn Storage) -> Result<(), AuthError> {
-        self.payload.validate_cosmwasm(store)
-    }
-}
-
-
 
 #[wasm_serde]
-pub struct MsgDataToSign<M: JsonSchema> {
+pub struct MsgDataToSign<M: Serialize> {
     pub chain_id: String,
     pub contract_address: String,
     pub messages: Vec<M>,
@@ -99,14 +81,14 @@ pub struct MsgDataToSign<M: JsonSchema> {
 
 
 #[wasm_serde]
-pub struct SignedData<M : JsonSchema> {
+pub struct SignedData<M : Serialize> {
     pub data: MsgDataToSign<M>,
     pub payload: Option<AuthPayload>,
     pub signature: Binary,
 }
 
 #[cfg(all(feature = "cosmwasm", feature = "replay"))]
-impl<M : JsonSchema> SignedData<M> {
+impl<M : Serialize> SignedData<M> {
     pub fn validate_cosmwasm(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
         ensure!(self.data.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
         ensure!(self.data.contract_address == env.contract.address, AuthError::ContractMismatch);

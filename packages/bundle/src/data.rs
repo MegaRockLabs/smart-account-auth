@@ -14,7 +14,6 @@ use saa_common::substrate::{InkEnvironment, InkApi};
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
 use saa_common::{storage::*, messages::*};
-use schemars::JsonSchema;
 
 
 use crate::{Credential, CredentialsWrapper};
@@ -43,7 +42,7 @@ impl Default for CredentialData {
 
 
 #[wasm_serde]
-pub enum UpdateOperation<A: JsonSchema = CredentialData> {
+pub enum UpdateOperation<A: serde::Serialize = CredentialData> {
     Add(A),
     Remove(A),
 }
@@ -123,7 +122,7 @@ impl CredentialData {
         storage: &dyn Storage, 
         env: &Env,
     ) -> Result<String, AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         let first = self.credentials.first().unwrap();
         let signed : SignedData<D> = saa_common::from_json(&first.message())?;
@@ -153,7 +152,7 @@ impl CredentialData {
         env: &Env, 
         info: &Option<MessageInfo>
     ) -> Result<(), AuthError>
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         let new = match &op {
             UpdateOperation::Add(data) => data,
@@ -324,7 +323,7 @@ impl Verifiable for CredentialData {
         env: &Env,
         info :  &Option<MessageInfo>
     ) -> Result<String, AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         if info.is_some() {
             let msg_info = info.as_ref().unwrap();
@@ -365,7 +364,7 @@ impl Verifiable for CredentialData {
         env: &Env, 
         info: &Option<MessageInfo>
     ) -> Result<Self, AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         let data = if self.with_caller.unwrap_or(false) {
             ensure!(info.is_some(), AuthError::generic("MessageInfo must be passed to use Caller"));

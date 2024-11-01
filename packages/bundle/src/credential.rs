@@ -20,6 +20,9 @@ use saa_custom::cosmos::CosmosArbitrary;
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm;
 
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+use saa_common::{storage::*, cosmwasm::{Storage, Order}, messages::*};
+
 
 #[wasm_serde]
 pub enum Credential {
@@ -218,13 +221,11 @@ impl Verifiable for Credential {
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
 pub fn load_credential(
-    storage:  &dyn saa_common::cosmwasm::Storage,
+    storage:  &dyn Storage,
     message:  Binary,
     signature: Binary,
     payload:  Option<AuthPayload>,
 ) -> Result<Credential, AuthError> {
-    use saa_common::storage::{CREDENTIAL_INFOS, VERIFYING_CRED_ID};
-
     let initial_id = VERIFYING_CRED_ID.load(storage)?;
 
     let id = match payload.clone() {
@@ -245,6 +246,43 @@ pub fn load_credential(
     let info = CREDENTIAL_INFOS.load(storage, initial_id.clone())?;
     construct_credential(id, info, message, signature, payload)
 }
+
+
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+pub fn get_all_credentials(
+    storage:  &dyn Storage,
+) -> Result<AccountCredentials, AuthError> {
+    let credentials = CREDENTIAL_INFOS
+        .range(storage, None, None, Order::Ascending)
+        .map(|item| {
+            let (id, info) = item?;
+            let human_id = match info.name == CredentialName::Passkey {
+                false => String::from_utf8(id.clone()).unwrap(),
+                true => Binary(id.clone()).to_base64(),
+            };
+            Ok(CredentialFullInfo {
+                id,
+                human_id,
+                name: info.name,
+                hrp: info.hrp,
+                extension: info.extension,
+            })
+        })
+        .collect::<Result<Vec<CredentialFullInfo>, AuthError>>()?;
+
+    let verifying_id = VERIFYING_CRED_ID.load(storage)?;
+    let caller = CALLER.load(storage).unwrap_or(None);
+
+    Ok(AccountCredentials {
+        credentials,
+        native_caller: caller.is_some(),
+        verifying_human_id: Binary(verifying_id.clone()).to_base64(),
+        verifying_id: verifying_id,
+    })
+
+}
+
+
 
 
 
@@ -303,7 +341,7 @@ pub fn construct_credential(
                 payload.extension.is_some(),
                 AuthError::generic("Extension must be provided for 'passkey'")
             );
-            let payload_ext : PasskeyPaylod = from_json(payload.extension.as_ref().unwrap())?;
+            let payload_ext : PasskeyPayload = from_json(payload.extension.as_ref().unwrap())?;
             let stored_ext : PasskeyStore = from_json(info.extension.as_ref().unwrap())?;
             
             ensure!(

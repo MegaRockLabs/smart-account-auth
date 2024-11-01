@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use saa_common::{
-    Verifiable, AuthError, Binary, 
+    Verifiable, AuthError, Binary, to_json_binary, from_json,
     CredentialId, CredentialName, CredentialInfo,
     hashes, utils, messages, 
 };

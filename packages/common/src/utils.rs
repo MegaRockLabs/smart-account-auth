@@ -4,7 +4,7 @@ use bech32::{hrp::Hrp, Bech32};
 
 pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> {
     let base32_addr = ripemd160(&sha256(pubkey));
-    let account: String = bech32::encode::<Bech32>(Hrp::parse(hrp)?, &base32_addr).unwrap();
+    let account: String = bech32::encode::<Bech32>(Hrp::parse(hrp)?, &base32_addr)?;
     Ok(account)
 }
 

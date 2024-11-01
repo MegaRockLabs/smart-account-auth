@@ -93,8 +93,9 @@ impl Verifiable for Caller {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(& self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
-        self.cosmos_address(api)?;
+    fn verify_cosmwasm(& self, _: &dyn Api, _: &Env) -> Result<(), AuthError> {
+        self.validate()?;
+        String::from_utf8(self.id.clone())?;
         Ok(())
     }
 
@@ -107,7 +108,7 @@ impl Verifiable for Caller {
         _       : &Env,
         info    : &Option<MessageInfo>
     ) -> Result<String, AuthError> 
-        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+        where D: serde::Serialize + serde::de::DeserializeOwned
     {
         ensure!(info.is_some(), AuthError::generic("MessageInfo must be passed to verify Caller"));
 
@@ -135,7 +136,7 @@ impl Verifiable for Caller {
         _       : &Env, 
         info    : &Option<MessageInfo>
     ) -> Result<Self, AuthError> 
-        where Self : Clone, D: schemars::JsonSchema + serde::de::DeserializeOwned 
+        where Self : Clone, D: serde::Serialize + serde::de::DeserializeOwned 
     {
         ensure!(info.is_some(), AuthError::generic("MessageInfo must be passed for the Caller"));
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;

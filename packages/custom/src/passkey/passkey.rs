@@ -47,7 +47,7 @@ pub struct ClientData {
 
 
 #[wasm_serde]
-pub struct PasskeyPaylod {
+pub struct PasskeyPayload {
     /// webauthn Authenticator data
     pub authenticator_data: Binary,
     /// Client data containg challenge, origin and type
@@ -105,9 +105,8 @@ impl Verifiable for PasskeyCredential {
         CredentialInfo {
             name: CredentialName::Passkey,
             hrp: None,
-            extension: Some(saa_common::to_json_binary(&PasskeyPaylod {
-                authenticator_data: self.authenticator_data.clone(),
-                client_data: self.client_data.clone(),
+            extension: Some(saa_common::to_json_binary(&PasskeyStore {
+                origin:      self.client_data.origin.clone(),
                 pubkey:      self.pubkey.clone(),
                 user_handle: self.user_handle.clone()
             }).unwrap())
@@ -135,7 +134,6 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        self.validate()?;
         let res = secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
@@ -148,7 +146,6 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self, _: &dyn Api, _: &Env) -> Result<(), AuthError> {
-        self.validate()?;
         let res = secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
@@ -157,5 +154,6 @@ impl Verifiable for PasskeyCredential {
         ensure!(res, AuthError::generic("Signature verification failed"));
         Ok(())
     }
+
 }
 
