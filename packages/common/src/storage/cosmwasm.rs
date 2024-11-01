@@ -10,5 +10,9 @@ pub static VERIFYING_CRED_ID : Item<CredentialId> = Item::new("saa_verifying_id"
 pub static CREDENTIAL_INFOS: Map<CredentialId, CredentialInfo> = Map::new("saa_credentials");
 
 
-/// Storage of used nonces to prevent replay attacks.
-pub static NONCES : Map<String, bool> = Map::new("saa_nonces");
+/// An EOA address that is authorized to actions withoit any signature
+pub static CALLER : Item<Option<String>> = Item::new("saa_with_caller");
+
+/// Storage of used nonces  to prevent replay attacks. &str to boolean
+#[cfg(feature = "replay")]
+pub static NONCES : Map<&str, bool> = Map::new("saa_nonces");

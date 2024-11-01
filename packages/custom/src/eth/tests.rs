@@ -35,6 +35,6 @@ mod tests {
         assert!(cred.verify().is_ok());
 
         #[cfg(feature = "cosmwasm")]
-        assert!(cred.verified_cosmwasm(deps.as_ref().api, &env, &None).is_ok())
+        assert!(cred.verify_cosmwasm(deps.as_ref().api, &env).is_ok())
     }
 }

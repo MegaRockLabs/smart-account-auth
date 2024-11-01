@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env, MessageInfo};
+use cosmwasm_std::{Api, Env};
 
 use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
@@ -47,14 +47,30 @@ pub struct ClientData {
 
 
 #[wasm_serde]
-pub struct PasskeyExtension {
+pub struct PasskeyPaylod {
     /// webauthn Authenticator data
     pub authenticator_data: Binary,
     /// Client data containg challenge, origin and type
     pub client_data: ClientData,
+    /// Public key is essential for verification but can be supplied on the contract side
+    /// and omitted by client
+    pub pubkey: Option<Binary>,
     /// Optional user handle reserved for future use
     pub user_handle: Option<String>,
 }
+
+
+#[wasm_serde]
+pub struct PasskeyStore {
+    /// Origin of the client where the passkey was created
+    pub origin: String,
+    /// Secpk256r1 Public key used for verification 
+    pub pubkey: Option<Binary>,
+    /// Optional user handle reserved for future use
+    pub user_handle: Option<String>,
+}
+
+
 
 
 #[wasm_serde]
@@ -89,9 +105,10 @@ impl Verifiable for PasskeyCredential {
         CredentialInfo {
             name: CredentialName::Passkey,
             hrp: None,
-            extension: Some(saa_common::to_json_binary(&PasskeyExtension {
+            extension: Some(saa_common::to_json_binary(&PasskeyPaylod {
                 authenticator_data: self.authenticator_data.clone(),
                 client_data: self.client_data.clone(),
+                pubkey:      self.pubkey.clone(),
                 user_handle: self.user_handle.clone()
             }).unwrap())
         }
@@ -130,7 +147,7 @@ impl Verifiable for PasskeyCredential {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verify_cosmwasm(&self, _: &dyn Api, _: &Env) -> Result<(), AuthError> {
         self.validate()?;
         let res = secp256r1_verify(
             &self.message_digest()?,
@@ -138,7 +155,7 @@ impl Verifiable for PasskeyCredential {
             self.pubkey.as_ref().unwrap()
         )?;
         ensure!(res, AuthError::generic("Signature verification failed"));
-        Ok(self.clone())
+        Ok(())
     }
 }
 

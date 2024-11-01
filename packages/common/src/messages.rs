@@ -54,7 +54,7 @@ impl<E : Serialize> AuthPayload<E> {
                 store, self.credential_id.clone().unwrap()
             );
     
-            ensure!(info_res.is_ok(), AuthError::generic("Credential not found"));
+            ensure!(info_res.is_ok(), AuthError::NotFound);
     
             if self.hrp.is_some() {
                 let name = info_res.unwrap().name;
@@ -111,7 +111,7 @@ impl<M : JsonSchema> SignedData<M> {
         ensure!(self.data.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
         ensure!(self.data.contract_address == env.contract.address, AuthError::ContractMismatch);
         ensure!(self.data.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        ensure!(!storage::NONCES.has(store, self.data.nonce.clone()), AuthError::DifferentNonce);
+        ensure!(!storage::NONCES.has(store, &self.data.nonce), AuthError::DifferentNonce);
         Ok(())
     }
 }
@@ -119,7 +119,7 @@ impl<M : JsonSchema> SignedData<M> {
 
 
 #[wasm_serde]
-pub struct CredentialFullInfo<E : Serialize + Clone = Binary> {
+pub struct CredentialFullInfo<E : JsonSchema = Binary> {
     pub id: CredentialId,
     pub human_id: String,
     pub name: CredentialName,
@@ -129,7 +129,7 @@ pub struct CredentialFullInfo<E : Serialize + Clone = Binary> {
 
 
 #[wasm_serde]
-pub struct AccountCredentials<E : Serialize + Clone = Binary> {
+pub struct AccountCredentials<E : JsonSchema = Binary> {
     pub credentials: Vec<CredentialFullInfo<E>>,
     pub verifying_id: CredentialId,
     pub verifying_human_id: String,

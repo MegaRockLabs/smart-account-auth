@@ -49,6 +49,9 @@ pub enum AuthError {
     #[error("The provided nonce has already been used")]
     NonceUsed,
 
+    #[error("The given credential was not found on this account")]
+    NotFound, 
+
     #[error("At least one of the credential must be usable for verifications")]
     NoVerifying,
 

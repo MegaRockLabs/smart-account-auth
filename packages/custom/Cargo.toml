@@ -67,3 +67,10 @@ native = [
 injective = [
     "saa-common/injective",
 ]
+replay = [
+    "storage",
+    "saa-common/replay"
+]
+storage = [
+    "saa-common/storage"
+]

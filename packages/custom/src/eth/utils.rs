@@ -1,4 +1,4 @@
-use saa_common::{hashes::keccak256_fixed, AuthError, vec, format};
+use saa_common::{hashes::keccak256, AuthError, vec, format};
 
 
 pub fn preamble_msg_eth(msg: &[u8]) -> [u8; 32] {
@@ -8,7 +8,7 @@ pub fn preamble_msg_eth(msg: &[u8]) -> [u8; 32] {
     let len_str = format!("{}", msg.len());
     bytes.extend_from_slice(len_str.as_bytes());
     bytes.extend_from_slice(msg);
-    keccak256_fixed(&bytes)
+    keccak256(&bytes)
 }
 
 

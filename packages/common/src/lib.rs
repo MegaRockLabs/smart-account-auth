@@ -11,7 +11,8 @@ pub mod hashes;
 pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 use saa_schema::wasm_serde;
-use serde::Serialize;
+use schemars::JsonSchema;
+use serde::de::DeserializeOwned;
 
 
 #[cfg(feature = "std")]
@@ -66,7 +67,8 @@ pub mod substrate {
 use cosmwasm::*;
 #[cfg(feature = "substrate")]
 use substrate::*;
-
+#[cfg(feature = "storage")]
+use crate::{storage::*, messages::*};
 
 
 #[macro_export]
@@ -81,9 +83,7 @@ macro_rules! ensure {
 
 
 
-pub trait Verifiable   {
-
-    fn validate(&self) -> Result<(), AuthError>;
+pub trait Verifiable  {
 
     fn id(&self) -> CredentialId;
 
@@ -112,45 +112,23 @@ pub trait Verifiable   {
     }
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "replay"))]
-    fn validate_signed_data(&self, storage: &dyn cosmwasm_std::Storage, env: &cosmwasm_std::Env) -> Result<String, AuthError> {
-        self.validate()?;
-        let signed : messages::SignedData<cosmwasm_std::Empty> = from_json(&self.message()).unwrap(); 
-        signed.validate_cosmwasm(storage, env)?;
-        Ok(signed.data.nonce)
-    }
+    fn validate(&self) -> Result<(), AuthError>;
 
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError>;
 
 
-
     #[cfg(feature = "substrate")]
-    fn verified_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment + Clone>) -> Result<Self, AuthError> 
-        where Self: Clone
-    {
+    fn verify_ink<'a>(&self,  _ : InkApi<'a, impl InkEnvironment>) -> Result<(), AuthError> {
         #[cfg(feature = "native")]
         if true {
             self.verify()?;
-            return Ok(self.clone());
+            return Ok(());
         } 
         Err(AuthError::generic("Not implemented"))
     }
 
-    
-    #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(& self, _:  &dyn Api, _:  &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> 
-        where Self: Clone
-    {   
-        #[cfg(feature = "native")]
-        if true {
-            self.verify()?;
-            return Ok(self.clone());
-        } 
-        
-        Err(AuthError::generic("Not Implemented"))
-    }
 
 
     #[cfg(feature = "cosmwasm")]
@@ -166,29 +144,93 @@ pub trait Verifiable   {
     }
 
 
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(
+        &self, 
+        _:  &dyn Api, 
+        _:  &Env, 
+    ) -> Result<(), AuthError> {   
+        #[cfg(feature = "native")]
+        if true {
+            self.verify()?;
+            return Ok(());
+        } 
+        Err(AuthError::generic("Not Implemented"))
+    }
+
+
     #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    fn verify_and_save(
+    fn assert_query_cosmwasm<D>(
+        &self, 
+        api     :  &dyn Api, 
+        storage :  &dyn Storage,
+        env     :  &Env, 
+        _       :  &Option<MessageInfo>
+    ) -> Result<String, AuthError> 
+        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+    {   
+        ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
+        self.verify_cosmwasm(api, env)?;
+
+        #[cfg(feature = "replay")]
+        if true {
+            let signed : SignedData<D> = from_json(&self.message()).unwrap(); 
+            signed.validate_cosmwasm(storage, env)?;
+            let nonce = signed.data.nonce.clone();
+            ensure!(!NONCES.has(storage, &nonce), AuthError::NonceUsed);
+            return Ok(nonce)
+        }
+        Ok(String::default())
+    }
+
+
+    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    fn assert_execute_cosmwasm<D>(
+        &self, 
+        api     :  &dyn Api,
+        #[cfg(feature = "replay")]
+        storage :  &mut dyn Storage,
+        #[cfg(not(feature = "replay"))]
+        storage :  &dyn Storage,
+        env     :  &Env, 
+        info    :  &Option<MessageInfo>
+    ) -> Result<(), AuthError> 
+        where D: schemars::JsonSchema + serde::de::DeserializeOwned
+    {
+        let nonce = self.assert_query_cosmwasm::<D>(api, storage, env, info)?;
+        if !nonce.is_empty() {
+            NONCES.save(storage, &nonce, &true)?;
+        }
+        Ok(())
+    }
+
+
+    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    fn save_cosmwasm<D>(
         &self, 
         api: &dyn Api, 
         storage: &mut dyn Storage,
         env: &Env, 
         info: &Option<MessageInfo>
     ) -> Result<Self, AuthError> 
-        where Self: Clone
+        where Self : Clone, D: JsonSchema + DeserializeOwned
     {
-        use storage::*;
-        let verified = self.verified_cosmwasm(api, env, info)?;
+        CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
+        if self.info().name != CredentialName::Caller {
+            VERIFYING_CRED_ID.save(storage, &self.id())?;
+        }
+
         #[cfg(feature = "replay")]
         if true {
-            let nonce = self.validate_signed_data(storage, env)?;
-            NONCES.save(storage, nonce, &true)?;
-        }
-        if verified.info().name != CredentialName::Caller {
-            VERIFYING_CRED_ID.save(storage, &verified.id())?;
-        }
-        CREDENTIAL_INFOS.save(storage, verified.id(), &verified.info())?;
-        Ok(verified)
+            self.assert_execute_cosmwasm::<D>(api, storage, env, info)?;
+            return Ok(self.clone());
+        } 
+
+        self.verify_cosmwasm(api, env)?;
+        Ok(self.clone())
     }
+
+
 
 }
 
@@ -209,9 +251,11 @@ pub enum CredentialName {
 
 
 #[wasm_serde]
-pub struct CredentialInfo<E : Serialize + Clone = Binary> {
+pub struct CredentialInfo<E : JsonSchema = Binary> {
     /// name of the used credential
     pub name: CredentialName,
+    /// human readable prefix to encode from a public key
     pub hrp: Option<String>,
+    /// extension data
     pub extension: Option<E>,
 }

@@ -13,7 +13,7 @@ mod credential;
 
 pub use credential::*;
 pub use wrapper::CredentialsWrapper;
-pub use data::CredentialData;
+pub use data::{CredentialData, UpdateOperation};
 
 #[cfg(feature = "curves")]
 pub use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};

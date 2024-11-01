@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env, MessageInfo, Addr};
+use cosmwasm_std::{Api, Env, Addr};
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;
@@ -7,7 +7,7 @@ use saa_common::crypto::secp256k1_recover_pubkey;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    hashes::keccak256_fixed, ensure,
+    hashes::keccak256, ensure,
     CredentialInfo, CredentialName, CredentialId, 
     AuthError, Binary, String, ToString, Verifiable 
 };
@@ -74,7 +74,7 @@ impl Verifiable for EthPersonalSign {
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
-        let hash = keccak256_fixed(&key_data[1..]);
+        let hash = keccak256(&key_data[1..]);
         let recovered = String::from_utf8(
             hash[12..].to_vec()
         ).map_err(|_| AuthError::RecoveryMismatch)?;
@@ -84,7 +84,7 @@ impl Verifiable for EthPersonalSign {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let signature = &self.signature.0;
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
@@ -92,13 +92,13 @@ impl Verifiable for EthPersonalSign {
             get_recovery_param(signature[64])?
         )?;
     
-        let hash = keccak256_fixed(&key_data[1..]);
+        let hash = keccak256(&key_data[1..]);
 
         let addr_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
         
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
-        Ok(Self::clone(&self))
+        Ok(())
     }
 
     #[cfg(feature = "cosmwasm")]
@@ -108,7 +108,7 @@ impl Verifiable for EthPersonalSign {
             return Ok(Addr::unchecked(
                 saa_common::utils::pubkey_to_address(self.signer.as_bytes(), "inj")?
             ))
-        }
+        } 
         Err(AuthError::generic("Can't generate a cosmos address from Eth credential"))
     }
     

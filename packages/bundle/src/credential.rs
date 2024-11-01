@@ -71,101 +71,145 @@ impl Credential {
         }
     }
 
-    pub fn value(&self) -> &dyn Verifiable {
-        match self {
-            Credential::Caller(c) => c,
-
-            #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => c,
-
-            #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c,
-
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c,
-
-            #[cfg(feature = "curves")]
-            curve => {
-                match curve {
-                    Credential::Secp256k1(c) => c,
-                    Credential::Secp256r1(c) => c,
-                    Credential::Ed25519(c) => c,
-                    _ => unreachable!(),
-                }
-            }
-        }
-    }
     
 }
 
 impl Verifiable for Credential {
 
     fn id(&self) -> CredentialId {
-        self.value().id()
+        match self {
+            Credential::Caller(c) => c.id(),
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.id(),
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.id(),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.id(),
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => c.id(),
+                    Credential::Secp256r1(c) => c.id(),
+                    Credential::Ed25519(c) => c.id(),
+                    _ => unreachable!(),
+                }
+            }
+            
+        }
     }
 
     fn info(&self) -> CredentialInfo {
-        self.value().info()
+        match self {
+            Credential::Caller(c) => c.info(),
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.info(),
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.info(),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.info(),
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => c.info(),
+                    Credential::Secp256r1(c) => c.info(),
+                    Credential::Ed25519(c) => c.info(),
+                    _ => unreachable!(),
+                }
+            }
+        }
     }
 
     fn message(&self) -> saa_common::Binary {
-        self.value().message()
+        match self {
+            Credential::Caller(c) => c.message(),
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.message(),
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.message(),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.message(),
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => c.message(),
+                    Credential::Secp256r1(c) => c.message(),
+                    Credential::Ed25519(c) => c.message(),
+                    _ => unreachable!(),
+                }
+            }
+        }
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        self.value().validate()
+        match self {
+            Credential::Caller(c) => c.validate(),
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.validate(),
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.validate(),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.validate(),
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => c.validate(),
+                    Credential::Secp256r1(c) => c.validate(),
+                    Credential::Ed25519(c) => c.validate(),
+                    _ => unreachable!(),
+                }
+            }
+        }
     }
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         self.validate()?;
-        self.value().verify()
-    }
-
-    #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(
-        &self, api:  
-        &dyn cosmwasm::Api, 
-        env: &cosmwasm::Env, 
-        info: &Option<cosmwasm::MessageInfo>
-    ) -> Result<Self, AuthError> 
-        where Self: Clone
-    {
-        self.validate()?;
-        Ok(match self {
-            Credential::Caller(c) => Credential::Caller(c.verified_cosmwasm(api, env, info)?),
-
+        match self {
+            Credential::Caller(c) => c.verify(),
             #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => Credential::EthPersonalSign(
-                c.verified_cosmwasm(api, env, info)?
-            ),
-
+            Credential::EthPersonalSign(c) => c.verify(),
             #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => Credential::CosmosArbitrary(
-                c.verified_cosmwasm(api, env, info)?
-            ),
-
+            Credential::CosmosArbitrary(c) => c.verify(),
             #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => Credential::Passkey(
-                c.verified_cosmwasm(api, env, info)?
-            ),
-
+            Credential::Passkey(c) => c.verify(),
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
-                    Credential::Secp256k1(c) 
-                        => Credential::Secp256k1(c.verified_cosmwasm(api, env, info)?),
-
-                    Credential::Secp256r1(c) 
-                        => Credential::Secp256r1(c.verified_cosmwasm(api, env, info)?),
-
-                    Credential::Ed25519(c) 
-                        => Credential::Ed25519(c.verified_cosmwasm(api, env, info)?),
-
+                    Credential::Secp256k1(c) => c.verify(),
+                    Credential::Secp256r1(c) => c.verify(),
+                    Credential::Ed25519(c) => c.verify(),
                     _ => unreachable!(),
                 }
             }
-        })
+        }
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(
+        &self, api:  
+        &dyn cosmwasm::Api, 
+        env: &cosmwasm::Env, 
+    ) -> Result<(), AuthError> {
+        match self {
+            Credential::Caller(c) => c.verify_cosmwasm(api, env)?,
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.verify_cosmwasm(api, env)?,
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.verify_cosmwasm(api, env)?,
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.verify_cosmwasm(api, env)?,
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => c.verify_cosmwasm(api, env)?,
+                    Credential::Secp256r1(c) => c.verify_cosmwasm(api, env)?,
+                    Credential::Ed25519(c) => c.verify_cosmwasm(api, env)?,
+                    _ => unreachable!(),
+                }
+            }
+        };
+
+        Ok(())
     }
 
 }
@@ -249,6 +293,7 @@ pub fn construct_credential(
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
+            use saa_custom::passkey::*;
             ensure!(
                 payload.is_some(),
                 AuthError::generic("Payload must be provided for 'passkey'")
@@ -258,17 +303,22 @@ pub fn construct_credential(
                 payload.extension.is_some(),
                 AuthError::generic("Extension must be provided for 'passkey'")
             );
+            let payload_ext : PasskeyPaylod = from_json(payload.extension.as_ref().unwrap())?;
+            let stored_ext : PasskeyStore = from_json(info.extension.as_ref().unwrap())?;
+            
             ensure!(
                 info.extension.is_some(),
                 AuthError::generic("No stored public key for givem 'passkey' id")
             );
-            let ext : saa_custom::passkey::PasskeyExtension = from_json(payload.extension.as_ref().unwrap())?;
-
-            Credential::Passkey(saa_custom::passkey::PasskeyCredential {
-                pubkey: Some(info.extension.unwrap().into()),
-                authenticator_data: ext.authenticator_data,
-                client_data: ext.client_data,
-                user_handle: ext.user_handle,
+            ensure!(
+                payload_ext.pubkey.is_some() || stored_ext.pubkey.is_some(),
+                AuthError::generic("No public key provided for 'passkey'")
+            );
+            Credential::Passkey(PasskeyCredential {
+                pubkey: Some(payload_ext.pubkey.unwrap_or(stored_ext.pubkey.unwrap())),
+                authenticator_data: payload_ext.authenticator_data,
+                client_data: payload_ext.client_data,
+                user_handle: payload_ext.user_handle.or(stored_ext.user_handle),
                 id: String::from_utf8(id)?,
                 signature,
             })

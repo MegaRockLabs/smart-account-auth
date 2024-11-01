@@ -1,12 +1,13 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo};
+use saa_common::cosmwasm::{Api, Env};
 
 use saa_common::{
-    ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, ToString, Verifiable
+    ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, 
+    CredentialId, CredentialInfo, CredentialName, String, ToString, Verifiable
 };
 
-use saa_schema::wasm_serde;
 use super::utils::preamble_msg_arb_036;
+use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
@@ -71,19 +72,18 @@ impl Verifiable for CosmosArbitrary {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(
+    fn verify_cosmwasm(
         &self, 
         api:  &dyn Api, 
         _:  &Env,
-        _:  &Option<MessageInfo>
-    ) -> Result<Self, AuthError> {
+    ) -> Result<(), AuthError> {
         let success = api.secp256k1_verify(
             &self.message_digest()?,
             &self.signature,
             &self.pubkey
         )?;
         ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(self.clone())
+        Ok(())
     }
 
 }

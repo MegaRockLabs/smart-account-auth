@@ -1,10 +1,13 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo};
-use saa_schema::wasm_serde;
-use saa_common::{CredentialInfo, CredentialName, AuthError, Binary, CredentialId, ToString, Verifiable, ensure};
-
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+use saa_common::cosmwasm::{Api, Env};
 use saa_common::hashes::sha256;
+use saa_schema::wasm_serde;
+
+use saa_common::{
+    CredentialInfo, CredentialName, CredentialId, 
+    AuthError, Binary, ToString, Verifiable, ensure
+};
+
 
 #[wasm_serde]
 pub struct Ed25519 {
@@ -59,14 +62,14 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let success = api.ed25519_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
         ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(self.clone())
+        Ok(())
     }
 
 }

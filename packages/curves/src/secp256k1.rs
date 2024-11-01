@@ -1,11 +1,14 @@
+use saa_common::{
+    CredentialInfo, CredentialName,CredentialId,  
+    AuthError, Binary, ToString, Verifiable,
+    ensure, hashes::sha256
+};
+
 use saa_schema::wasm_serde;
-use saa_common::{CredentialInfo, CredentialName, AuthError, Binary, CredentialId, ToString, Verifiable};
 
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo};
+use saa_common::cosmwasm::{Api, Env};
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
-use saa_common::{ensure, hashes::sha256};
 
 
 
@@ -43,11 +46,11 @@ impl Verifiable for Secp256k1 {
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        if !(self.signature.len() > 0 &&
-            self.message.len() > 0 && 
-            self.pubkey.len() > 0) {
-            return Err(AuthError::MissingData("Empty credential data".to_string()));
-        }
+        ensure!(self.signature.len() > 0 &&
+                self.message.len() > 0 && 
+                self.pubkey.len() > 0,
+            AuthError::MissingData("Empty credential data".to_string())
+        );
         Ok(())
     }
 
@@ -64,13 +67,13 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, api: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let res = api.secp256k1_verify(
             &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(self.clone())
+        Ok(())
     }
 }
