@@ -1,5 +1,5 @@
 [package]
-name = "saa-curves"
+name        = "saa-curves"
 description = "Cryptographic curves for smart account auth"
 edition     = { workspace = true }
 authors     = { workspace = true }

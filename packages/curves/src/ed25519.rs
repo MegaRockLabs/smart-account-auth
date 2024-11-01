@@ -40,11 +40,12 @@ impl Verifiable for Ed25519 {
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        if !(self.signature.len() > 0 &&
-            self.message.len() > 0 && 
-            self.pubkey.len() > 0) {
-            return Err(AuthError::MissingData("Empty credential data".to_string()));
-        }
+        ensure!(
+            self.signature.len() > 0 &&
+                self.message.len() > 0 && 
+                self.pubkey.len() > 0,
+            AuthError::MissingData("Empty credential data".to_string())
+        );
         Ok(())
     }
 
