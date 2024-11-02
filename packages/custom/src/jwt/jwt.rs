@@ -1,6 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env, MessageInfo};
-
+use saa_common::cosmwasm::{Api, Env, MessageInfo};
 use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
 
@@ -38,7 +37,7 @@ impl Verifiable for JWTCredential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verified_cosmwasm(&self, _: &dyn Api, _: &Env, _: &Option<MessageInfo>) -> Result<Self, AuthError> {
+    fn verify_cosmwasm(&self, _: &dyn Api, _: &Env) -> Result<Self, AuthError> {
         todo!();
     }
 }

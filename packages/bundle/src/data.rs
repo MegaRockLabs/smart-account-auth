@@ -159,7 +159,7 @@ impl CredentialData {
             UpdateOperation::Remove(data) => data,
         };
         
-        let nonce = self.assert_query_cosmwasm::<()>(api, storage, env, info)?;
+        let nonce = self.assert_query_cosmwasm::<D>(api, storage, env, info)?;
         let new_nonce = new.assert_signed::<D>(storage, env)?;
 
         if !nonce.is_empty() && !new_nonce.is_empty() {

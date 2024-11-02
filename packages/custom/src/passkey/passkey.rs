@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env};
+use saa_common::cosmwasm::{Api, Env};
 
 use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;

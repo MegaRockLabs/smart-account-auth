@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{Api, Env, Addr};
+use saa_common::cosmwasm::{Api, Env, Addr};
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;

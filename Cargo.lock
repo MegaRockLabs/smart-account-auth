@@ -172,9 +172,9 @@ checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cc"
-version = "1.1.23"
+version = "1.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bbb537bb4a30b90362caddba8f360c0a56bc13d3a5570028e7197204cb54a17"
+checksum = "c2e7962b54006dcfcc61cb72735f4d89bb97061dd6a7ed882ec6b8ee53714c6f"
 dependencies = [
  "shlex",
 ]
@@ -901,18 +901,18 @@ checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
 
 [[package]]
 name = "linkme"
-version = "0.3.28"
+version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c943daedff228392b791b33bba32e75737756e80a613e32e246c6ce9cbab20a"
+checksum = "70fe496a7af8c406f877635cbf3cd6a9fac9d6f443f58691cd8afe6ce0971af4"
 dependencies = [
  "linkme-impl",
 ]
 
 [[package]]
 name = "linkme-impl"
-version = "0.3.28"
+version = "0.3.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb26336e6dc7cc76e7927d2c9e7e3bb376d7af65a6f56a0b16c47d18a9b1abc5"
+checksum = "b01f197a15988fb5b2ec0a5a9800c97e70771499c456ad757d63b3c5e9b96e75"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1231,7 +1231,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "saa-common"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1256,7 +1256,7 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "bech32 0.11.0",
  "borsh",
@@ -1273,7 +1273,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1292,7 +1292,7 @@ dependencies = [
 
 [[package]]
 name = "saa-macros-proto"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1301,7 +1301,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -1610,7 +1610,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.14.7"
+version = "0.14.8"
 dependencies = [
  "borsh",
  "parity-scale-codec",

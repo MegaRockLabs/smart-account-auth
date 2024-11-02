@@ -17,8 +17,6 @@ saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-curves              = { workspace = true }
 
-cosmwasm-std            = { workspace = true, optional = true }
-
 scale                   = { workspace = true, optional = true }
 scale-info              = { workspace = true, optional = true }
 
@@ -26,6 +24,8 @@ borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
+[dev-dependencies]
+cosmwasm-std            = { workspace = true  }
 
 
 [features]
@@ -46,7 +46,6 @@ substrate = [
     "saa-curves/substrate",
 ]
 cosmwasm = [
-    "dep:cosmwasm-std",
     "dep:schemars",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",

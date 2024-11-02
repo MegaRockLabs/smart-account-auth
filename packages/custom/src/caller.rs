@@ -89,7 +89,7 @@ impl Verifiable for Caller {
     #[cfg(feature = "cosmwasm")]
     fn cosmos_address(&self, _: &dyn Api) -> Result<Addr, AuthError> {
         let addr : String = String::from_utf8(self.id.clone())?;
-        Ok(cosmwasm_std::Addr::unchecked(addr))
+        Ok(saa_common::cosmwasm::Addr::unchecked(addr))
     }
 
     #[cfg(feature = "cosmwasm")]
