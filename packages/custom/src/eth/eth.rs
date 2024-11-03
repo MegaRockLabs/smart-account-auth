@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, Addr};
+use saa_common::cosmwasm::{Api, Env};
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;
@@ -22,15 +22,17 @@ pub struct EthPersonalSign {
     pub signer:    String,
 }
 
+impl EthPersonalSign {
+    pub fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        Ok(preamble_msg_eth(&self.message).into())
+    }
+}
+
 
 impl Verifiable for EthPersonalSign {
 
     fn id(&self) -> CredentialId {
         self.signer.as_bytes().to_vec()
-    }
-
-    fn human_id(&self) -> String {
-        self.signer.clone()
     }
 
     fn info(&self) -> CredentialInfo {
@@ -44,7 +46,6 @@ impl Verifiable for EthPersonalSign {
     fn message(&self) -> Binary {
         self.message.clone()
     }
-
 
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -61,10 +62,6 @@ impl Verifiable for EthPersonalSign {
         Ok(())
     }
 
-
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        Ok(preamble_msg_eth(&self.message).into())
-    }
 
     #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
@@ -87,7 +84,7 @@ impl Verifiable for EthPersonalSign {
     fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let signature = &self.signature.0;
         let key_data = api.secp256k1_recover_pubkey(
-            &preamble_msg_eth(&self.message), 
+            &self.message_digest()?, 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
@@ -101,17 +98,6 @@ impl Verifiable for EthPersonalSign {
         Ok(())
     }
 
-    #[cfg(feature = "cosmwasm")]
-    fn cosmos_address(&self, _: &dyn Api) -> Result<Addr, AuthError> {
-        #[cfg(feature = "injective")]
-        if true {
-            return Ok(Addr::unchecked(
-                saa_common::utils::pubkey_to_address(self.signer.as_bytes(), "inj")?
-            ))
-        } 
-        Err(AuthError::generic("Can't generate a cosmos address from Eth credential"))
-    }
-    
 
 }
 

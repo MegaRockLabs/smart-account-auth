@@ -18,15 +18,22 @@ pub struct CosmosArbitrary {
     pub hrp:       Option<String>
 }
 
+impl CosmosArbitrary {
+
+    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for the public key".to_string()));
+        Ok(sha256(&preamble_msg_arb_036(
+            pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
+            &self.message.to_string()
+        ).as_bytes()))
+    }
+}
+
 
 impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
         self.pubkey.0.clone()
-    }
-
-    fn human_id(&self) -> String {
-        self.pubkey.to_base64()
     }
 
     fn info(&self) -> CredentialInfo {
@@ -48,15 +55,6 @@ impl Verifiable for CosmosArbitrary {
             return Err(AuthError::MissingData("Empty credential data".to_string()));
         }
         Ok(())
-    }
-
-
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for the public key".to_string()));
-        Ok(sha256(&preamble_msg_arb_036(
-            pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
-            &self.message.to_string()
-        ).as_bytes()))
     }
 
     #[cfg(feature = "native")]

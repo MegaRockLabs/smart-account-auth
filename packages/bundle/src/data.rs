@@ -51,24 +51,11 @@ pub enum UpdateOperation<A = CredentialData> {
 
 impl CredentialData {
 
-    pub fn new(
-        credentials: Vec<Credential>, 
-        primary_index: Option<u8>, 
-        with_caller: Option<bool>,
-    ) -> Self {
-        Self { 
-            credentials, 
-            primary_index,
-            with_caller,
-        }
-    }
-
-
     pub fn with_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
         let mut credentials = self.credentials.clone();
 
         let existing = credentials.iter()
-                .position(|c| c.name() == CredentialName::Caller);
+                .position(|c| c.info().name == CredentialName::Caller);
 
         if let Some(index) = existing {
             credentials[index] = Credential::Caller(cal.into());
@@ -90,77 +77,86 @@ impl CredentialData {
     
 
     #[cfg(feature = "cosmwasm")]
-    pub fn with_caller_cosmwasm(&self, info: &saa_common::cosmwasm::MessageInfo) -> Self  {
+    pub fn with_caller_cosmwasm(&self, info: &MessageInfo) -> Self  {
         self.with_caller(info)
     }
 
 
-    #[cfg(feature = "cosmwasm")]
-    fn is_cosmos_derivable(&self) -> bool {
-        self.credentials.len() > 0 &&
-        (
-            self.credentials.iter().any(
-                |c|  {
-                    let name = c.name();
-                    if name == CredentialName::Caller {
-                        return true;
-                    }
-                    #[cfg(feature = "injective")]
-                    if true {
-                        return name == CredentialName::EthPersonalSign;
-                    }
-                    name == CredentialName::CosmosArbitrary ||
-                    name == CredentialName::Secp256k1
-                }
-            ) 
-        )
-    }
-
     #[cfg(all(feature = "cosmwasm", feature = "replay"))]
-    pub fn assert_signed<D>(
+    pub fn assert_signed(
         &self, 
         storage: &dyn Storage, 
         env: &Env,
-    ) -> Result<String, AuthError> 
-        where D: serde::Serialize + serde::de::DeserializeOwned
-    {
+    ) -> Result<String, AuthError> {
         let first = self.credentials.first().unwrap();
-        let signed : SignedData<D> = saa_common::from_json(&first.message())?;
-        signed.validate_cosmwasm(storage, env)?;
-        let data = &signed.data;
-        let nonce = data.nonce.clone();
+        let first_data : MsgDataToSign<()> = saa_common::from_json(&first.message())?;
+        first_data.validate_cosmwasm(storage, env)?;
+        let nonce = first_data.nonce.clone();
         
         self.credentials().iter().skip(1).map(|c| {
-            let signed : SignedData<D> = saa_common::from_json(&c.message())?;
-            let cred_data = &signed.data;
-            ensure!(cred_data.chain_id == data.chain_id, AuthError::ChainIdMismatch);
-            ensure!(cred_data.contract_address == data.contract_address, AuthError::ContractMismatch);
-            ensure!(cred_data.nonce == nonce, AuthError::DifferentNonce);
+            let data : MsgDataToSign<()> = saa_common::from_json(&c.message())?;
+            ensure!(data.chain_id == first_data.chain_id, AuthError::ChainIdMismatch);
+            ensure!(data.contract_address == first_data.contract_address, AuthError::ContractMismatch);
+            ensure!(data.nonce == nonce, AuthError::DifferentNonce);
             Ok(())
-        }).collect::<Result<Vec<()>, AuthError>>()?;
+        }).collect::<Result<(), AuthError> >()?;
 
         Ok(nonce)
     }
 
 
     #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    pub fn update<D>(
+    fn assert_query_cosmwasm(
+        &self, 
+        api: &dyn Api,
+        storage: &dyn Storage, 
+        env: &Env,
+        info :  &MessageInfo
+    ) -> Result<String, AuthError> {
+        if self.with_caller.unwrap_or(false) {
+            self.with_caller_cosmwasm(info).validate()?;
+            let caller = CALLER.load(storage).unwrap_or(None);
+            if caller.is_some() && caller.unwrap() == info.sender {
+                return Ok(String::default())
+            }
+        }  else {
+            self.validate()?;
+        }
+
+        ensure!(
+            self.credentials.iter().all(|c| 
+                CREDENTIAL_INFOS.has(storage, c.id()) &&
+                c.verify_cosmwasm(api, env).is_ok()
+            ), 
+            AuthError::NotFound
+        );
+
+        #[cfg(feature = "replay")]
+        if true {
+            return self.assert_signed(storage, env)
+        }
+
+        Ok(String::default())
+    }
+    
+
+
+    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    pub fn update(
         &self,
         op: UpdateOperation,
         api: &dyn Api, 
         storage: &mut dyn Storage,
         env: &Env, 
-        info: &Option<MessageInfo>
-    ) -> Result<(), AuthError>
-        where D: serde::Serialize + serde::de::DeserializeOwned
-    {
+        info: &MessageInfo
+    ) -> Result<(), AuthError> {
         let new = match &op {
             UpdateOperation::Add(data) => data,
             UpdateOperation::Remove(data) => data,
         };
         
-        let nonce = self.assert_query_cosmwasm::<D>(api, storage, env, info)?;
-        let new_nonce = new.assert_signed::<D>(storage, env)?;
+        let nonce = self.assert_query_cosmwasm(api, storage, env, info)?;
+        let new_nonce = new.assert_signed(storage, env)?;
 
         if !nonce.is_empty() && !new_nonce.is_empty() {
             ensure!(nonce == new_nonce, AuthError::DifferentNonce);
@@ -173,7 +169,7 @@ impl CredentialData {
         match op {
             UpdateOperation::Add(data) => {
                 for cred in data.credentials() {
-                    cred.save_cosmwasm::<D>(api, storage, env, info)?;
+                    cred.save_cosmwasm(api, storage, env, info)?;
                     if data.primary_index.is_some() {
                         let primary = data.primary();
                         if let Credential::Caller(_) = primary {} else {
@@ -192,6 +188,61 @@ impl CredentialData {
         }
 
         Ok(())
+    }
+
+
+
+    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    pub fn save_cosmwasm(
+        &self, 
+        api: &dyn Api, 
+        storage: &mut dyn Storage,
+        env: &Env, 
+        info: &MessageInfo
+    ) -> Result<(), AuthError> {
+        let data = if self.with_caller.unwrap_or(false) {
+            CALLER.save(storage, &Some(info.sender.to_string()))?;
+            self.with_caller_cosmwasm(info)
+        } else {
+            self.clone()
+        };
+
+        #[cfg(feature = "replay")]
+        if true {
+            let nonce = data.assert_signed(storage, env)?;
+            NONCES.save(storage, &nonce, &true)?;
+        }  
+
+        let mut verifying_found = false;
+
+        if data.primary_index.is_some() {
+            if let Credential::Caller(_) = data.primary() {
+                // skio the caller since it is can't be used to verify messages
+            } else {
+                VERIFYING_CRED_ID.save(storage, &data.primary_id())?;
+                verifying_found = true;
+            }
+        }
+
+        for cred in self.credentials() {
+
+            if let Credential::Caller(_) = cred {
+                continue;
+            }
+
+            cred.verify_cosmwasm(api, env)?;
+
+            if !verifying_found {
+                VERIFYING_CRED_ID.save(storage, &cred.id())?;
+                verifying_found = true;
+            }
+
+            CREDENTIAL_INFOS.save(storage, cred.id(), &cred.info())?;
+        }
+
+        ensure!(verifying_found, AuthError::NoVerifying);
+        Ok(())
+        
     }
 
 
@@ -260,7 +311,9 @@ impl Verifiable for CredentialData {
 
 
     #[cfg(feature = "substrate")]
-    fn verify_ink<'a>(&self, api: InkApi<'a, impl InkEnvironment + Clone>) -> Result<(), AuthError> {
+    fn verify_ink<'a>(&self, api: InkApi<'a, impl InkEnvironment + Clone>) -> Result<(), AuthError> 
+        where Self: Sized
+    {
         let with_caller = self.with_caller.unwrap_or(false);
         
         let creds = if with_caller {
@@ -280,32 +333,10 @@ impl Verifiable for CredentialData {
         Ok(())
     }
 
-    #[cfg(feature = "cosmwasm")]
-    fn is_cosmos_derivable(&self) -> bool {
-        self.credentials().iter().any(|c| c.is_cosmos_derivable())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn cosmos_address(&self, api: &dyn Api) -> Result<saa_common::cosmwasm::Addr, AuthError> {
-        ensure!(
-            self.is_cosmos_derivable(), 
-            AuthError::generic("No credentials derivaable into a cosmos address")
-        );
-        if self.primary_index.is_some() {
-            if self.primary().is_cosmos_derivable() {
-                return self.primary().cosmos_address(api);
-            }
-        }
-        let cred = self.credentials
-            .iter()
-            .find(|c| c.is_cosmos_derivable());
-        cred.unwrap().cosmos_address(api)
-    }
-
-
+    
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self, api: &dyn Api, env: &Env) -> Result<(), AuthError>
+        where Self: Sized
     {
         self.validate()?;
         self.credentials()
@@ -314,104 +345,6 @@ impl Verifiable for CredentialData {
         Ok(())
     }
 
-
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    fn assert_query_cosmwasm<D>(
-        &self, 
-        api: &dyn Api,
-        storage: &dyn Storage, 
-        env: &Env,
-        info :  &Option<MessageInfo>
-    ) -> Result<String, AuthError> 
-        where D: serde::Serialize + serde::de::DeserializeOwned
-    {
-        if info.is_some() {
-            let msg_info = info.as_ref().unwrap();
-            self.with_caller_cosmwasm(msg_info).validate()?;
-
-            let caller = CALLER.load(storage).unwrap_or(None);
-            if caller.is_some() && caller.unwrap() == msg_info.sender {
-                return Ok(String::default())
-            }
-        }  else {
-            self.validate()?;
-        }
-
-        let creds = self.credentials();
-        ensure!(
-            creds.iter().all(|c| 
-                CREDENTIAL_INFOS.has(storage, c.id()) &&
-                c.verify_cosmwasm(api, env).is_ok()
-            ), 
-            AuthError::NotFound
-        );
-
-        #[cfg(feature = "replay")]
-        if true {
-            return self.assert_signed::<D>(storage, env)
-        }
-
-        Ok(String::default())
-    }
-    
-
-
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    fn save_cosmwasm<D>(
-        &self, 
-        api: &dyn Api, 
-        storage: &mut dyn Storage,
-        env: &Env, 
-        info: &Option<MessageInfo>
-    ) -> Result<Self, AuthError> 
-        where D: serde::Serialize + serde::de::DeserializeOwned
-    {
-        let data = if self.with_caller.unwrap_or(false) {
-            ensure!(info.is_some(), AuthError::generic("MessageInfo must be passed to use Caller"));
-            let info = info.as_ref().unwrap();
-            CALLER.save(storage, &Some(info.sender.to_string()))?;
-            self.with_caller_cosmwasm(info)
-        } else {
-            self.clone()
-        };
-
-        #[cfg(feature = "replay")]
-        if true {
-            let nonce = data.assert_signed::<D>(storage, env)?;
-            NONCES.save(storage, &nonce, &true)?;
-        }  
-
-        let mut verifying_found = false;
-
-        if data.primary_index.is_some() {
-            if let Credential::Caller(_) = data.primary() {
-                // skio the caller since it is can't be used to verify messages
-            } else {
-                VERIFYING_CRED_ID.save(storage, &data.primary_id())?;
-                verifying_found = true;
-            }
-        }
-
-        for cred in self.credentials() {
-
-            if let Credential::Caller(_) = cred {
-                continue;
-            }
-
-            cred.verify_cosmwasm(api, env)?;
-
-            if !verifying_found {
-                VERIFYING_CRED_ID.save(storage, &cred.id())?;
-                verifying_found = true;
-            }
-
-            CREDENTIAL_INFOS.save(storage, cred.id(), &cred.info())?;
-        }
-
-        ensure!(verifying_found, AuthError::NoVerifying);
-        Ok(data.clone())
-        
-    }
 
 
 }

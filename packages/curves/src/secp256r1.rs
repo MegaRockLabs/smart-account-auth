@@ -81,10 +81,6 @@ impl Verifiable for Secp256r1 {
         self.pubkey.0.clone()
     }
 
-    fn human_id(&self) -> String {
-        self.pubkey.to_base64()
-    }
-
     fn info(&self) -> CredentialInfo {
         CredentialInfo {
             name: CredentialName::Secp256r1,

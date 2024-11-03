@@ -22,11 +22,6 @@ impl Verifiable for Ed25519 {
         self.pubkey.0.clone()
     }
 
-    fn human_id(&self) -> String {
-        self.pubkey.to_base64()
-    }
-
-
     fn info(&self) -> CredentialInfo {
         CredentialInfo {
             name: CredentialName::Ed25519,
@@ -62,7 +57,9 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> 
+        where Self: Clone
+    {
         let success = api.ed25519_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 

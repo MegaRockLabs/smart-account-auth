@@ -39,9 +39,8 @@ pub trait CredentialsWrapper : Clone + Verifiable {
                 // only primary id
                 1 => return vec![],
                 // skop primary and take the rest
-                _ => creds.iter().skip(1).map(
-                    |c| c.clone()
-                ).collect()
+                _ => creds.iter().skip(1)
+                    .map(|c| c.clone()).collect()
             }
         }
     }

@@ -39,7 +39,7 @@ getrandom           = { version = "0.2.15",  default-features = false, features 
 
 [features]
 default     = [
-    "std", "replay"
+    "std"
 ]
 solana      = [
     "dep:borsh", 
