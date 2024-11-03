@@ -1,4 +1,4 @@
-use saa_common::{ensure, from_json, messages::AuthPayload, to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
+use saa_common::{ensure, from_json, to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
 };
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
@@ -281,11 +281,9 @@ pub fn verify_signed_actions(
     #[cfg(not(feature = "replay"))]
     storage: &dyn Storage,
     env: &Env,
-    message: Binary,
-    signature: Binary,
-    payload: Option<AuthPayload>,
+    data: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = load_credential(storage, message.clone(), signature.clone(), payload.clone())?;
+    let credential = load_credential(storage, data)?;
     credential.assert_execute_cosmwasm(api, storage, env)?;
     Ok(())
 }
@@ -294,13 +292,11 @@ pub fn verify_signed_actions(
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
 fn load_credential(
     storage:   &dyn Storage,
-    message:   Binary,
-    signature: Binary,
-    payload:   Option<AuthPayload>,
+    data:      SignedDataMsg
 ) -> Result<Credential, AuthError> {
     let initial_id = VERIFYING_CRED_ID.load(storage)?;
 
-    let id = match payload.clone() {
+    let id = match data.payload.clone() {
         Some(payload) => {
             payload.validate_cosmwasm(storage)?;
             if let Some(id) = payload.credential_id {
@@ -320,16 +316,16 @@ fn load_credential(
     construct_credential(
         id, 
         info.name,
-        payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),
+        data.payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),
         info.extension,
-        payload.map(|p| p.extension).unwrap_or(None),
-        message, 
-        signature, 
+        data.payload.map(|p| p.extension).unwrap_or(None),
+        data.data, 
+        data.signature, 
     )
 }
 
 
-
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
 fn construct_credential(
     id: CredentialId,
     name: CredentialName,
