@@ -89,16 +89,11 @@ pub trait Verifiable  {
 
     fn id(&self) -> CredentialId;
 
-    fn info(&self) -> CredentialInfo;
-
-    fn message(&self) -> Binary;
-
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        Ok(hashes::sha256(&self.message()))
+    fn hrp(&self) -> Option<String> {
+        None
     }
 
     fn validate(&self) -> Result<(), AuthError>;
-
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError>;

@@ -1,6 +1,6 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
-use saa_common::{ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable};
+use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
 
@@ -36,20 +36,6 @@ impl Verifiable for Caller {
     fn id(&self) -> CredentialId {
         self.id.clone()
     }
-
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::Caller,
-            hrp: None,
-            extension: None
-        }
-    }
-
-    // mock implementation
-    fn message(&self) -> Binary {
-        Binary(self.id.clone())
-    }
-
 
     fn validate(&self) -> Result<(), AuthError> {
         let id = self.id();

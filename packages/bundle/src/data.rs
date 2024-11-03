@@ -1,7 +1,7 @@
 
 use saa_common::{
-    format, vec, Binary, 
-    CredentialId, CredentialInfo, CredentialName, 
+    format, vec, 
+    CredentialId, CredentialName, 
     Vec, Verifiable, AuthError, ensure
 };
 use saa_custom::caller::Caller;
@@ -55,7 +55,7 @@ impl CredentialData {
         let mut credentials = self.credentials.clone();
 
         let existing = credentials.iter()
-                .position(|c| c.info().name == CredentialName::Caller);
+                .position(|c| c.name() == CredentialName::Caller);
 
         if let Some(index) = existing {
             credentials[index] = Credential::Caller(cal.into());
@@ -266,14 +266,6 @@ impl Verifiable for CredentialData {
 
     fn id(&self) -> CredentialId {
         self.primary_id()
-    }
-
-    fn info(&self) -> CredentialInfo {
-        self.primary().info()
-    }
-
-    fn message(&self) -> Binary {
-        self.primary().message()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

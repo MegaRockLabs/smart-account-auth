@@ -1,5 +1,5 @@
 use saa_common::{
-    CredentialInfo, CredentialName,CredentialId,  
+    CredentialId,  
     AuthError, Binary, ToString, Verifiable,
     ensure
 };
@@ -21,23 +21,14 @@ pub struct Secp256k1 {
 }
 
 
-
 impl Verifiable for Secp256k1 {
 
     fn id(&self) -> CredentialId {
         self.pubkey.0.clone()
     }
 
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::Secp256k1,
-            hrp: self.hrp.clone(),
-            extension: None,
-        }
-    }
-
-    fn message(&self) -> Binary {
-        self.message.clone()
+    fn hrp(&self) -> Option<String> {
+        self.hrp.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

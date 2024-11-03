@@ -5,35 +5,13 @@ use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    ensure, hashes::sha256, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, Verifiable
+    ensure, hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable
 };
 
 use sha2::{Digest, Sha256};
 
 
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
-#[cfg_attr(feature = "cosmwasm", 
-    derive(::saa_schema::schemars::JsonSchema ),
-    schemars(crate = "::saa_schema::schemars")
-)]
-#[cfg_attr(feature = "substrate", derive(
-    ::saa_schema::scale::Encode, 
-    ::saa_schema::scale::Decode
-))]
-#[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, 
-    ::saa_schema::borsh::BorshDeserialize
-))]
-#[cfg_attr(all(feature = "std", feature="substrate"), derive(
-    saa_schema::scale_info::TypeInfo)
-)]
-#[allow(clippy::derive_partial_eq_without_eq)]
+#[wasm_serde]
 pub struct ClientData {
     // rename to type
     #[serde(rename = "type")]
@@ -47,13 +25,12 @@ pub struct ClientData {
 
 
 #[wasm_serde]
-pub struct PasskeyPayload {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Client data containg challenge, origin and type
-    pub client_data: ClientData,
-    /// Public key is essential for verification but can be supplied on the contract side
-    /// and omitted by client
+pub struct PasskeyExtension {
+    #[serde(rename = "type")]
+    pub ty: String,
+    /// Origin of the client where the passkey was created
+    pub origin: String,
+    /// Secpk256r1 Public key used for verification 
     pub pubkey: Option<Binary>,
     /// Optional user handle reserved for future use
     pub user_handle: Option<String>,
@@ -61,13 +38,13 @@ pub struct PasskeyPayload {
 
 
 #[wasm_serde]
-pub struct PasskeyStore {
-    /// Origin of the client where the passkey was created
-    pub origin: String,
-    /// Secpk256r1 Public key used for verification 
+pub struct PasskeyPayload {
+    /// webauthn Authenticator data
+    pub authenticator_data: Binary,
+    /// Passkey client data
+    pub client_data: ClientData,
+    /// Public key is essential for verification but can be supplied on the contract side
     pub pubkey: Option<Binary>,
-    /// Optional user handle reserved for future use
-    pub user_handle: Option<String>,
 }
 
 
@@ -90,27 +67,21 @@ pub struct PasskeyCredential {
     pub pubkey               :       Option<Binary>,
 }
 
+impl PasskeyCredential {
+    pub fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
+        let mut hasher = Sha256::new();
+        hasher.update(&self.authenticator_data);
+        hasher.update(&client_data_hash);
+        let hash = hasher.finalize();
+        Ok(hash.to_vec())
+    }
+}
 
 impl Verifiable for PasskeyCredential {
 
     fn id(&self) -> CredentialId {
         self.id.as_bytes().to_vec()
-    }
-
-    fn message(&self) -> Binary {
-        self.client_data.challenge.clone()
-    }
-
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::Passkey,
-            hrp: None,
-            extension: Some(saa_common::to_json_binary(&PasskeyStore {
-                origin:      self.client_data.origin.clone(),
-                pubkey:      self.pubkey.clone(),
-                user_handle: self.user_handle.clone()
-            }).unwrap())
-        }
     }
 
 
@@ -121,15 +92,6 @@ impl Verifiable for PasskeyCredential {
         ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
         ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
         Ok(())
-    }
-    
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
-        let mut hasher = Sha256::new();
-        hasher.update(&self.authenticator_data);
-        hasher.update(&client_data_hash);
-        let hash = hasher.finalize();
-        Ok(hash.to_vec())
     }
 
     #[cfg(feature = "native")]

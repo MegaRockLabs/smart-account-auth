@@ -1,6 +1,4 @@
-use saa_common::{ensure, from_json, Binary, AuthError,
-    CredentialId, CredentialInfo, CredentialName, Verifiable,
-    messages::AuthPayload 
+use saa_common::{ensure, from_json, messages::AuthPayload, to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
 };
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
@@ -49,6 +47,27 @@ pub enum Credential {
 
 impl Credential {
 
+    pub fn name(&self) -> CredentialName {
+        match self {
+            Credential::Caller(_) => CredentialName::Caller,
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(_) => CredentialName::EthPersonalSign,
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(_) => CredentialName::CosmosArbitrary,
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(_) => CredentialName::Passkey,
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(_) => CredentialName::Secp256k1,
+                    Credential::Secp256r1(_) => CredentialName::Secp256r1,
+                    Credential::Ed25519(_) => CredentialName::Ed25519,
+                    _ => unreachable!(),
+                }
+            },
+        }
+    }
+
     pub fn value(&self) -> &dyn Verifiable {
         match self {
             Credential::Caller(c) => c,
@@ -70,24 +89,57 @@ impl Credential {
         }
     }
 
+    pub fn message(&self) -> &[u8] {
+        match self {
+            Credential::Caller(_) => &[],
+            #[cfg(feature = "ethereum")]
+            Credential::EthPersonalSign(c) => c.message.as_ref(),
+            #[cfg(feature = "cosmos")]
+            Credential::CosmosArbitrary(c) => c.message.as_ref(),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => &c.client_data.challenge,
+            #[cfg(feature = "curves")]
+            curve => {
+                match curve {
+                    Credential::Secp256k1(c) => &c.message,
+                    Credential::Secp256r1(c) => &c.message,
+                    Credential::Ed25519(c) => &c.message,
+                    _ => unreachable!(),
+                }
+            },
+        }
+    }
+
+    pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
+        if let Credential::Passkey(c) = self {
+            use saa_custom::passkey::*;
+            return Ok(Some(to_json_binary(&PasskeyExtension {
+                ty: c.client_data.ty.clone(),
+                origin: c.client_data.origin.clone(),
+                pubkey: c.pubkey.clone(),
+                user_handle: c.user_handle.clone(),
+            })?));
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn info(&self) -> CredentialInfo {
+        CredentialInfo {
+            name: self.name(),
+            hrp: self.hrp(),
+            extension: self.extension().unwrap_or(None),
+        }
+    }
+
     #[cfg(feature = "cosmwasm")]
     pub fn is_cosmos_derivable(&self) -> bool {
-        let name = self.info().name;
-        if name == CredentialName::Caller {
-            return true;
-        }
-        #[cfg(feature = "injective")]
-        if true {
-            return name == CredentialName::EthPersonalSign;
-        }
-        name == CredentialName::CosmosArbitrary ||
-        name == CredentialName::Secp256k1
+        self.hrp().is_some()
     }
 
     #[cfg(feature = "cosmwasm")]
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        let info = self.info();
-        let name = info.name;
+        let name = self.name();
         if name == CredentialName::Caller {
             let address =  String::from_utf8(self.id())
                     .map(|s| Addr::unchecked(s))?;
@@ -103,7 +155,7 @@ impl Credential {
                 ))
             } 
         }
-        Ok(match info.hrp {
+        Ok(match self.hrp() {
             Some(hrp) => Addr::unchecked(
                 saa_common::utils::pubkey_to_address(&self.id(), &hrp)?
             ),
@@ -184,14 +236,6 @@ impl Verifiable for Credential {
         self.value().id()
     }
 
-    fn info(&self) -> CredentialInfo {
-        self.value().info()
-    }
-
-    fn message(&self) -> saa_common::Binary {
-        self.value().message()
-    }
-
     fn validate(&self) -> Result<(), AuthError> {
         self.value().validate()
     }
@@ -229,9 +273,26 @@ impl Verifiable for Credential {
 }
 
 
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+pub fn verify_signed_actions(
+    api: &dyn Api,
+    #[cfg(feature = "replay")]
+    storage: &mut dyn Storage,
+    #[cfg(not(feature = "replay"))]
+    storage: &dyn Storage,
+    env: &Env,
+    message: Binary,
+    signature: Binary,
+    payload: Option<AuthPayload>,
+) -> Result<(), AuthError> {
+    let credential = load_credential(storage, message.clone(), signature.clone(), payload.clone())?;
+    credential.assert_execute_cosmwasm(api, storage, env)?;
+    Ok(())
+}
+
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-pub fn load_credential(
+fn load_credential(
     storage:   &dyn Storage,
     message:   Binary,
     signature: Binary,
@@ -247,35 +308,39 @@ pub fn load_credential(
             } else if let Some(address) = payload.address {
                 address.as_bytes().to_vec()
             } else {
-                initial_id.clone()
+                initial_id
             }
         }
         None => {
-            initial_id.clone()
+            initial_id
         }
     };
-    let stored_info = CREDENTIAL_INFOS.load(storage, initial_id)?;
-    let info = CredentialInfo {
-        name: stored_info.name,
-        hrp: payload.as_ref().map(|p| p.hrp.clone())
-            .unwrap_or(stored_info.hrp),
-        extension: payload.as_ref().map(|p| p.extension.clone())
-            .unwrap_or(stored_info.extension),
-    };
-    construct_credential(id, info, message, signature, payload)
+    let info = CREDENTIAL_INFOS.load(storage, id.clone())?;
+
+    construct_credential(
+        id, 
+        info.name,
+        payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),
+        info.extension,
+        payload.map(|p| p.extension).unwrap_or(None),
+        message, 
+        signature, 
+    )
 }
 
 
 
-pub fn construct_credential(
+fn construct_credential(
     id: CredentialId,
-    info: CredentialInfo,
+    name: CredentialName,
+    hrp: Option<String>,
+    stored_extension: Option<Binary>,
+    passed_extension: Option<Binary>,
     message: Binary,
     signature: Binary,
-    payload: Option<AuthPayload>,
 ) -> Result<Credential, AuthError> {
 
-    let credential = match info.name {
+    let credential = match name {
 
         CredentialName::Caller => Credential::Caller(saa_custom::caller::Caller { id }),
 
@@ -292,23 +357,23 @@ pub fn construct_credential(
             pubkey: Binary(id),
             message,
             signature,
-            hrp: info.hrp,
+            hrp,
         }),
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
             use saa_custom::passkey::*;
             ensure!(
-                payload.is_some(),
+                passed_extension.is_some(),
                 AuthError::generic("Payload must be provided for 'passkey'")
             );
-            let payload = payload.as_ref().unwrap();
             ensure!(
-                payload.extension.is_some(),
-                AuthError::generic("Extension must be provided for 'passkey'")
+                stored_extension.is_some(),
+                AuthError::generic("Extension must be stored for 'passkey'")
             );
-            let payload_ext : PasskeyPayload = from_json(payload.extension.as_ref().unwrap())?;
-            let stored_ext : PasskeyStore = from_json(info.extension.as_ref().unwrap())?;
+            let extensiom = passed_extension.unwrap();
+            let payload_ext : PasskeyPayload = from_json(&extensiom)?;
+            let stored_ext : PasskeyExtension = from_json(&stored_extension.unwrap())?;
             let pubkey = payload_ext.pubkey.or(stored_ext.pubkey);
             ensure!(
                 pubkey.is_some(),
@@ -320,26 +385,27 @@ pub fn construct_credential(
                 signature,
                 authenticator_data: payload_ext.authenticator_data,
                 client_data: payload_ext.client_data,
-                user_handle: payload_ext.user_handle.or(stored_ext.user_handle),
+                user_handle: stored_ext.user_handle,
             })
         },
 
         #[cfg(feature = "curves")]
         curves => {
+            let pubkey = Binary(id);
             match curves {
                 CredentialName::Secp256k1 => Credential::Secp256k1(saa_curves::secp256k1::Secp256k1 {
-                    pubkey: Binary(id),
+                    pubkey,
                     signature,
                     message,
-                    hrp: info.hrp,
+                    hrp,
                 }),
                 CredentialName::Secp256r1 => Credential::Secp256r1(saa_curves::secp256r1::Secp256r1 {
-                    pubkey: Binary(id),
+                    pubkey,
                     signature,
                     message,
                 }),
                 CredentialName::Ed25519 => Credential::Ed25519(saa_curves::ed25519::Ed25519 {
-                    pubkey: Binary(id),
+                    pubkey,
                     signature,
                     message,
                 }),

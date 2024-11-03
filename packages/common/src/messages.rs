@@ -46,10 +46,8 @@ impl<E> AuthPayload<E> {
         store: &dyn Storage
     ) -> Result<(), AuthError> {
         self.validate()?;
-
         #[cfg(feature = "storage")]
         if self.credential_id.is_some() {
-
             let info_res = crate::storage::CREDENTIAL_INFOS.load(
                 store, self.credential_id.clone().unwrap()
             );
@@ -69,16 +67,16 @@ impl<E> AuthPayload<E> {
 
 
 #[wasm_serde]
-pub struct MsgDataToSign {
+pub struct MsgDataToSign<M = ()> {
     pub chain_id: String,
     pub contract_address: String,
     #[cfg_attr(feature = "cosmwasm", serde(skip_deserializing))]
-    pub messages: Vec<()>,
+    pub messages: Vec<M>,
     pub nonce: String,
 }
 
 #[cfg(feature = "cosmwasm")]
-impl MsgDataToSign {
+impl<M> MsgDataToSign<M> {
     pub fn validate_cosmwasm(
         &self, 
         #[cfg(feature = "storage")]
@@ -99,6 +97,24 @@ pub struct SignedDataMsg {
     pub data: Binary,
     pub signature: Binary,
     pub payload: Option<AuthPayload>,
+}
+
+#[cfg(feature = "cosmwasm")]
+impl SignedDataMsg {
+    pub fn validate_cosmwasm<M : serde::de::DeserializeOwned + std::default::Default>(
+        &self,
+        #[cfg(feature = "storage")]
+        store: &dyn Storage,
+        env: &Env
+    ) -> Result<MsgDataToSign<M>, AuthError> {
+        let msg : MsgDataToSign<M> = crate::from_json(&self.data)?;
+        msg.validate_cosmwasm(
+            #[cfg(feature = "storage")]
+            store,
+            env
+        )?;
+        Ok(msg)
+    }
 }
 
 

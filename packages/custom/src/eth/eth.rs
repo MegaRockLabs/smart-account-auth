@@ -7,8 +7,7 @@ use saa_common::crypto::secp256k1_recover_pubkey;
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    hashes::keccak256, ensure,
-    CredentialInfo, CredentialName, CredentialId, 
+    hashes::keccak256, ensure,CredentialId, 
     AuthError, Binary, String, ToString, Verifiable 
 };
 
@@ -22,12 +21,6 @@ pub struct EthPersonalSign {
     pub signer:    String,
 }
 
-impl EthPersonalSign {
-    pub fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        Ok(preamble_msg_eth(&self.message).into())
-    }
-}
-
 
 impl Verifiable for EthPersonalSign {
 
@@ -35,18 +28,13 @@ impl Verifiable for EthPersonalSign {
         self.signer.as_bytes().to_vec()
     }
 
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::EthPersonalSign,
-            hrp: None,
-            extension: None,
+    fn hrp(&self) -> Option<String> {
+        #[cfg(feature = "injective")]
+        if true {
+            return Some("inj".to_string());
         }
+        None
     }
-
-    fn message(&self) -> Binary {
-        self.message.clone()
-    }
-
 
     fn validate(&self) -> Result<(), AuthError> {
         if self.signature.len() < 65 {
@@ -84,7 +72,7 @@ impl Verifiable for EthPersonalSign {
     fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
         let signature = &self.signature.0;
         let key_data = api.secp256k1_recover_pubkey(
-            &self.message_digest()?, 
+            &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;

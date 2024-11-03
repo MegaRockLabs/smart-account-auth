@@ -3,7 +3,7 @@ use saa_common::cosmwasm::{Api, Env};
 use saa_schema::wasm_serde;
 
 use saa_common::{
-    CredentialInfo, CredentialName, CredentialId, 
+    CredentialId, 
     AuthError, Binary, ToString, Verifiable, ensure
 };
 
@@ -22,17 +22,6 @@ impl Verifiable for Ed25519 {
         self.pubkey.0.clone()
     }
 
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::Ed25519,
-            extension: None,
-            hrp: None
-        }
-    }
-
-    fn message(&self) -> Binary {
-        self.message.clone()
-    }
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(

@@ -49,10 +49,4 @@ pub trait CredentialsWrapper : Clone + Verifiable {
         self.primary().id()
     }
 
-
-    fn ids(&self) -> Vec<CredentialId> {
-        self.credentials().iter().map(|c| c.id()).collect()
-    }
-
-
 }

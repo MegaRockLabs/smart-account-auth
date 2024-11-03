@@ -3,7 +3,7 @@ use saa_common::cosmwasm::{Api, Env};
 
 use saa_common::{
     ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, 
-    CredentialId, CredentialInfo, CredentialName, String, ToString, Verifiable
+    CredentialId, String, ToString, Verifiable
 };
 
 use super::utils::preamble_msg_arb_036;
@@ -36,16 +36,8 @@ impl Verifiable for CosmosArbitrary {
         self.pubkey.0.clone()
     }
 
-    fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: CredentialName::Secp256k1,
-            hrp: self.hrp.clone(),
-            extension: None,
-        }
-    }
-
-    fn message(&self) -> Binary {
-        self.message.clone()
+    fn hrp(&self) -> Option<String> {
+        self.hrp.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
