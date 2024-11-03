@@ -1,4 +1,4 @@
-use saa_common::{ensure, from_json, to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
+use saa_common::{to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
 };
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
@@ -19,7 +19,7 @@ use saa_custom::cosmos::CosmosArbitrary;
 use saa_common::cosmwasm::{Api, Addr, Env, MessageInfo};
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-use saa_common::{storage::*, cosmwasm::{Storage, Order}, messages::*};
+use saa_common::{storage::*, cosmwasm::{Storage, Order}, messages::*, ensure, from_json};
 
 
 #[wasm_serde]
@@ -272,6 +272,18 @@ impl Verifiable for Credential {
 
 }
 
+
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+pub fn verify_signed_queries(
+    api: &dyn Api,
+    storage: &dyn Storage,
+    env: &Env,
+    data: SignedDataMsg
+) -> Result<(), AuthError> {
+    let credential = load_credential(storage, data)?;
+    credential.assert_query_cosmwasm(api, storage, env)?;
+    Ok(())
+}
 
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
 pub fn verify_signed_actions(

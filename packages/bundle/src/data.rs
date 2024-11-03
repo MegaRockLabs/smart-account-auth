@@ -209,7 +209,7 @@ impl CredentialData {
 
         #[cfg(feature = "replay")]
         if true {
-            let nonce = data.assert_signed(storage, env)?;
+            let nonce = self.assert_signed(storage, env)?;
             NONCES.save(storage, &nonce, &true)?;
         }  
 
@@ -275,7 +275,7 @@ impl Verifiable for CredentialData {
         if with_caller {
             ensure!(creds
                     .iter()
-                    .filter(|c| c.info().name == CredentialName::Caller)
+                    .filter(|c| c.name() == CredentialName::Caller)
                     .count() == 1,
                 AuthError::generic("No caller credential found")
             );
@@ -324,19 +324,5 @@ impl Verifiable for CredentialData {
 
         Ok(())
     }
-
-    
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api, env: &Env) -> Result<(), AuthError>
-        where Self: Sized
-    {
-        self.validate()?;
-        self.credentials()
-            .iter()
-            .try_for_each(|c| c.verify_cosmwasm(api, env))?;
-        Ok(())
-    }
-
-
 
 }
