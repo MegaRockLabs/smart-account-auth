@@ -1,7 +1,7 @@
 
 use core::fmt::Debug;
 use saa_schema::wasm_serde;
-use serde::Serialize;
+use serde::{self, Serialize};
 
 use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
 
