@@ -69,11 +69,10 @@ impl<E : Serialize> AuthPayload<E> {
 
 
 #[wasm_serde]
-#[derive(Default)]
 pub struct MsgDataToSign {
     pub chain_id: String,
     pub contract_address: String,
-    #[serde(skip_deserializing)]
+    #[cfg_attr(feature = "cosmwasm", serde(skip_deserializing))]
     pub messages: Vec<()>,
     pub nonce: String,
 }
