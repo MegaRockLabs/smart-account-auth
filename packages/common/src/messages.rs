@@ -1,6 +1,6 @@
 
 use core::fmt::Debug;
-use saa_schema::{wasm_serde, serde::Serialize};
+use saa_schema::wasm_serde;
 
 use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
 
@@ -9,7 +9,7 @@ use cosmwasm_std::{CustomMsg, Storage, Env};
 
 
 #[wasm_serde]
-pub struct AuthPayload<E : Serialize = Binary> {
+pub struct AuthPayload<E = Binary> {
     pub hrp: Option<String>,
     pub address: Option<String>,
     pub credential_id: Option<CredentialId>,
@@ -17,7 +17,7 @@ pub struct AuthPayload<E : Serialize = Binary> {
 }
 
 
-impl<E : Serialize> AuthPayload<E> {
+impl<E> AuthPayload<E> {
 
     pub fn validate(&self) -> Result<(), AuthError> {
         let error : &str = "Only one of the 'address' or 'hrp' can be provided";
