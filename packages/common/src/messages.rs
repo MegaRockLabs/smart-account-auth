@@ -1,7 +1,6 @@
 
 use core::fmt::Debug;
-use saa_schema::wasm_serde;
-use serde::{self, Serialize};
+use saa_schema::{wasm_serde, serde::Serialize};
 
 use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
 
@@ -69,18 +68,18 @@ impl<E : Serialize> AuthPayload<E> {
 }
 
 
-
 #[wasm_serde]
-pub struct MsgDataToSign<M: Serialize> {
+#[derive(Default)]
+pub struct MsgDataToSign {
     pub chain_id: String,
     pub contract_address: String,
     #[serde(skip_deserializing)]
-    pub messages: Vec<M>,
+    pub messages: Vec<()>,
     pub nonce: String,
 }
 
 #[cfg(feature = "cosmwasm")]
-impl<M : Serialize> MsgDataToSign<M> {
+impl MsgDataToSign {
     pub fn validate_cosmwasm(
         &self, 
         #[cfg(feature = "storage")]

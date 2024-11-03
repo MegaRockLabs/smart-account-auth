@@ -129,7 +129,7 @@ impl Credential {
         self.verify_cosmwasm(api, env)?;
         #[cfg(feature = "replay")]
         if true {
-            let msg : MsgDataToSign<()> = from_json(&self.message())?;
+            let msg : MsgDataToSign = from_json(&self.message())?;
             msg.validate_cosmwasm(storage, env)?;
             let nonce = msg.nonce.clone();
             ensure!(!NONCES.has(storage, &nonce), AuthError::NonceUsed);

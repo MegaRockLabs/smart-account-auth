@@ -89,12 +89,12 @@ impl CredentialData {
         env: &Env,
     ) -> Result<String, AuthError> {
         let first = self.credentials.first().unwrap();
-        let first_data : MsgDataToSign<()> = saa_common::from_json(&first.message())?;
+        let first_data : MsgDataToSign = saa_common::from_json(&first.message())?;
         first_data.validate_cosmwasm(storage, env)?;
         let nonce = first_data.nonce.clone();
         
         self.credentials().iter().skip(1).map(|c| {
-            let data : MsgDataToSign<()> = saa_common::from_json(&c.message())?;
+            let data : MsgDataToSign = saa_common::from_json(&c.message())?;
             ensure!(data.chain_id == first_data.chain_id, AuthError::ChainIdMismatch);
             ensure!(data.contract_address == first_data.contract_address, AuthError::ContractMismatch);
             ensure!(data.nonce == nonce, AuthError::DifferentNonce);
