@@ -72,3 +72,6 @@ storage    = [
 ]
 cosmos     = []
 injective  = []
+iterator   = [
+    "cosmwasm-std/iterator"
+]

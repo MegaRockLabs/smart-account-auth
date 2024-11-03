@@ -361,7 +361,7 @@ pub fn construct_credential(
 
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "cosmwasm", feature = "storage", feature = "iterator"))]
 pub fn get_all_credentials(
     storage:  &dyn Storage,
 ) -> Result<AccountCredentials, AuthError> {

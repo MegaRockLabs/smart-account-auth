@@ -78,8 +78,13 @@ replay    = [
     "saa-common/replay",
     "saa-custom/storage",
 ]
+storage   = [
+    "iterator",
+]
+iterator  = [
+    "saa-common/iterator",
+]
 passkeys  = []
 ethereum  = []
 cosmos    = []
-storage   = []
 curves    = []
