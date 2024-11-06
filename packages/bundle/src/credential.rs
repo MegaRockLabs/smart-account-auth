@@ -134,7 +134,7 @@ impl Credential {
 
     #[cfg(feature = "cosmwasm")]
     pub fn is_cosmos_derivable(&self) -> bool {
-        self.hrp().is_some()
+        self.value().hrp().is_some()
     }
 
     #[cfg(feature = "cosmwasm")]
