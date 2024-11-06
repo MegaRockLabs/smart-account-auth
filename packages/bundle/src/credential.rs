@@ -134,7 +134,7 @@ impl Credential {
 
     #[cfg(feature = "cosmwasm")]
     pub fn is_cosmos_derivable(&self) -> bool {
-        self.value().hrp().is_some()
+        self.hrp().is_some()
     }
 
     #[cfg(feature = "cosmwasm")]
@@ -234,6 +234,10 @@ impl Verifiable for Credential {
 
     fn id(&self) -> CredentialId {
         self.value().id()
+    }
+
+    fn hrp(&self) -> Option<String> {
+        self.value().hrp()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
