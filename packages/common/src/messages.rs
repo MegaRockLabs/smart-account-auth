@@ -70,7 +70,6 @@ impl<E> AuthPayload<E> {
 pub struct MsgDataToSign<M = ()> {
     pub chain_id: String,
     pub contract_address: String,
-    #[cfg_attr(feature = "cosmwasm", serde(skip_deserializing))]
     pub messages: Vec<M>,
     pub nonce: String,
 }
