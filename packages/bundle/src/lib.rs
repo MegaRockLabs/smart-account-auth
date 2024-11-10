@@ -16,10 +16,11 @@ mod wrapper;
 mod functions;
 mod credential;
 
-pub use functions::*;
-pub use credential::*;
-pub use wrapper::CredentialsWrapper;
 pub use data::{CredentialData, UpdateOperation};
+pub use wrapper::CredentialsWrapper;
+pub use credential::*;
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+pub use functions::*;
 
 
 #[cfg(feature = "curves")]

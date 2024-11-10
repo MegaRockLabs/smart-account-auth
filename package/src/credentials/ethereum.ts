@@ -4,6 +4,13 @@ import type { Credential } from "./types";
 import { fromHex, toBase64, toHex, toUtf8 } from "@cosmjs/encoding";
 
 
+export const requestEthAcccounts = async (
+    methodProvider : Eip1193Provider
+) : Promise<string[]> => {
+    return methodProvider.request({ method: "eth_requestAccounts" });
+}
+
+
 export const getEthPersonalSignCredential = async (
     methodProvider  : Eip1193Provider,
     message         : string | Uint8Array,
@@ -15,7 +22,7 @@ export const getEthPersonalSignCredential = async (
     }
 
     if (!signerAddress) {
-        const addresses : string[] = await methodProvider.request({ method: "eth_requestAccounts" });
+        const addresses : string[] = await requestEthAcccounts(methodProvider);
         signerAddress = addresses[0];
     }
 
@@ -28,7 +35,7 @@ export const getEthPersonalSignCredential = async (
 
     return {
         eth_personal_sign: {
-            signer: signerAddress,
+            signer: signerAddress.toLowerCase(),
             signature: toBase64(sigBytes),
             message: toBase64(message)
         }
