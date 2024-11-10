@@ -20,25 +20,12 @@ use crate::{Credential, CredentialsWrapper};
 
 
 
-
 #[wasm_serde]
 pub struct CredentialData {
     pub credentials     :  Vec<Credential>,
     pub with_caller     :  Option<bool>,
     pub primary_index   :  Option<u8>,
 }
-
-
-impl Default for CredentialData {
-    fn default() -> Self {
-        Self { 
-            credentials     : vec![], 
-            with_caller     : None,
-            primary_index   : None, 
-        }
-    }
-}
-
 
 
 #[wasm_serde]
@@ -89,12 +76,12 @@ impl CredentialData {
         env: &Env,
     ) -> Result<String, AuthError> {
         let first = self.credentials.first().unwrap();
-        let first_data : MsgDataToSign = saa_common::from_json(&first.message())?;
+        let first_data : MsgDataToVerify = saa_common::from_json(&first.message())?;
         first_data.validate_cosmwasm(storage, env)?;
         let nonce = first_data.nonce.clone();
         
         self.credentials().iter().skip(1).map(|c| {
-            let data : MsgDataToSign = saa_common::from_json(&c.message())?;
+            let data : MsgDataToVerify = saa_common::from_json(&c.message())?;
             ensure!(data.chain_id == first_data.chain_id, AuthError::ChainIdMismatch);
             ensure!(data.contract_address == first_data.contract_address, AuthError::ContractMismatch);
             ensure!(data.nonce == nonce, AuthError::DifferentNonce);
@@ -169,6 +156,7 @@ impl CredentialData {
         match op {
             UpdateOperation::Add(data) => {
                 for cred in data.credentials() {
+                    ensure!(!CREDENTIAL_INFOS.has(storage, cred.id()), AuthError::AlreadyExists);
                     cred.save_cosmwasm(api, storage, env, info)?;
                     if data.primary_index.is_some() {
                         let primary = data.primary();

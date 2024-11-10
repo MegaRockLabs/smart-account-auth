@@ -1,6 +1,6 @@
 #[cfg(feature = "cosmwasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo};
-use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
+use saa_common::{ensure, utils::prefix_from_address, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
 
@@ -35,6 +35,18 @@ impl Verifiable for Caller {
 
     fn id(&self) -> CredentialId {
         self.id.clone()
+    }
+
+    fn hrp(&self) -> Option<String> {
+        #[cfg(feature = "cosmwasm")]
+        if true {
+            let res = String::from_utf8(self.id.clone());
+            if res.is_err() {
+                return None;
+            }
+            return Some(prefix_from_address(res.unwrap().as_str()));
+        }
+        None
     }
 
     fn validate(&self) -> Result<(), AuthError> {

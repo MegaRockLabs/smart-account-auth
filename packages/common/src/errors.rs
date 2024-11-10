@@ -52,6 +52,9 @@ pub enum AuthError {
     #[error("The given credential was not found on this account")]
     NotFound, 
 
+    #[error("The given credential already exists on this account")]
+    AlreadyExists,
+
     #[error("At least one of the credential must be usable for verifications")]
     NoVerifying,
 

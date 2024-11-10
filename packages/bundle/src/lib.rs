@@ -13,8 +13,10 @@ pub use saa_schema::wasm_serde;
 
 mod data;
 mod wrapper;
+mod functions;
 mod credential;
 
+pub use functions::*;
 pub use credential::*;
 pub use wrapper::CredentialsWrapper;
 pub use data::{CredentialData, UpdateOperation};

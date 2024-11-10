@@ -65,19 +65,35 @@ impl<E> AuthPayload<E> {
 }
 
 
-#[cfg(feature = "cosmwasm")]
-#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
-pub struct MsgDataToSign<M = ()> {
+#[wasm_serde]
+pub struct MsgDataToSign<M = String> {
     pub chain_id: String,
     pub contract_address: String,
-    #[serde(skip_deserializing)]
     pub messages: Vec<M>,
     pub nonce: String,
 }
 
 
+#[wasm_serde]
+pub struct MsgDataToVerify {
+    pub chain_id: String,
+    pub contract_address: String,
+    pub nonce: String,
+}
+
+impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
+    fn into(self) -> MsgDataToVerify {
+        MsgDataToVerify {
+            chain_id: self.chain_id.clone(),
+            contract_address: self.contract_address.clone(),
+            nonce: self.nonce.clone(),
+        }
+    }
+}
+
+
 #[cfg(feature = "cosmwasm")]
-impl<M> MsgDataToSign<M> {
+impl MsgDataToVerify {
     pub fn validate_cosmwasm(
         &self, 
         #[cfg(feature = "storage")]
@@ -93,29 +109,29 @@ impl<M> MsgDataToSign<M> {
     }
 }
 
+
+#[cfg(feature = "cosmwasm")]
+impl<M> MsgDataToSign<M> {
+    pub fn validate_cosmwasm(
+        &self, 
+        #[cfg(feature = "storage")]
+        store: &dyn Storage, 
+        env: &Env
+    ) -> Result<(), AuthError> {
+        Into::<MsgDataToVerify>::into(self)
+        .validate_cosmwasm(
+            #[cfg(feature = "storage")]
+            store,
+            env
+        )
+    }
+}
+
 #[wasm_serde]
 pub struct SignedDataMsg {
     pub data: Binary,
     pub signature: Binary,
     pub payload: Option<AuthPayload>,
-}
-
-#[cfg(feature = "cosmwasm")]
-impl SignedDataMsg {
-    pub fn validate_cosmwasm<M : serde::de::DeserializeOwned + std::default::Default>(
-        &self,
-        #[cfg(feature = "storage")]
-        store: &dyn Storage,
-        env: &Env
-    ) -> Result<MsgDataToSign<M>, AuthError> {
-        let msg : MsgDataToSign<M> = crate::from_json(&self.data)?;
-        msg.validate_cosmwasm(
-            #[cfg(feature = "storage")]
-            store,
-            env
-        )?;
-        Ok(msg)
-    }
 }
 
 
