@@ -1,8 +1,8 @@
 
 use saa_common::{
-    format, vec, 
+    format, ensure,
     CredentialId, CredentialName, 
-    Vec, Verifiable, AuthError, ensure
+    Vec, Verifiable, AuthError
 };
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;

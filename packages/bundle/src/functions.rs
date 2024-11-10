@@ -1,15 +1,11 @@
-
-use saa_common::{
-    CredentialId, CredentialName, 
-    AuthError, Binary, from_json, ensure
-};
-
-#[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, Storage};
 #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-use saa_common::{storage::*, messages::*};
-
-
+use saa_common::{
+    CredentialId, CredentialName, AuthError, Binary, ensure, 
+    cosmwasm::{Api, Env, Storage, from_json},
+    storage::*,
+    messages::*
+};
+#[cfg(all(feature = "cosmwasm", feature = "storage"))]
 use crate::Credential;
 
 
