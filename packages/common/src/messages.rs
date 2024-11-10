@@ -7,7 +7,6 @@ use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
 #[cfg(feature = "cosmwasm")]
 use cosmwasm_std::{CustomMsg, Storage, Env};
 
-
 #[wasm_serde]
 pub struct AuthPayload<E = Binary> {
     pub hrp: Option<String>,
@@ -66,13 +65,16 @@ impl<E> AuthPayload<E> {
 }
 
 
-#[wasm_serde]
+#[cfg(feature = "cosmwasm")]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
 pub struct MsgDataToSign<M = ()> {
     pub chain_id: String,
     pub contract_address: String,
+    #[serde(skip_deserializing)]
     pub messages: Vec<M>,
     pub nonce: String,
 }
+
 
 #[cfg(feature = "cosmwasm")]
 impl<M> MsgDataToSign<M> {

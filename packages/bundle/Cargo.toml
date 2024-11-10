@@ -68,7 +68,6 @@ native = [
     "saa-custom/native",
     "saa-common/native",
 ]
-
 injective = [
     "saa-custom/injective",
     "saa-common/injective",

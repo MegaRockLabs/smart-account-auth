@@ -3,7 +3,7 @@ import type { Window as KeplrWindow } from "@keplr-wallet/types";
 import type { Eip1193Provider } from "ethers";
 
 
-export interface EvmCredential {
+export interface EthPersonalSign {
     message: string;
     signature: string;
     signer: string;
@@ -34,7 +34,7 @@ export interface PasskeyCredential {
 
 
 export type Credential = 
-  { evm: EvmCredential } | 
+  { eth_personal_sign: EthPersonalSign } | 
   { cosmos_arbitrary: CosmosArbitrary } |
   { passkey: PasskeyCredential };
 

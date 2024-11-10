@@ -4,7 +4,7 @@ import type { Credential } from "./types";
 import { fromHex, toBase64, toHex, toUtf8 } from "@cosmjs/encoding";
 
 
-export const getEthPersonalCredential = async (
+export const getEthPersonalSignCredential = async (
     methodProvider  : Eip1193Provider,
     message         : string | Uint8Array,
     signerAddress?  : string,
@@ -27,7 +27,7 @@ export const getEthPersonalCredential = async (
     const sigBytes = fromHex(signature.slice(2));
 
     return {
-        evm: {
+        eth_personal_sign: {
             signer: signerAddress,
             signature: toBase64(sigBytes),
             message: toBase64(message)

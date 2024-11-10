@@ -186,7 +186,6 @@ impl CredentialData {
                 }
             }
         }
-
         Ok(())
     }
 
@@ -307,19 +306,29 @@ impl Verifiable for CredentialData {
         where Self: Sized
     {
         let with_caller = self.with_caller.unwrap_or(false);
-        
         let creds = if with_caller {
             let caller = api.clone().caller();
             self.with_caller_ink(caller)
         } else {
             self.clone()
         };
-
         creds.validate()?;
-
         creds.credentials()
             .iter()
             .map(|c| c.verify_ink(api.clone())).
+            collect::<Result<Vec<()>, AuthError>>()?;
+
+        Ok(())
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(&self,  api : &dyn Api,  env:  &Env) -> Result<(), AuthError>  
+        where Self: Sized 
+    {
+        self.validate()?;
+        self.credentials()
+            .iter()
+            .map(|c| c.verify_cosmwasm(api, env)).
             collect::<Result<Vec<()>, AuthError>>()?;
 
         Ok(())

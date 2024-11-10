@@ -114,7 +114,8 @@ pub trait Verifiable  {
 
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self,  _:  &dyn Api,  _:  &Env) -> Result<(), AuthError>  
-    where Self: Sized {
+        where Self: Sized 
+    {
         #[cfg(feature = "native")]
         if true {
             self.verify()?;

@@ -178,10 +178,14 @@ impl Credential {
         where Self: Sized
     {   
         ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
+        println!("Assert before validation");
         self.verify_cosmwasm(api, env)?;
+        println!("Assert after validation");
         #[cfg(feature = "replay")]
         if true {
+            println!("Assert (replay) before deserialization");
             let msg : MsgDataToSign = from_json(&self.message())?;
+            println!("Assert (replay) data before validation");
             msg.validate_cosmwasm(storage, env)?;
             let nonce = msg.nonce.clone();
             ensure!(!NONCES.has(storage, &nonce), AuthError::NonceUsed);
@@ -217,10 +221,8 @@ impl Credential {
         info: &MessageInfo
     ) -> Result<(), AuthError> {
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
-        #[cfg(feature = "replay")] 
-        if true {
-            self.assert_execute_cosmwasm(api, storage, env)?;
-        }
+        self.assert_execute_cosmwasm(api, storage, env)?;
+
         if let Credential::Caller(_) = self {
             CALLER.save(storage, &Some(info.sender.to_string()))?;
         }
