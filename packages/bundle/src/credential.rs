@@ -45,6 +45,14 @@ pub enum Credential {
     Ed25519(Ed25519),
 }
 
+/* impl Deref for Credential {
+    type Target = dyn Verifiable;
+
+    fn deref(&self) -> &Self::Target {
+        self.value()
+    }
+} */
+
 impl Credential {
 
     pub fn name(&self) -> CredentialName {
@@ -146,7 +154,7 @@ impl Credential {
             return Ok(address)
         }
         #[cfg(all(feature = "injective", feature="ethereum"))]
-        if true {
+        {
             if name == CredentialName::EthPersonalSign {
                 return Ok(Addr::unchecked(
                     saa_common::utils::pubkey_to_address(

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+ /*    use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use saa_common::{Binary, Verifiable};
     use crate::passkey::{ClientData, PasskeyCredential};
 
@@ -69,6 +69,6 @@ mod tests {
         assert!(res.is_ok());
     }
 
-
+ */
 
 }

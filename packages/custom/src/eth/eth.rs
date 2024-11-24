@@ -54,9 +54,7 @@ impl Verifiable for EthPersonalSign {
     fn verify(&self) -> Result<(), AuthError> {
         let signature = &self.signature.0;
         let key_data = secp256k1_recover_pubkey(
-            &preamble_msg_eth(
-                &Binary(hex::encode(&self.message).into())
-            ), 
+            &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
@@ -69,14 +67,6 @@ impl Verifiable for EthPersonalSign {
         Ok(())
     }
 
-/*     let key_data = api.secp256k1_recover_pubkey(
-        &preamble_msg_eth(&Binary(
-            hex::encode(&self.message).into()
-        )), 
-        &signature[..64], 
-        get_recovery_param(signature[64])?
-    )?;
- */
 
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
@@ -84,9 +74,7 @@ impl Verifiable for EthPersonalSign {
         let signature = &self.signature.0;
         
         let key_data = api.secp256k1_recover_pubkey(
-            &preamble_msg_eth(
-                &Binary(hex::encode(&self.message).into())
-            ), 
+            &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
@@ -98,9 +86,7 @@ impl Verifiable for EthPersonalSign {
         
         let hash_hex = hex::encode(&hash[12..]);
         let addr_hex = hex::encode(&addr_bytes);
-        println!("hash: {:?}", hash_hex);
-        println!("addr: {:?}", addr_hex);
-        
+
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
         Ok(())
     }
