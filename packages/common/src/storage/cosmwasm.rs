@@ -1,7 +1,6 @@
 use cw_storage_plus::{Item, Map};
 use crate::{CredentialInfo, CredentialId};
 
-
 /// The credential ID to use by default for verifications
 pub const VERIFYING_CRED_ID : Item<CredentialId> = Item::new("saa_verifying_id");
 
@@ -15,4 +14,4 @@ pub const CALLER : Item<Option<String>> = Item::new("saa_with_caller");
 
 /// Storage of used nonces  to prevent replay attacks. &str to boolean
 #[cfg(feature = "replay")]
-pub const NONCES : Map<&str, bool> = Map::new("saa_nonces");
+pub const ACCOUNT_NUMBER : Item<u128> = Item::new("saa_acc_num");

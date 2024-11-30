@@ -1,3 +1,4 @@
+#![allow(unreachable_code)]
 
 use saa_common::{
     format, ensure,
@@ -93,7 +94,7 @@ impl CredentialData {
 
 
     #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    fn assert_query_cosmwasm(
+    fn assert_cosmwasm(
         &self, 
         api: &dyn Api,
         storage: &dyn Storage, 
@@ -103,7 +104,7 @@ impl CredentialData {
         if self.with_caller.unwrap_or(false) {
             self.with_caller_cosmwasm(info).validate()?;
             let caller = CALLER.load(storage).unwrap_or(None);
-            if caller.is_some() && caller.unwrap() == info.sender {
+            if caller.is_some() && caller.unwrap() == info.sender.to_string() {
                 return Ok(String::default())
             }
         }  else {
@@ -113,15 +114,13 @@ impl CredentialData {
         ensure!(
             self.credentials.iter().all(|c| 
                 CREDENTIAL_INFOS.has(storage, c.id()) &&
-                c.verify_cosmwasm(api, env).is_ok()
+                c.verify_cosmwasm(api).is_ok()
             ), 
             AuthError::NotFound
         );
 
         #[cfg(feature = "replay")]
-        if true {
-            return self.assert_signed(storage, env)
-        }
+        return self.assert_signed(storage, env);
 
         Ok(String::default())
     }
@@ -129,7 +128,7 @@ impl CredentialData {
 
 
     #[cfg(all(feature = "cosmwasm", feature = "storage"))]
-    pub fn update(
+    pub fn update_cosmwasm(
         &self,
         op: UpdateOperation,
         api: &dyn Api, 
@@ -142,16 +141,14 @@ impl CredentialData {
             UpdateOperation::Remove(data) => data,
         };
         
-        let nonce = self.assert_query_cosmwasm(api, storage, env, info)?;
+        let nonce = self.assert_cosmwasm(api, storage, env, info)?;
         let new_nonce = new.assert_signed(storage, env)?;
 
         if !nonce.is_empty() && !new_nonce.is_empty() {
             ensure!(nonce == new_nonce, AuthError::DifferentNonce);
-        } else if !nonce.is_empty() {
-            NONCES.save(storage, &nonce, &true)?;
-        } else if !new_nonce.is_empty() {
-            NONCES.save(storage, &new_nonce, &true)?;
         }
+
+        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, AuthError>(n + 1))?;
 
         match op {
             UpdateOperation::Add(data) => {
@@ -195,9 +192,9 @@ impl CredentialData {
         };
 
         #[cfg(feature = "replay")]
-        if true {
-            let nonce = self.assert_signed(storage, env)?;
-            NONCES.save(storage, &nonce, &true)?;
+        {
+            self.assert_signed(storage, env)?;
+            ACCOUNT_NUMBER.save(storage, &1)?;
         }  
 
         let mut verifying_found = false;
@@ -217,7 +214,7 @@ impl CredentialData {
                 continue;
             }
 
-            cred.verify_cosmwasm(api, env)?;
+            cred.verify_cosmwasm(api)?;
 
             if !verifying_found {
                 VERIFYING_CRED_ID.save(storage, &cred.id())?;
@@ -310,13 +307,13 @@ impl Verifiable for CredentialData {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self,  api : &dyn Api,  env:  &Env) -> Result<(), AuthError>  
+    fn verify_cosmwasm(&self,  api : &dyn Api) -> Result<(), AuthError>  
         where Self: Sized 
     {
         self.validate()?;
         self.credentials()
             .iter()
-            .map(|c| c.verify_cosmwasm(api, env)).
+            .map(|c| c.verify_cosmwasm(api)).
             collect::<Result<Vec<()>, AuthError>>()?;
 
         Ok(())

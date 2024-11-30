@@ -58,7 +58,7 @@ pub enum AuthError {
     #[error("At least one of the credential must be usable for verifications")]
     NoVerifying,
 
-    #[error("The list of credentials musy have the same nonce")]
+    #[error("Wrong account number")]
     DifferentNonce,
 
     #[error("{0}")]

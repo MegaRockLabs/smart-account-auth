@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env};
+use saa_common::cosmwasm::Api;
 
 use saa_common::{
     ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, 
@@ -33,7 +33,7 @@ impl CosmosArbitrary {
 impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.0.clone()
+        self.pubkey.to_vec()
     }
 
     fn hrp(&self) -> Option<String> {
@@ -64,8 +64,7 @@ impl Verifiable for CosmosArbitrary {
     #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(
         &self, 
-        api:  &dyn Api, 
-        _:  &Env,
+        api:  &dyn Api
     ) -> Result<(), AuthError> {
         let success = api.secp256k1_verify(
             &self.message_digest()?,

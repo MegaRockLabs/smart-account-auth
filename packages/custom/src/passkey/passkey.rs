@@ -1,7 +1,6 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env};
+use saa_common::cosmwasm::Api;
 
-use saa_curves::secp256r1::secp256r1_verify;
 use saa_schema::wasm_serde;
 
 use saa_common::{
@@ -26,6 +25,7 @@ use sha2::{Digest, Sha256};
 ))]
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(saa_schema::scale_info::TypeInfo))]
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[non_exhaustive]
 pub struct ClientData {
     // rename to type
     #[serde(rename = "type")]
@@ -110,7 +110,7 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let res = secp256r1_verify(
+        let res = saa_common::crypto::secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
@@ -121,8 +121,9 @@ impl Verifiable for PasskeyCredential {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, _: &dyn Api, _: &Env) -> Result<(), AuthError> {
-        let res = secp256r1_verify(
+    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
+        
+        let res = api.secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()

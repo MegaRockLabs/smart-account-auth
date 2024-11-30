@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unreachable_code)]
 
 pub mod eth;
 pub mod cosmos;

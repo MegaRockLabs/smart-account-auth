@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env, MessageInfo};
+use saa_common::cosmwasm::{Api, MessageInfo};
 use saa_common::{ensure, utils::prefix_from_address, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
@@ -39,7 +39,7 @@ impl Verifiable for Caller {
 
     fn hrp(&self) -> Option<String> {
         #[cfg(feature = "cosmwasm")]
-        if true {
+        {
             let res = String::from_utf8(self.id.clone());
             if res.is_err() {
                 return None;
@@ -65,7 +65,7 @@ impl Verifiable for Caller {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(& self, _: &dyn Api, _: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(& self, _: &dyn Api) -> Result<(), AuthError> {
         self.validate()
     }
 

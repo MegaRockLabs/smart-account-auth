@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     
- /*    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+ /*    
+    use cosmwasm_std::testing::{mock_dependencies};
     use saa_common::{Binary, Verifiable};
     use crate::passkey::{ClientData, PasskeyCredential};
 
@@ -11,7 +12,6 @@ mod tests {
 
         let deps = mock_dependencies();
         let deps = deps.as_ref();
-        let env = mock_env();
 
         let public_key = Binary::from_base64("BI0JR98MB4w+dSphFbtyfcDqoiZu+DPrCqXg+C+S39hfKfFBLOQe/zDGOII6DG2YDJDG3d9r3bwxD1V386EIDr8=").unwrap();
         let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MdAAAAAA==").unwrap();
@@ -31,7 +31,7 @@ mod tests {
             user_handle: None
         };
 
-        let res = credential.verify_cosmwasm(deps.api, &env);
+        let res = credential.verify_cosmwasm(deps.api);
 
         println!("Res: {:?}", res);
         assert!(res.is_ok());
@@ -43,7 +43,6 @@ mod tests {
 
         let deps = mock_dependencies();
         let deps = deps.as_ref();
-        let env = mock_env();
 
         let public_key = Binary::from_base64("BGDRdC9Ynea9vlpLxFZmEGL1cYpxGgzRvEMzlugVfmYOyACjQ5wHA8DNuCR4GI/Sfj6OkVNlyvuwyfkeOPavcG8=").unwrap();
         let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MFAAAAAA==").unwrap();
@@ -63,7 +62,7 @@ mod tests {
             user_handle: None
         };
 
-        let res = credential.verify_cosmwasm(deps.api, &env);
+        let res = credential.verify_cosmwasm(deps.api);
 
         println!("Res: {:?}", res);
         assert!(res.is_ok());

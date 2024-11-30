@@ -25,8 +25,3 @@ pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
     hasher.finalize(&mut output);
     output
 }
-
-
-
-
-pub use crate::identity::Identity256;

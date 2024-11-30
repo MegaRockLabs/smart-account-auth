@@ -18,10 +18,14 @@ use crate::AuthError;
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(
     saa_schema::scale_info::TypeInfo)
 )]
-pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
-
+pub struct Binary(#[schemars(with = "String")] Vec<u8>);
 
 impl Binary {
+    /// Creates a new `Binary` containing the given data.
+    pub const fn new(data: Vec<u8>) -> Self {
+        Self(data)
+    }
+
     /// Base64 encoding engine used in conversion to/from base64.
     ///
     /// The engine adds padding when encoding and accepts strings with or
@@ -265,14 +269,14 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 #[cfg(feature = "cosmwasm")]
 impl From<Binary> for cosmwasm_std::Binary {
     fn from(binary: Binary) -> Self {
-        cosmwasm_std::Binary(binary.0)
+        crate::cosmwasm::Binary::new(binary.0)
     }
 }
 
 #[cfg(feature = "cosmwasm")]
 impl Into<Binary> for cosmwasm_std::Binary {
     fn into(self) -> Binary {
-        Binary(self.0)
+        Binary::new(self.to_vec())
     }
 }
 

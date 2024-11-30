@@ -116,10 +116,10 @@ impl MsgDataToVerify {
         env: &Env
     ) -> Result<(), AuthError> {
         ensure!(self.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
-        ensure!(self.contract_address == env.contract.address, AuthError::ContractMismatch);
+        ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
         ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
         #[cfg(feature = "storage")]
-        ensure!(!crate::storage::NONCES.has(store, &self.nonce), AuthError::DifferentNonce);
+        ensure!(crate::storage::ACCOUNT_NUMBER.load(store)?.to_string() == self.nonce, AuthError::DifferentNonce);
         Ok(())
     }
 }

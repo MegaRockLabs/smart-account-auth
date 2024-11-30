@@ -16,7 +16,7 @@ pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> 
 
 #[cfg(feature = "cosmwasm")]
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> cosmwasm_std::CanonicalAddr {
-    cosmwasm_std::CanonicalAddr::from(
-        cosmwasm_std::Binary(ripemd160(&sha256(pubkey)))
+    crate::cosmwasm::CanonicalAddr::from(
+        crate::cosmwasm::Binary::new(ripemd160(&sha256(pubkey)))
     )
 }

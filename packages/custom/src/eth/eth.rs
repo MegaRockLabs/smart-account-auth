@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env};
+use saa_common::cosmwasm::Api;
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;
@@ -30,7 +30,7 @@ impl Verifiable for EthPersonalSign {
 
     fn hrp(&self) -> Option<String> {
         #[cfg(feature = "injective")]
-        if true {
+        {
             return Some("inj".to_string());
         }
         None
@@ -52,7 +52,7 @@ impl Verifiable for EthPersonalSign {
 
     #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
-        let signature = &self.signature.0;
+        let signature = &self.signature.to_vec();
         let key_data = secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &signature[..64], 
@@ -69,9 +69,9 @@ impl Verifiable for EthPersonalSign {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
         
-        let signature = &self.signature.0;
+        let signature = &self.signature.to_vec();
         
         let key_data = api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
@@ -84,9 +84,6 @@ impl Verifiable for EthPersonalSign {
         let addr_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
         
-        let hash_hex = hex::encode(&hash[12..]);
-        let addr_hex = hex::encode(&addr_bytes);
-
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
         Ok(())
     }

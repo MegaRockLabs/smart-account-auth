@@ -1,5 +1,5 @@
-use saa_common::{to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable 
-};
+#![allow(unreachable_code)]
+use saa_common::{to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable};
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
 
@@ -45,13 +45,6 @@ pub enum Credential {
     Ed25519(Ed25519),
 }
 
-/* impl Deref for Credential {
-    type Target = dyn Verifiable;
-
-    fn deref(&self) -> &Self::Target {
-        self.value()
-    }
-} */
 
 impl Credential {
 
@@ -76,7 +69,7 @@ impl Credential {
         }
     }
 
-    pub fn value(&self) -> &dyn Verifiable {
+    fn value(&self) -> &dyn Verifiable {
         match self {
             Credential::Caller(c) => c,
             #[cfg(feature = "ethereum")]
@@ -186,9 +179,9 @@ impl Credential {
         where Self: Sized
     {   
         ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
-        self.verify_cosmwasm(api, env)?;
+        self.verify_cosmwasm(api)?;
         #[cfg(feature = "replay")]
-        if true {
+        {
             let msg : MsgDataToVerify = from_json(&self.message())?;
             msg.validate_cosmwasm(storage, env)?;
             return Ok(msg.nonce.clone())
@@ -196,22 +189,17 @@ impl Credential {
         Ok(String::default())
     }
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    #[cfg(all(feature = "cosmwasm", feature = "replay"))]
     pub fn assert_execute_cosmwasm(
         &self, 
         api     :  &dyn Api,
-        #[cfg(feature = "replay")]
         storage :  &mut dyn Storage,
-        #[cfg(not(feature = "replay"))]
-        storage :  &dyn Storage,
         env     :  &Env, 
     ) -> Result<(), AuthError> 
         where Self: Sized
     {
-        let nonce = self.assert_query_cosmwasm(api, storage, env)?;
-        if !nonce.is_empty() {
-            NONCES.save(storage, &nonce, &true)?;
-        }
+        self.assert_query_cosmwasm(api, storage, env)?;
+        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, AuthError>(n + 1))?;
         Ok(())
     }
 
@@ -223,6 +211,7 @@ impl Credential {
         info: &MessageInfo
     ) -> Result<(), AuthError> {
         CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
+        #[cfg(feature = "replay")]
         self.assert_execute_cosmwasm(api, storage, env)?;
         if let Credential::Caller(_) = self {
             CALLER.save(storage, &Some(info.sender.to_string()))?;
@@ -253,24 +242,24 @@ impl Verifiable for Credential {
     }
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self,  api:  &dyn Api,  env:  &Env) -> Result<(), AuthError>  
+    fn verify_cosmwasm(&self,  api:  &dyn Api) -> Result<(), AuthError>  
         where Self: Sized
     {
         self.validate()?;
         match self {
-            Credential::Caller(c) => c.verify_cosmwasm(api, env),
+            Credential::Caller(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => c.verify_cosmwasm(api, env),
+            Credential::EthPersonalSign(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c.verify_cosmwasm(api, env),
+            Credential::CosmosArbitrary(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c.verify_cosmwasm(api, env),
+            Credential::Passkey(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
-                    Credential::Secp256k1(c) => c.verify_cosmwasm(api, env),
-                    Credential::Secp256r1(c) => c.verify_cosmwasm(api, env),
-                    Credential::Ed25519(c) => c.verify_cosmwasm(api, env),
+                    Credential::Secp256k1(c) => c.verify_cosmwasm(api),
+                    Credential::Secp256r1(c) => c.verify_cosmwasm(api),
+                    Credential::Ed25519(c) => c.verify_cosmwasm(api),
                     _ => unreachable!(),
                 }
             },

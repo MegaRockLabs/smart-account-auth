@@ -1,5 +1,5 @@
 #[cfg(feature = "cosmwasm")]
-use saa_common::cosmwasm::{Api, Env};
+use saa_common::cosmwasm::Api;
 use saa_schema::wasm_serde;
 
 use saa_common::{
@@ -19,7 +19,7 @@ pub struct Ed25519 {
 impl Verifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.0.clone()
+        self.pubkey.to_vec()
     }
 
 
@@ -46,7 +46,7 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api, _: &Env) -> Result<(), AuthError> 
+    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> 
         where Self: Clone
     {
         let success = api.ed25519_verify(

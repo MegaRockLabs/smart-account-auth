@@ -1,10 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(unreachable_code)]
 
 
 use saa_schema::wasm_serde;
 mod binary;
 mod errors;
-mod identity;
 pub mod utils;
 pub mod messages;
 pub mod hashes;
@@ -33,9 +33,8 @@ pub use ink::prelude::{
 
 #[cfg(feature = "native")]
 pub mod crypto {
-    pub use cosmwasm_crypto::*;    
+    pub use cosmwasm_crypto::*;  
 } 
-
 
 
 #[cfg(feature = "cosmwasm")]
@@ -104,7 +103,7 @@ pub trait Verifiable  {
         where Self: Sized 
     {
         #[cfg(feature = "native")]
-        if true {
+        {
             self.verify()?;
             return Ok(());
         } 
@@ -113,11 +112,11 @@ pub trait Verifiable  {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self,  _:  &dyn Api,  _:  &Env) -> Result<(), AuthError>  
+    fn verify_cosmwasm(&self,  _:  &dyn Api) -> Result<(), AuthError>  
         where Self: Sized 
     {
         #[cfg(feature = "native")]
-        if true {
+        {
             self.verify()?;
             return Ok(());
         } 

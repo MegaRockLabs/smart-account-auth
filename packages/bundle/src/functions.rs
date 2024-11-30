@@ -21,7 +21,7 @@ pub fn get_all_credentials(
         .map(|item| {
             let (id, info) = item?;
             Ok((
-                Binary(id), 
+                Binary::new(id), 
                 CredentialInfo {
                     name: info.name,
                     hrp: info.hrp,
@@ -36,7 +36,7 @@ pub fn get_all_credentials(
     Ok(AccountCredentials {
         credentials,
         native_caller: caller.is_some(),
-        verifying_id: Binary(verifying_id),
+        verifying_id: Binary::new(verifying_id),
     })
 
 }
@@ -66,13 +66,10 @@ pub fn verify_signed_queries(
     Ok(())
 }
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "cosmwasm", feature = "replay"))]
 pub fn verify_signed_actions(
     api: &dyn Api,
-    #[cfg(feature = "replay")]
     storage: &mut dyn Storage,
-    #[cfg(not(feature = "replay"))]
-    storage: &dyn Storage,
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
@@ -129,7 +126,6 @@ fn construct_credential(
     signature: Binary,
 ) -> Result<Credential, AuthError> {
 
-
     let credential = match name {
 
         CredentialName::Caller => Credential::Caller(saa_custom::caller::Caller { id }),
@@ -144,7 +140,7 @@ fn construct_credential(
 
         #[cfg(feature = "cosmos")]
         CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_custom::cosmos::CosmosArbitrary {
-            pubkey: Binary(id),
+            pubkey: Binary::new(id),
             message,
             signature,
             hrp,
@@ -181,7 +177,7 @@ fn construct_credential(
 
         #[cfg(feature = "curves")]
         curves => {
-            let pubkey = Binary(id);
+            let pubkey = Binary::new(id);
             match curves {
                 CredentialName::Secp256k1 => Credential::Secp256k1(saa_curves::secp256k1::Secp256k1 {
                     pubkey,

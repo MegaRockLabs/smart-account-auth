@@ -103,14 +103,13 @@ export const getPasskeyCredential = async (
         }
     }
 
+    const allowCredentials : PublicKeyCredentialDescriptor[] = id 
+        ? [{ id: Buffer.from(id, "base64"), type: "public-key" }] 
+        : [];
+        
     const credentialRequestOptions: CredentialRequestOptions = {
         publicKey: {
-            allowCredentials: [
-                {
-                    id: Buffer.from(id, "base64"),
-                    type: "public-key",
-                },
-            ],
+            allowCredentials,
             challenge,
             timeout: 60000,
             ...options

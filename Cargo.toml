@@ -6,7 +6,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.14.23"
+version         = "0.15.0"
 edition         = "2021"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
 description     = "Utilities, types and verification logic for smart contract / program based accounts for various blockchain-based virtual machines"
@@ -18,25 +18,25 @@ bech32                  = { version = "0.11.0", default-features = false, featur
 base64                  = { version = "0.22.1", default-features = false, features = ["alloc"] }
 sha2                    = { version = "0.10.8", default-features = false } 
 semver                  = { version = "1.0.23", default-features = false }
-thiserror               = { version = "1.0.66", default-features = false }
+thiserror               = { version = "2.0.3", default-features = false }
 
-smart-account-auth      = { version = "0.14.23", path = "packages/bundle" }
-saa-custom              = { version = "0.14.23", path = "packages/custom" }
-saa-common              = { version = "0.14.23", path = "packages/common" }
-saa-schema              = { version = "0.14.23", path = "packages/schema" }
-saa-curves              = { version = "0.14.23", path = "packages/curves" }
-saa-macros-proto        = { version = "0.14.23", path = "packages/macros-proto" }
+smart-account-auth      = { version = "0.15.0", path = "packages/bundle" }
+saa-custom              = { version = "0.15.0", path = "packages/custom" }
+saa-common              = { version = "0.15.0", path = "packages/common" }
+saa-schema              = { version = "0.15.0", path = "packages/schema" }
+saa-curves              = { version = "0.15.0", path = "packages/curves" }
+saa-macros-proto        = { version = "0.15.0", path = "packages/macros-proto" }
 
-cosmwasm-std            = { version = "1.5.8", default-features = false }
+cosmwasm-std            = { version = "2.1.4", default-features = false, features = ["cosmwasm_2_1", "std"] }
 
 # Substrate
 scale               = { version = "3.6.12", default-features = false, features = ["derive"], package = "parity-scale-codec"}
 scale-info          = { version = "2.11.3", default-features = false, features = ["derive"] }
 # CosmWasm
-serde               = { version = "1.0.214", default-features = false, features = ["derive"] }
+serde               = { version = "1.0.215", default-features = false, features = ["derive"] }
 schemars            = { version = "0.8.21",  default-features = false, features = ["derive"] }
 # Solana
-borsh               = { version = "1.5.1", default-features = false, features = ["derive"] }
+borsh               = { version = "1.5.3", default-features = false, features = ["derive"] }
 
 
 [profile.release.package.smart-account-auth]
