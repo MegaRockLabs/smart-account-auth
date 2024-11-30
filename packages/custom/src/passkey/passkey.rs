@@ -25,7 +25,6 @@ use sha2::{Digest, Sha256};
 ))]
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(saa_schema::scale_info::TypeInfo))]
 #[allow(clippy::derive_partial_eq_without_eq)]
-#[non_exhaustive]
 pub struct ClientData {
     // rename to type
     #[serde(rename = "type")]
