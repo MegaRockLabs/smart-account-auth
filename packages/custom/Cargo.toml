@@ -47,7 +47,6 @@ substrate = [
     "saa-curves/substrate",
 ]
 cosmwasm = [
-    "dep:schemars",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
     "saa-curves/cosmwasm",
@@ -85,4 +84,7 @@ injective = [
     "saa-common/injective",
     "cosmwasm"
 ]
-wasm = []
+wasm = [
+    "dep:schemars",
+    "saa-schema/cosmwasm"
+]

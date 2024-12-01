@@ -6,7 +6,7 @@ use saa_common::{
 
 use saa_schema::wasm_serde;
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::Api;
 
 

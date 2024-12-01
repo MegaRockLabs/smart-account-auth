@@ -246,6 +246,8 @@ impl<'de> Deserialize<'de> for Binary {
     }
 }
 
+
+
 struct Base64Visitor;
 
 impl<'de> de::Visitor<'de> for Base64Visitor {

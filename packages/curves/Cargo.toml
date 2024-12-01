@@ -42,8 +42,6 @@ substrate = [
     "saa-common/substrate",
 ]
 cosmwasm = [
-    "dep:serde",
-    "dep:schemars",
     "dep:cosmwasm-std",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
@@ -67,4 +65,8 @@ secretwasm = [
     "saa-common/secretwasm",
     "wasm"
 ]
-wasm = []
+wasm = [
+    "dep:serde",
+    "dep:schemars",
+    "saa-schema/cosmwasm"
+]

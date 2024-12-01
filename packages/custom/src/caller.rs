@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::{Api, MessageInfo};
 use saa_common::{ensure, utils::prefix_from_address, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
@@ -20,7 +20,7 @@ impl From<&[u8]> for Caller {
 }
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {
         Caller {

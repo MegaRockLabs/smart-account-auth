@@ -16,7 +16,7 @@ pub fn wasm_serde(
                 Debug,
                 PartialEq
             )]
-            #[cfg_attr(feature = "cosmwasm", 
+            #[cfg_attr(any(feature = "cosmwasm", feature = "wasm"),
                 derive(
                     ::saa_schema::serde::Serialize,
                     ::saa_schema::serde::Deserialize,
@@ -45,7 +45,7 @@ pub fn wasm_serde(
                 Debug,
                 PartialEq
             )]
-            #[cfg_attr(feature = "cosmwasm", 
+            #[cfg_attr(any(feature = "cosmwasm", feature = "wasm"),
                 derive(
                     ::saa_schema::serde::Serialize,
                     ::saa_schema::serde::Deserialize,

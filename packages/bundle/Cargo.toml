@@ -60,7 +60,6 @@ substrate = [
     "saa-custom/substrate",
 ]
 cosmwasm = [
-    "saa-schema/cosmwasm",
     "saa-curves/cosmwasm",
     "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
@@ -94,9 +93,11 @@ secretwasm  = [
 injective = [
     "saa-custom/injective",
     "saa-common/injective",
-    "wasm",
+    "cosmwasm",
 ]
-wasm      = []
+wasm      = [
+    "saa-schema/cosmwasm",
+]
 storage   = []
 
 

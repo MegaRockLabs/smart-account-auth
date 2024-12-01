@@ -127,13 +127,13 @@ impl Verifiable for PasskeyCredential {
         let res = api.secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey.as_ref().unwrap_or_default()
+            &self.pubkey.as_ref().unwrap()
         )?;
         #[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
         let res = saa_curves::secp256r1::secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey.as_ref().unwrap_or_default()
+            &self.pubkey.as_ref().unwrap()
         )?;
         ensure!(res, AuthError::generic("Signature verification failed"));
         Ok(())
