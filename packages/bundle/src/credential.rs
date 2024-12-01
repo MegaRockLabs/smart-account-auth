@@ -6,6 +6,9 @@ use saa_schema::wasm_serde;
 #[cfg(feature = "curves")]
 use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
 
+#[cfg(all(not(feature = "curves"), feature = "ed25519" ))]
+use saa_curves::ed25519::Ed25519;
+
 #[cfg(feature = "passkeys")]
 use saa_custom::passkey::PasskeyCredential;
 
@@ -41,7 +44,7 @@ pub enum Credential {
     #[cfg(feature = "curves")]
     Secp256r1(Secp256r1),
     
-    #[cfg(feature = "curves")]
+    #[cfg(any(feature = "curves", feature = "ed25519" ))]
     Ed25519(Ed25519),
 }
 
@@ -51,12 +54,14 @@ impl Credential {
     pub fn name(&self) -> CredentialName {
         match self {
             Credential::Caller(_) => CredentialName::Caller,
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(_) => CredentialName::Passkey,
             #[cfg(feature = "ethereum")]
             Credential::EthPersonalSign(_) => CredentialName::EthPersonalSign,
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(_) => CredentialName::CosmosArbitrary,
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(_) => CredentialName::Passkey,
+            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            Credential::Ed25519(_) => CredentialName::Ed25519,
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
@@ -72,12 +77,14 @@ impl Credential {
     fn value(&self) -> &dyn Verifiable {
         match self {
             Credential::Caller(c) => c,
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c,
             #[cfg(feature = "ethereum")]
             Credential::EthPersonalSign(c) => c,
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c,
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c,
+            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            Credential::Ed25519(c) => c,
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
@@ -99,6 +106,8 @@ impl Credential {
             Credential::CosmosArbitrary(c) => c.message.as_ref(),
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => &c.client_data.challenge,
+            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            Credential::Ed25519(c) => c.message.as_ref(),
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
@@ -249,12 +258,14 @@ impl Verifiable for Credential {
         self.validate()?;
         match self {
             Credential::Caller(c) => c.verify_cosmwasm(api),
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "ethereum")]
             Credential::EthPersonalSign(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c.verify_cosmwasm(api),
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c.verify_cosmwasm(api),
+            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            Credential::Ed25519(c) => c.verify_cosmwasm(api),
             #[cfg(feature = "curves")]
             curve => {
                 match curve {

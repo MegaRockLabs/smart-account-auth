@@ -27,6 +27,9 @@ pub use functions::*;
 #[cfg(feature = "curves")]
 pub use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
 
+#[cfg(all(not(feature = "curves"), feature = "ed25519" ))]
+pub use saa_curves::ed25519::Ed25519;
+
 #[cfg(feature = "passkeys")]
 pub use saa_custom::passkey::{PasskeyCredential, ClientData};
 

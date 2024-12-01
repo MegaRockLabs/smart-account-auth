@@ -31,8 +31,9 @@ default = [
     "std", 
     "ethereum", 
     "cosmos", 
+    "ed25519",
     "passkeys",
-    "replay",
+    "replay"
 ]
 std = [
     "scale?/std",
@@ -100,7 +101,12 @@ wasm  = ["saa-common/wasm"]
 # Passkey credential 
 passkeys    = []
 
-# Blockchain specific features
+# Blockchain specific authenticators
 ethereum    = []
 cosmos      = []
+
+# Enable raw curve credentials without envelops
 curves      = []
+
+# Set separately for Solana
+ed25519     = []
