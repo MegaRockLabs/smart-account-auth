@@ -83,11 +83,11 @@ storage    = [
     "dep:cw-storage-plus",
 ]
 iterator   = [
-    "cosmwasm-std/iterator",
-    "secretwasm-std/iterator",
-    "secretwasm-storage/iterator",
+    "cosmwasm-std?/iterator",
+    "secretwasm-std?/iterator",
+    "secretwasm-storage?/iterator",
 ]
-secretwasm     = [
+secretwasm  = [
     "wasm",
     "dep:secretwasm-std",
     "dep:secretwasm-storage",
