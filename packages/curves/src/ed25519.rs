@@ -45,7 +45,7 @@ impl Verifiable for Ed25519 {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> 
         where Self: Clone
     {

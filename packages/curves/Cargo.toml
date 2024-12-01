@@ -47,6 +47,7 @@ cosmwasm = [
     "dep:cosmwasm-std",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
+    "wasm"
 ]
 std = [
     "scale?/std",
@@ -58,8 +59,12 @@ native = [
     "saa-common/native",
 ]
 cosmwasm_2_1 = [
-    "cosmwasm",
     "cosmwasm-std/cosmwasm_2_1",
     "saa-common/cosmwasm_2_1",
+    "cosmwasm",
 ]
-secretwasm = []
+secretwasm = [
+    "saa-common/secretwasm",   
+    "wasm"
+]
+wasm = []

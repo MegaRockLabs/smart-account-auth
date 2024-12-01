@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::Api;
 
 use saa_schema::wasm_serde;
@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 
 
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "cosmwasm", derive(
+#[cfg_attr(feature = "wasm", derive(
     ::saa_schema::serde::Serialize,
     ::saa_schema::serde::Deserialize,
     ::saa_schema::schemars::JsonSchema
@@ -119,7 +119,7 @@ impl Verifiable for PasskeyCredential {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     #[allow(unused_variables)]
     fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
 
@@ -127,13 +127,13 @@ impl Verifiable for PasskeyCredential {
         let res = api.secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey
+            &self.pubkey.as_ref().unwrap_or_default()
         )?;
         #[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
         let res = saa_curves::secp256r1::secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey.as_ref().unwrap()
+            &self.pubkey.as_ref().unwrap_or_default()
         )?;
         ensure!(res, AuthError::generic("Signature verification failed"));
         Ok(())

@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::Api;
 
 use saa_common::{
@@ -61,7 +61,7 @@ impl Verifiable for CosmosArbitrary {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(
         &self, 
         api:  &dyn Api

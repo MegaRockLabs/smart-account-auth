@@ -25,13 +25,13 @@ schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-std            = { workspace = true  }
-secretwasm-std          = { workspace = true  }
+cosmwasm-std            = { workspace = true }
+secretwasm-std          = { workspace = true }
 
 
 [features]
 default = [
-    "std", "cosmwasm"
+    "std", "replay"
 ]
 solana = [
     "dep:borsh",
@@ -51,6 +51,7 @@ cosmwasm = [
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
     "saa-curves/cosmwasm",
+    "wasm"
 ]
 std = [
     "scale?/std",
@@ -75,9 +76,12 @@ storage = [
     "saa-common/storage"
 ]
 cosmwasm_2_1 = [
-    "cosmwasm",
     "saa-common/cosmwasm_2_1",
+    "cosmwasm",
 ]
 secretwasm = [
     "saa-common/secretwasm",
+    "saa-curves/secretwasm",
+    "wasm"
 ]
+wasm = []

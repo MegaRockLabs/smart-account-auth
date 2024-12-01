@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::Api;
 
 use saa_schema::wasm_serde;
@@ -45,7 +45,7 @@ impl Verifiable for Secp256r1 {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     #[allow(unused_variables)]
     fn verify_cosmwasm(&self, api : &dyn Api) -> Result<(), AuthError> {
 

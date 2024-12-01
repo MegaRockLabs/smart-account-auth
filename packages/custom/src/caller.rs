@@ -38,7 +38,7 @@ impl Verifiable for Caller {
     }
 
     fn hrp(&self) -> Option<String> {
-        #[cfg(feature = "cosmwasm")]
+        #[cfg(feature = "wasm")]
         {
             let res = String::from_utf8(self.id.clone());
             if res.is_err() {
@@ -64,7 +64,7 @@ impl Verifiable for Caller {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(& self, _: &dyn Api) -> Result<(), AuthError> {
         self.validate()
     }

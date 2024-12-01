@@ -33,7 +33,8 @@ default = [
     "cosmos", 
     "ed25519",
     "passkeys",
-    "replay"
+    "replay",
+    "iterator",
 ]
 std = [
     "scale?/std",
@@ -70,25 +71,19 @@ native = [
     "saa-custom/native",
     "saa-common/native",
 ]
-injective = [
-    "saa-custom/injective",
-    "saa-common/injective",
-]
 replay    = [
-    "storage",
     "saa-common/replay",
     "saa-custom/storage",
-]
-storage   = [
-    "iterator",
+    "storage",
 ]
 iterator  = [
     "saa-common/iterator",
+    "storage",
 ]
 cosmwasm_2_1 = [
-    "cosmwasm",
     "saa-custom/cosmwasm_2_1",
     "saa-curves/cosmwasm_2_1",
+    "cosmwasm",
 ]
 secretwasm  = [
     "saa-common/secretwasm",
@@ -96,7 +91,14 @@ secretwasm  = [
     "saa-curves/secretwasm",
     "wasm",
 ]
-wasm  = ["saa-common/wasm"]
+injective = [
+    "saa-custom/injective",
+    "saa-common/injective",
+    "wasm",
+]
+wasm      = []
+storage   = []
+
 
 # Passkey credential 
 passkeys    = []

@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::Api;
 
 #[cfg(feature = "native")] 
@@ -68,7 +68,7 @@ impl Verifiable for EthPersonalSign {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
         
         let signature = &self.signature.to_vec();
