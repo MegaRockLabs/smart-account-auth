@@ -65,9 +65,6 @@ native = [
     "saa-common/native",
     "saa-curves/native",
 ]
-injective = [
-    "saa-common/injective",
-]
 replay = [
     "storage",
     "saa-common/replay"
@@ -83,5 +80,9 @@ secretwasm = [
     "saa-common/secretwasm",
     "saa-curves/secretwasm",
     "wasm"
+]
+injective = [
+    "saa-common/injective",
+    "cosmwasm"
 ]
 wasm = []

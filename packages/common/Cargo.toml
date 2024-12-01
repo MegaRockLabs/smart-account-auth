@@ -90,7 +90,10 @@ iterator   = [
 secretwasm  = [
     "dep:secretwasm-std",
     "dep:secret-toolkit",
+    "saa-schema/cosmwasm",
     "wasm",
 ]
-injective  = ["wasm"]
+injective  = [
+    "cosmwasm"
+]
 wasm       = []

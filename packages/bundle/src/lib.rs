@@ -6,7 +6,7 @@ pub use saa_common::{
     hashes, utils, messages, 
 };
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 pub use saa_common::storage;
 pub use saa_custom::caller::Caller;
 pub use saa_schema::wasm_serde;

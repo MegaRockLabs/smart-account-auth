@@ -64,7 +64,7 @@ cosmwasm_2_1 = [
     "cosmwasm",
 ]
 secretwasm = [
-    "saa-common/secretwasm",   
+    "saa-common/secretwasm",
     "wasm"
 ]
 wasm = []

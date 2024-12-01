@@ -174,7 +174,12 @@ fn construct_credential(
                 user_handle: stored_ext.user_handle,
             })
         },
-
+        #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+        CredentialName::Ed25519 => Credential::Ed25519(saa_curves::ed25519::Ed25519 {
+            pubkey: Binary::new(id),
+            signature,
+            message,
+        }),
         #[cfg(feature = "curves")]
         curves => {
             let pubkey = Binary::new(id);
@@ -199,7 +204,8 @@ fn construct_credential(
             }
         }
         #[cfg(any(
-            not(feature = "curves"), 
+            not(feature = "curves"),
+            not(feature = "ed25519"),
             not(feature = "passkeys"), 
             not(feature = "cosmos"), 
             not(feature = "ethereum"))
