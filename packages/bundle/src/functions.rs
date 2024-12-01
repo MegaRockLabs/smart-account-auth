@@ -1,34 +1,21 @@
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 use saa_common::{
     CredentialId, CredentialName, AuthError, Binary, ensure, 
-    cosmwasm::{Api, Env, Storage, from_json},
+    cosmwasm::{Api, Env, Storage},
     storage::*,
     messages::*
 };
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 use crate::Credential;
 
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage", feature = "iterator"))]
+#[cfg(all(feature = "wasm", feature = "storage", feature = "iterator"))]
 pub fn get_all_credentials(
     storage:  &dyn Storage,
 ) -> Result<AccountCredentials, AuthError> {
-    use saa_common::CredentialInfo;
 
-    let credentials = CREDENTIAL_INFOS
-        .range(storage, None, None, saa_common::cosmwasm::Order::Ascending)
-        .map(|item| {
-            let (id, info) = item?;
-            Ok((
-                Binary::new(id), 
-                CredentialInfo {
-                    name: info.name,
-                    hrp: info.hrp,
-                    extension: info.extension,
-            }))
-        })
-        .collect::<Result<Vec<(Binary, CredentialInfo)>, AuthError>>()?;
+    let credentials = get_credentials(storage)?;
 
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
     let caller = CALLER.load(storage).unwrap_or(None);
@@ -43,18 +30,29 @@ pub fn get_all_credentials(
 
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 pub fn reset_credentials(
     storage: &mut dyn Storage,
 ) -> Result<(), AuthError> {
     VERIFYING_CRED_ID.remove(storage);
-    CREDENTIAL_INFOS.clear(storage);
     CALLER.remove(storage);
+    #[cfg(feature = "secretwasm")]
+    {
+        let keys : Vec<CredentialId> = CREDENTIAL_INFOS
+            .iter_keys(storage)?.map(|k| k.unwrap()).collect();
+
+        for key in keys {
+            CREDENTIAL_INFOS.remove(storage, &key)?;
+        }
+    }
+    #[cfg(not(feature = "secretwasm"))]
+    CREDENTIAL_INFOS.clear(storage);
+
     Ok(())
 }
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 pub fn verify_signed_queries(
     api: &dyn Api,
     storage: &dyn Storage,
@@ -66,7 +64,7 @@ pub fn verify_signed_queries(
     Ok(())
 }
 
-#[cfg(all(feature = "cosmwasm", feature = "replay"))]
+#[cfg(all(feature = "wasm", feature = "replay"))]
 pub fn verify_signed_actions(
     api: &dyn Api,
     storage: &mut dyn Storage,
@@ -79,7 +77,7 @@ pub fn verify_signed_actions(
 }
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 fn load_credential(
     storage:   &dyn Storage,
     data:      SignedDataMsg
@@ -101,7 +99,7 @@ fn load_credential(
             initial_id
         }
     };
-    let info = CREDENTIAL_INFOS.load(storage, id.clone())?;
+    let info = get_cred_info(storage, id.clone())?;
 
     construct_credential(
         id, 
@@ -115,7 +113,7 @@ fn load_credential(
 }
 
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 fn construct_credential(
     id: CredentialId,
     name: CredentialName,
@@ -125,6 +123,8 @@ fn construct_credential(
     message: Binary,
     signature: Binary,
 ) -> Result<Credential, AuthError> {
+    use saa_common::from_json;
+
 
     let credential = match name {
 

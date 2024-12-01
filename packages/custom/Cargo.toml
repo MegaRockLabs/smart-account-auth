@@ -26,6 +26,7 @@ serde                   = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-std            = { workspace = true  }
+secretwasm-std          = { workspace = true  }
 
 
 [features]
@@ -72,4 +73,11 @@ replay = [
 ]
 storage = [
     "saa-common/storage"
+]
+cosmwasm_2_1 = [
+    "cosmwasm",
+    "saa-common/cosmwasm_2_1",
+]
+secretwasm = [
+    "saa-common/secretwasm",
 ]

@@ -62,6 +62,7 @@ cosmwasm = [
     "saa-curves/cosmwasm",
     "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
+    "wasm",
 ]
 native = [
     "saa-curves/native",
@@ -83,7 +84,23 @@ storage   = [
 iterator  = [
     "saa-common/iterator",
 ]
-passkeys  = []
-ethereum  = []
-cosmos    = []
-curves    = []
+cosmwasm_2_1 = [
+    "cosmwasm",
+    "saa-custom/cosmwasm_2_1",
+    "saa-curves/cosmwasm_2_1",
+]
+secretwasm  = [
+    "saa-common/secretwasm",
+    "saa-custom/secretwasm",
+    "saa-curves/secretwasm",
+    "wasm",
+]
+wasm  = ["saa-common/wasm"]
+
+# Passkey credential 
+passkeys    = []
+
+# Blockchain specific features
+ethereum    = []
+cosmos      = []
+curves      = []

@@ -19,7 +19,8 @@ mod credential;
 pub use data::{CredentialData, UpdateOperation};
 pub use wrapper::CredentialsWrapper;
 pub use credential::*;
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+
+#[cfg(all(feature = "wasm", feature = "storage"))]
 pub use functions::*;
 
 

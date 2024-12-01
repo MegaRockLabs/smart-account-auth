@@ -11,6 +11,9 @@ pub mod hashes;
 pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 
+#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
+pub mod identity;
+
 #[cfg(feature = "storage")]
 pub mod storage;
 
@@ -37,17 +40,33 @@ pub mod crypto {
 } 
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(all(feature = "cosmwasm", not(feature = "secretwasm")))]
 pub mod cosmwasm {
     pub use cosmwasm_std::{
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
-        from_json, to_json_binary
+        from_json, to_json_binary, CustomMsg,
+        StdError, VerificationError, RecoverPubkeyError
     };
     #[cfg(feature = "storage")]
     pub use cosmwasm_std::Storage;
     #[cfg(feature = "iterator")]
     pub use cosmwasm_std::Order;
 }
+
+
+#[cfg(feature = "secretwasm")]
+pub mod cosmwasm {
+    pub use secretwasm_std::{
+        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
+        from_binary as from_json, to_binary as to_json_binary,
+        StdError, VerificationError, RecoverPubkeyError,
+        CustomMsg, Order
+    };
+    #[cfg(feature = "storage")]
+    pub use secretwasm_std::Storage;
+}
+
+
 
 
 #[cfg(feature = "substrate")]
@@ -66,7 +85,7 @@ pub mod substrate {
     }
 }
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use cosmwasm::*;
 #[cfg(feature = "substrate")]
 use substrate::*;
@@ -111,7 +130,7 @@ pub trait Verifiable  {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self,  _:  &dyn Api) -> Result<(), AuthError>  
         where Self: Sized 
     {

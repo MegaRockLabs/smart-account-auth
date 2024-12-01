@@ -8,12 +8,13 @@ use saa_common::{
 use saa_custom::caller::Caller;
 use saa_schema::wasm_serde;
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::{Api, Env, MessageInfo, Storage};
+
 #[cfg(feature = "substrate")]
 use saa_common::substrate::{InkEnvironment, InkApi};
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 use saa_common::{storage::*, messages::*};
 
 
@@ -64,13 +65,13 @@ impl CredentialData {
     }
     
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     pub fn with_caller_cosmwasm(&self, info: &MessageInfo) -> Self  {
         self.with_caller(info)
     }
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "replay"))]
+    #[cfg(all(feature = "wasm", feature = "replay"))]
     pub fn assert_signed(
         &self, 
         storage: &dyn Storage, 
@@ -93,7 +94,7 @@ impl CredentialData {
     }
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    #[cfg(all(feature = "wasm", feature = "storage"))]
     fn assert_cosmwasm(
         &self, 
         api: &dyn Api,
@@ -112,9 +113,9 @@ impl CredentialData {
         }
 
         ensure!(
-            self.credentials.iter().all(|c| 
-                CREDENTIAL_INFOS.has(storage, c.id()) &&
-                c.verify_cosmwasm(api).is_ok()
+            self.credentials.iter().all(|c| {
+                has_credential(storage, &c.id()) && c.verify_cosmwasm(api).is_ok()
+            }
             ), 
             AuthError::NotFound
         );
@@ -127,7 +128,7 @@ impl CredentialData {
     
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    #[cfg(all(feature = "wasm", feature = "storage"))]
     pub fn update_cosmwasm(
         &self,
         op: UpdateOperation,
@@ -136,6 +137,8 @@ impl CredentialData {
         env: &Env, 
         info: &MessageInfo
     ) -> Result<(), AuthError> {
+        use saa_common::cosmwasm::StdError;
+
         let new = match &op {
             UpdateOperation::Add(data) => data,
             UpdateOperation::Remove(data) => data,
@@ -148,12 +151,12 @@ impl CredentialData {
             ensure!(nonce == new_nonce, AuthError::DifferentNonce);
         }
 
-        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, AuthError>(n + 1))?;
+        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, StdError>(n + 1))?;
 
         match op {
             UpdateOperation::Add(data) => {
                 for cred in data.credentials() {
-                    ensure!(!CREDENTIAL_INFOS.has(storage, cred.id()), AuthError::AlreadyExists);
+                    ensure!(!has_credential(storage, &cred.id()), AuthError::AlreadyExists);
                     cred.save_cosmwasm(api, storage, env, info)?;
                     if data.primary_index.is_some() {
                         let primary = data.primary();
@@ -167,7 +170,7 @@ impl CredentialData {
                 for cred in data.credentials() {
                     let id = cred.id();
                     ensure!(VERIFYING_CRED_ID.load(storage)? != id, AuthError::NoVerifying);
-                    CREDENTIAL_INFOS.remove(storage, id);
+                    remove_credential(storage, &id)?;
                 }
             }
         }
@@ -176,7 +179,7 @@ impl CredentialData {
 
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    #[cfg(all(feature = "wasm", feature = "storage"))]
     pub fn save_cosmwasm(
         &self, 
         api: &dyn Api, 
@@ -221,6 +224,9 @@ impl CredentialData {
                 verifying_found = true;
             }
 
+            #[cfg(feature = "secretwasm")]
+            CREDENTIAL_INFOS.insert(storage, &cred.id(), &cred.info())?;
+            #[cfg(not(feature = "secretwasm"))]
             CREDENTIAL_INFOS.save(storage, cred.id(), &cred.info())?;
         }
 
@@ -306,7 +312,7 @@ impl Verifiable for CredentialData {
         Ok(())
     }
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self,  api : &dyn Api) -> Result<(), AuthError>  
         where Self: Sized 
     {

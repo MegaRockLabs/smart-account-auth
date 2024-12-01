@@ -4,8 +4,8 @@ use saa_schema::wasm_serde;
 
 use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
 
-#[cfg(feature = "cosmwasm")]
-use cosmwasm_std::{CustomMsg, Storage, Env};
+#[cfg(feature = "wasm")]
+use crate::cosmwasm::{CustomMsg, Storage, Env};
 
 #[wasm_serde]
 pub struct AuthPayload<E = Binary> {
@@ -38,19 +38,22 @@ impl<E> AuthPayload<E> {
         Ok(())
     }
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     pub fn validate_cosmwasm(
         &self, 
         #[cfg(feature = "storage")]
         store: &dyn Storage
     ) -> Result<(), AuthError> {
+
         self.validate()?;
         #[cfg(feature = "storage")]
         if self.credential_id.is_some() {
-            let info_res = crate::storage::CREDENTIAL_INFOS.load(
-                store, self.credential_id.clone().unwrap()
+            let info_res = crate::storage::get_cred_info(
+                store, 
+                self.credential_id.clone().unwrap()
             );
             ensure!(info_res.is_ok(), AuthError::NotFound);
+
             if self.hrp.is_some() {
                 let name = info_res.unwrap().name;
                 ensure!(
@@ -75,7 +78,7 @@ pub struct MsgDataToSign<M = String> {
 
 
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "cosmwasm", derive(
+#[cfg_attr(feature = "wasm", derive(
     ::saa_schema::serde::Serialize,
     ::saa_schema::serde::Deserialize,
     ::saa_schema::schemars::JsonSchema
@@ -107,7 +110,7 @@ impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
 }
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 impl MsgDataToVerify {
     pub fn validate_cosmwasm(
         &self, 
@@ -125,7 +128,7 @@ impl MsgDataToVerify {
 }
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 impl<M> MsgDataToSign<M> {
     pub fn validate_cosmwasm(
         &self, 
@@ -160,5 +163,5 @@ pub struct AccountCredentials {
 
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 impl CustomMsg for SignedDataMsg {}

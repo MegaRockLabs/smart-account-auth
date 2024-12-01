@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use cw_storage_plus::{Item, Map};
 use crate::{CredentialInfo, CredentialId};
 
@@ -15,3 +17,5 @@ pub const CALLER : Item<Option<String>> = Item::new("saa_with_caller");
 /// Storage of used nonces  to prevent replay attacks. &str to boolean
 #[cfg(feature = "replay")]
 pub const ACCOUNT_NUMBER : Item<u128> = Item::new("saa_acc_num");
+
+

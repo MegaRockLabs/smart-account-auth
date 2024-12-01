@@ -266,19 +266,26 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     }
 }
 
-#[cfg(feature = "cosmwasm")]
-impl From<Binary> for cosmwasm_std::Binary {
+#[cfg(feature = "wasm")]
+impl From<Binary> for crate::cosmwasm::Binary {
     fn from(binary: Binary) -> Self {
-        crate::cosmwasm::Binary::new(binary.0)
+        #[cfg(feature = "secretwasm")]
+        return crate::cosmwasm::Binary(binary.to_vec());
+        #[cfg(not(feature = "secretwasm"))]
+        crate::cosmwasm::Binary::new(binary.to_vec())
     }
 }
 
-#[cfg(feature = "cosmwasm")]
-impl Into<Binary> for cosmwasm_std::Binary {
+#[cfg(feature = "wasm")]
+impl Into<Binary> for crate::cosmwasm::Binary {
     fn into(self) -> Binary {
+        #[cfg(feature = "secretwasm")]
+        return Binary(self.0);
+        #[cfg(not(feature = "secretwasm"))]
         Binary::new(self.to_vec())
     }
 }
+
 
 
 pub fn to_json_binary<T>(data: &T) -> Result<Binary, AuthError>

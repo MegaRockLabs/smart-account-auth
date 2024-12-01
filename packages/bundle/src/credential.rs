@@ -15,10 +15,10 @@ use saa_custom::eth::EthPersonalSign;
 #[cfg(feature = "cosmos")]
 use saa_custom::cosmos::CosmosArbitrary;
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::cosmwasm::{Api, Addr, Env, MessageInfo};
 
-#[cfg(all(feature = "cosmwasm", feature = "storage"))]
+#[cfg(all(feature = "wasm", feature = "storage"))]
 use saa_common::{storage::*, cosmwasm::Storage, messages::*, ensure, from_json};
 
 
@@ -133,12 +133,12 @@ impl Credential {
         }
     }
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     pub fn is_cosmos_derivable(&self) -> bool {
         self.hrp().is_some()
     }
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
         let name = self.name();
         if name == CredentialName::Caller {
@@ -169,7 +169,7 @@ impl Credential {
     }
 
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    #[cfg(all(feature = "wasm", feature = "storage"))]
     pub fn assert_query_cosmwasm(
         &self, 
         api     :  &dyn Api, 
@@ -178,7 +178,7 @@ impl Credential {
     ) -> Result<String, AuthError> 
         where Self: Sized
     {   
-        ensure!(CREDENTIAL_INFOS.has(storage, self.id()), AuthError::NotFound);
+        ensure!(has_credential(storage, &self.id()), AuthError::NotFound);
         self.verify_cosmwasm(api)?;
         #[cfg(feature = "replay")]
         {
@@ -189,7 +189,7 @@ impl Credential {
         Ok(String::default())
     }
 
-    #[cfg(all(feature = "cosmwasm", feature = "replay"))]
+    #[cfg(all(feature = "wasm", feature = "replay"))]
     pub fn assert_execute_cosmwasm(
         &self, 
         api     :  &dyn Api,
@@ -199,18 +199,19 @@ impl Credential {
         where Self: Sized
     {
         self.assert_query_cosmwasm(api, storage, env)?;
-        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, AuthError>(n + 1))?;
+        increment_acc_number(storage)?;
         Ok(())
     }
 
-    #[cfg(all(feature = "cosmwasm", feature = "storage"))]
+    
+    #[cfg(all(feature = "wasm", feature = "storage"))]
     pub fn save_cosmwasm(&self, 
         api: &dyn Api, 
         storage: &mut dyn Storage,
         env:  &Env,
         info: &MessageInfo
     ) -> Result<(), AuthError> {
-        CREDENTIAL_INFOS.save(storage, self.id(), &self.info())?;
+        save_credential(storage, &self.id(), &self.info())?;
         #[cfg(feature = "replay")]
         self.assert_execute_cosmwasm(api, storage, env)?;
         if let Credential::Caller(_) = self {
@@ -241,7 +242,7 @@ impl Verifiable for Credential {
         self.value().verify()
     }
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self,  api:  &dyn Api) -> Result<(), AuthError>  
         where Self: Sized
     {

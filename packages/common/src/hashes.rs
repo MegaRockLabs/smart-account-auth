@@ -25,3 +25,6 @@ pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
     hasher.finalize(&mut output);
     output
 }
+
+#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
+pub use crate::identity::Identity256;

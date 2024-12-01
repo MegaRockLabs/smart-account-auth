@@ -113,24 +113,24 @@ impl From<cosmwasm_crypto::CryptoError> for AuthError {
     }
 }
 
-#[cfg(feature = "cosmwasm")] 
+#[cfg(feature = "wasm")] 
 mod implementation{
     use crate::AuthError;
 
-    impl From<cosmwasm_std::RecoverPubkeyError> for AuthError {
-        fn from(err: cosmwasm_std::RecoverPubkeyError) -> Self {
+    impl From<crate::cosmwasm::RecoverPubkeyError> for AuthError {
+        fn from(err: crate::cosmwasm::RecoverPubkeyError) -> Self {
             Self::Recovery(err.to_string())
         }
     }
 
-    impl From<cosmwasm_std::StdError> for AuthError {
-        fn from(err: cosmwasm_std::StdError) -> Self {
+    impl From<crate::cosmwasm::StdError> for AuthError {
+        fn from(err: crate::cosmwasm::StdError) -> Self {
             Self::Generic(err.to_string())
         }
     }
 
-    impl From<cosmwasm_std::VerificationError> for AuthError {
-        fn from(err: cosmwasm_std::VerificationError) -> Self {
+    impl From<crate::cosmwasm::VerificationError> for AuthError {
+        fn from(err: crate::cosmwasm::VerificationError) -> Self {
             Self::Crypto(err.to_string())
         }
     }

@@ -32,8 +32,7 @@ let evm_credential = EvmCredential {
 evm_credential.verify()?:
 
 # cosmwasm (feature) api code
-# third argument is for deriving a prefix which is not needed for ethereum
-evm_credential.verified_cosmwasm(deps.api, &env, &None)?;
+evm_credential.verify_cosmwasm(deps.api)?;
 ```
 
 ### Multiple Credentials
@@ -50,8 +49,9 @@ let credential_data = CredentialData {
     primary_index   :  Some(0)
 }
 
-let verified = credential_data.verified_cosmwasm(deps.api, &env, &Some(info)?;
+credential_data.verify_cosmwasm(deps.api)?;
 
-let primary_credential = verified.primary();
+// pick a credential under primary index, first credential if not set
+let primary_credential = data.primary();
 
 ```

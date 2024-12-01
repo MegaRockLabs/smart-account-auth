@@ -120,12 +120,20 @@ impl Verifiable for PasskeyCredential {
 
 
     #[cfg(feature = "cosmwasm")]
+    #[allow(unused_variables)]
     fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
-        
+
+        #[cfg(all(feature = "cosmwasm_2_1", not(feature = "secretwasm")))]
         let res = api.secp256r1_verify(
-            &self.message_digest()?,
-            &self.signature,
-            self.pubkey.as_ref().unwrap()
+            &self.message_digest()?, 
+            &self.signature, 
+            &self.pubkey
+        )?;
+        #[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
+        let res = saa_curves::secp256r1::secp256r1_verify(
+            &self.message_digest()?, 
+            &self.signature, 
+            &self.pubkey.as_ref().unwrap()
         )?;
         ensure!(res, AuthError::generic("Signature verification failed"));
         Ok(())
