@@ -21,7 +21,7 @@ scale                   = { workspace = true, optional = true }
 scale-info              = { workspace = true, optional = true }
 
 borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true, optional = true }
+schemars                = { workspace = true }
 serde                   = { workspace = true }
 
 [dev-dependencies]
@@ -65,19 +65,21 @@ native = [
     "saa-curves/native",
 ]
 replay = [
+    "saa-common/replay",
     "storage",
-    "saa-common/replay"
 ]
 storage = [
     "saa-common/storage"
 ]
 cosmwasm_2_1 = [
+    "saa-curves/cosmwasm_2_1",
     "saa-common/cosmwasm_2_1",
     "cosmwasm",
 ]
 secretwasm = [
     "saa-common/secretwasm",
     "saa-curves/secretwasm",
+    "saa-schema/cosmwasm",
     "wasm"
 ]
 injective = [
@@ -85,6 +87,5 @@ injective = [
     "cosmwasm"
 ]
 wasm = [
-    "dep:schemars",
-    "saa-schema/cosmwasm"
+    "saa-schema/wasm"
 ]

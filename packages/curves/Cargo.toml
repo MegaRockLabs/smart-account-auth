@@ -13,14 +13,13 @@ bech32                  = { workspace = true }
 saa-common              = { workspace = true }
 saa-schema              = { workspace = true }
 
-cosmwasm-std            = { workspace = true, optional = true }
 
 scale                   = { workspace = true, optional = true  }
 scale-info              = { workspace = true, optional = true  }
 
 borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true, optional = true }
-serde                   = { workspace = true, optional = true }
+schemars                = { workspace = true }
+serde                   = { workspace = true }
 
 digest                  = { version = "0.10.7", default-features = false }
 p256                    = { version = "0.13.2" }
@@ -29,6 +28,12 @@ p256                    = { version = "0.13.2" }
 [features]
 default = [
     "std"
+]
+std = [
+    "scale?/std",
+    "scale-info?/std",
+    "saa-schema/std",
+    "saa-common/std",
 ]
 solana = [
     "dep:borsh",
@@ -42,31 +47,23 @@ substrate = [
     "saa-common/substrate",
 ]
 cosmwasm = [
-    "dep:cosmwasm-std",
     "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
     "wasm"
-]
-std = [
-    "scale?/std",
-    "scale-info?/std",
-    "saa-schema/std",
-    "saa-common/std",
 ]
 native = [
     "saa-common/native",
 ]
 cosmwasm_2_1 = [
-    "cosmwasm-std/cosmwasm_2_1",
     "saa-common/cosmwasm_2_1",
     "cosmwasm",
 ]
 secretwasm = [
+    "saa-schema/cosmwasm",
     "saa-common/secretwasm",
     "wasm"
 ]
 wasm = [
-    "dep:serde",
-    "dep:schemars",
-    "saa-schema/cosmwasm"
+    "serde/serde_derive",
+    "saa-schema/wasm"
 ]

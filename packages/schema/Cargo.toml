@@ -14,8 +14,8 @@ saa-macros-proto    = { workspace = true }
 scale               = { workspace = true, default-features = false, features = ["derive"], optional = true }
 scale-info          = { workspace = true, default-features = false, features = ["derive"], optional = true }
 # CosmWasm
-serde               = { workspace = true, default-features = false, features = ["derive"], optional = true }
-schemars            = { workspace = true, default-features = false, features = ["derive"], optional = true }
+serde               = { workspace = true   }
+schemars            = { workspace = true }
 # Solana
 borsh               = { workspace = true, default-features = false, features = ["derive"], optional = true }
 
@@ -24,8 +24,8 @@ borsh               = { workspace = true, default-features = false, features = [
 default        = ["std"]
 solana         = ["dep:borsh",                   "saa-macros-proto/solana"    ]
 substrate      = ["dep:scale", "dep:scale-info", "saa-macros-proto/substrate" ]
-cosmwasm       = ["wasm",                        "saa-macros-proto/cosmwasm"  ]
-wasm           = ["dep:serde", "dep:schemars",   "saa-macros-proto/wasm"      ]
+cosmwasm       = ["saa-macros-proto/cosmwasm", "wasm"  ]
+wasm           = ["saa-macros-proto/wasm"]
 std            = [
     "scale?/std", 
     "scale-info?/std", 

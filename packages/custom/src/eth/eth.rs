@@ -1,16 +1,14 @@
 #[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
+use saa_common::{cosmwasm::Api, ensure};
 
 #[cfg(feature = "native")] 
 use saa_common::crypto::secp256k1_recover_pubkey;
 
 use saa_schema::wasm_serde;
 
-use saa_common::{
-    hashes::keccak256, ensure,CredentialId, 
-    AuthError, Binary, String, ToString, Verifiable 
-};
+use saa_common::{CredentialId, AuthError, Binary, String, ToString, Verifiable };
 
+#[cfg(any(feature = "wasm", feature = "native"))]
 use super::utils::{get_recovery_param, preamble_msg_eth};
 
 
@@ -58,7 +56,7 @@ impl Verifiable for EthPersonalSign {
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
-        let hash = keccak256(&key_data[1..]);
+        let hash = saa_common::hashes::keccak256(&key_data[1..]);
         let recovered = String::from_utf8(
             hash[12..].to_vec()
         ).map_err(|_| AuthError::RecoveryMismatch)?;
@@ -79,7 +77,7 @@ impl Verifiable for EthPersonalSign {
             get_recovery_param(signature[64])?
         )?;
     
-        let hash = keccak256(&key_data[1..]);
+        let hash = saa_common::hashes::keccak256(&key_data[1..]);
 
         let addr_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;

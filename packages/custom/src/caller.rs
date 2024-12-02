@@ -1,6 +1,6 @@
 #[cfg(feature = "wasm")]
-use saa_common::cosmwasm::{Api, MessageInfo};
-use saa_common::{ensure, utils::prefix_from_address, AuthError, CredentialId, ToString, Verifiable};
+use saa_common::{cosmwasm::{Api, MessageInfo}, utils::prefix_from_address};
+use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
 

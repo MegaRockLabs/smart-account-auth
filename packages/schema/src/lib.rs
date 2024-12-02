@@ -1,11 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use saa_macros_proto;
-
 pub use saa_macros_proto::wasm_serde;
 
 
-#[cfg(feature = "cosmwasm")]
 pub use {serde, schemars};
 
 #[cfg(feature = "solana")]

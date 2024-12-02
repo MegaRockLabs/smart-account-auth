@@ -1,32 +1,27 @@
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
-
 use saa_schema::wasm_serde;
-
-use saa_common::{
-    ensure, hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable
-};
+use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable, ensure};
 
 use sha2::{Digest, Sha256};
 
-
-#[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "wasm", derive(
+#[derive(
+    Clone, Debug, PartialEq,  
     ::saa_schema::serde::Serialize,
     ::saa_schema::serde::Deserialize,
-    ::saa_schema::schemars::JsonSchema
-), schemars(crate = "::saa_schema::schemars"
+    ::saa_schema::schemars::JsonSchema,
+)]
+#[cfg_attr(feature = "cosmwasm", schemars(
+    crate = "::saa_schema::schemars"
 ))]
 #[cfg_attr(feature = "substrate", derive(
     ::saa_schema::scale::Encode, ::saa_schema::scale::Decode
 ))]
 #[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, ::saa_schema::borsh::BorshDeserialize
+    ::saa_schema::borsh::BorshSerialize, 
+    ::saa_schema::borsh::BorshDeserialize
 ))]
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(saa_schema::scale_info::TypeInfo))]
 #[allow(clippy::derive_partial_eq_without_eq)]
 pub struct ClientData {
-    // rename to type
     #[serde(rename = "type")]
     pub ty: String,
     pub challenge: Binary,
@@ -121,7 +116,7 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "wasm")]
     #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
 
         #[cfg(all(feature = "cosmwasm_2_1", not(feature = "secretwasm")))]
         let res = api.secp256r1_verify(

@@ -14,16 +14,10 @@ pub fn wasm_serde(
             #[derive(
                 Clone,
                 Debug,
-                PartialEq
-            )]
-            #[cfg_attr(any(feature = "cosmwasm", feature = "wasm"),
-                derive(
-                    ::saa_schema::serde::Serialize,
-                    ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
-                ),
-                serde(deny_unknown_fields, crate = "::saa_schema::serde"),
-                schemars(crate = "::saa_schema::schemars")
+                PartialEq,
+                ::saa_schema::serde::Serialize,
+                ::saa_schema::serde::Deserialize,
+                ::saa_schema::schemars::JsonSchema
             )]
             #[cfg_attr(feature = "substrate", derive(
                 ::saa_schema::scale::Encode, 
@@ -43,16 +37,10 @@ pub fn wasm_serde(
             #[derive(
                 Clone,
                 Debug,
-                PartialEq
-            )]
-            #[cfg_attr(any(feature = "cosmwasm", feature = "wasm"),
-                derive(
-                    ::saa_schema::serde::Serialize,
-                    ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
-                ),
-                schemars(crate = "::saa_schema::schemars"),
-                serde(deny_unknown_fields, rename_all = "snake_case", crate = "::saa_schema::serde")
+                PartialEq,
+                ::saa_schema::serde::Serialize,
+                ::saa_schema::serde::Deserialize,
+                ::saa_schema::schemars::JsonSchema
             )]
             #[cfg_attr(feature = "solana", derive(
                 ::saa_schema::borsh::BorshSerialize, 

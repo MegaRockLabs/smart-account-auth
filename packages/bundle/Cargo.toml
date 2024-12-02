@@ -63,6 +63,7 @@ cosmwasm = [
     "saa-curves/cosmwasm",
     "saa-custom/cosmwasm",
     "saa-common/cosmwasm",
+    "saa-schema/cosmwasm",
     "wasm",
 ]
 native = [
@@ -88,6 +89,7 @@ secretwasm  = [
     "saa-common/secretwasm",
     "saa-custom/secretwasm",
     "saa-curves/secretwasm",
+    "saa-schema/cosmwasm",
     "wasm",
 ]
 injective = [
@@ -96,7 +98,7 @@ injective = [
     "cosmwasm",
 ]
 wasm      = [
-    "saa-schema/cosmwasm",
+    "saa-schema/wasm",
 ]
 storage   = []
 

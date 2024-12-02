@@ -93,11 +93,13 @@ secretwasm  = [
     "dep:secretwasm-std",
     "dep:secret-toolkit",
     "dep:secretwasm-storage",
+    "saa-schema/cosmwasm",
     "wasm",
 ]
 injective  = [
     "cosmwasm"
 ]
 wasm       = [
+    "saa-schema/cosmwasm",
     "saa-schema/wasm",
 ]

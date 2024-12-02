@@ -1,12 +1,10 @@
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
 
-use saa_common::{
-    ensure, hashes::sha256, utils::pubkey_to_address, AuthError, Binary, 
-    CredentialId, String, ToString, Verifiable
+#[cfg(any(feature = "wasm", feature = "native"))]
+use {
+    saa_common::{hashes::sha256, utils::pubkey_to_address, ensure},
+    super::utils::preamble_msg_arb_036
 };
-
-use super::utils::preamble_msg_arb_036;
+use saa_common::{AuthError, Binary, CredentialId, String, ToString, Verifiable};
 use saa_schema::wasm_serde;
 
 
@@ -18,6 +16,7 @@ pub struct CosmosArbitrary {
     pub hrp:       Option<String>
 }
 
+#[cfg(any(feature = "wasm", feature = "native"))]
 impl CosmosArbitrary {
 
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
@@ -64,7 +63,7 @@ impl Verifiable for CosmosArbitrary {
     #[cfg(feature = "wasm")]
     fn verify_cosmwasm(
         &self, 
-        api:  &dyn Api
+        api:  &dyn saa_common::cosmwasm::Api
     ) -> Result<(), AuthError> {
         let success = api.secp256k1_verify(
             &self.message_digest()?,
