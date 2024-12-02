@@ -154,6 +154,7 @@ pub struct CredentialInfo {
 }
 
 
+
 #[wasm_serde]
 pub enum CredentialName {
     Caller,

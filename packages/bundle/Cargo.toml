@@ -35,6 +35,7 @@ default = [
     "passkeys",
     "replay",
     "iterator",
+    "secretwasm"
 ]
 std = [
     "scale?/std",
@@ -75,6 +76,8 @@ injective = [
 ]
 secretwasm  = [
     "saa-common/secretwasm",
+    "saa-custom/cosmwasm",
+    "saa-curves/cosmwasm",
     "wasm",
 ]
 wasm      = [

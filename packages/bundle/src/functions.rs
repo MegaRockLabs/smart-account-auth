@@ -36,7 +36,7 @@ pub fn reset_credentials(
 ) -> Result<(), AuthError> {
     VERIFYING_CRED_ID.remove(storage);
     CALLER.remove(storage);
-    #[cfg(feature = "secretwasm")]
+    #[cfg(all(feature = "secretwasm", feature = "iterator"))]
     {
         let keys : Vec<CredentialId> = CREDENTIAL_INFOS
             .iter_keys(storage)?.map(|k| k.unwrap()).collect();

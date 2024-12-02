@@ -145,6 +145,7 @@ impl<M> MsgDataToSign<M> {
     }
 }
 
+
 #[wasm_serde]
 pub struct SignedDataMsg {
     pub data: Binary,
