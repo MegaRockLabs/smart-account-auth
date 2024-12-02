@@ -10,17 +10,26 @@ use {
 
 // Enforce serde for now until figuring how to rename fields with other serialization libraries
 #[derive(
+    Clone, Debug, PartialEq,
     ::saa_schema::serde::Serialize,
     ::saa_schema::serde::Deserialize
 )]
 // Manual derivation due to #[deny_unknown_fields] in the macro
-#[cfg_attr(feature = "cosmwasm", derive(
-        Clone, Debug, PartialEq, 
-        ::saa_schema::schemars::JsonSchema
-    ), 
+#[cfg_attr(feature = "cosmwasm", 
+    derive(::saa_schema::schemars::JsonSchema), 
     schemars(crate = "::saa_schema::schemars")
 )]
-#[cfg_attr(not(feature = "cosmwasm"), wasm_serde)]
+#[cfg_attr(feature = "substrate", derive(
+    ::saa_schema::scale::Encode, 
+    ::saa_schema::scale::Decode
+))]
+#[cfg_attr(feature = "solana", derive(
+    ::saa_schema::borsh::BorshSerialize, 
+    ::saa_schema::borsh::BorshDeserialize
+))]
+#[cfg_attr(all(feature = "std", feature="substrate"), derive(
+    saa_schema::scale_info::TypeInfo)
+)]
 pub struct ClientData {
     #[serde(rename = "type")]
     pub ty: String,
@@ -120,13 +129,13 @@ impl Verifiable for PasskeyCredential {
     #[cfg(feature = "cosmwasm")]
     #[allow(unused_variables)]
     fn verify_cosmwasm(&self, api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
-        #[cfg(feature = "cosmwasm_2_0")]
+        #[cfg(feature = "cosmwasm_2_1")]
         let res = api.secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
             &self.pubkey.as_ref().unwrap_or(&Binary::default())
         )?;
-        #[cfg(not(feature = "cosmwasm_2_0"))] 
+        #[cfg(not(feature = "cosmwasm_2_1"))] 
         let res = saa_curves::secp256r1::implementation::secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 

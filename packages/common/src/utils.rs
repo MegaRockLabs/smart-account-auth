@@ -4,9 +4,9 @@ use bech32::{hrp::Hrp, Bech32};
 
 #[cfg(feature = "wasm")]
 pub fn new_cw_binary(data: Vec<u8>) -> crate::cosmwasm::Binary {
-    #[cfg(feature = "secretwasm")]
+    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
     return secretwasm_std::Binary(data);
-    #[cfg(not(feature = "secretwasm"))]
+    #[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
     return crate::cosmwasm::Binary::new(data.to_vec())
 }
 

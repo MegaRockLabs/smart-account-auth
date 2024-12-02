@@ -223,11 +223,7 @@ impl CredentialData {
                 VERIFYING_CRED_ID.save(storage, &cred.id())?;
                 verifying_found = true;
             }
-
-            #[cfg(feature = "secretwasm")]
-            CREDENTIAL_INFOS.insert(storage, &cred.id(), &cred.info())?;
-            #[cfg(not(feature = "secretwasm"))]
-            CREDENTIAL_INFOS.save(storage, cred.id(), &cred.info())?;
+            save_credential(storage, &cred.id(), &cred.info())?;
         }
 
         ensure!(verifying_found, AuthError::NoVerifying);

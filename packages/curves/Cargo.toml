@@ -50,8 +50,8 @@ cosmwasm = [
     "saa-common/cosmwasm",
     "wasm"
 ]
-cosmwasm_2_0 = [
-    "saa-common/cosmwasm_2_0",
+cosmwasm_2_1 = [
+    "saa-common/cosmwasm_2_1",
     "cosmwasm",
 ]
 wasm = []

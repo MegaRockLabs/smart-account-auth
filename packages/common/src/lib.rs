@@ -10,11 +10,12 @@ pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 
 
-#[cfg(all(not(feature = "cosmwasm_2_0"), not(feature = "native")))]
+#[cfg(all(not(feature = "cosmwasm_2_1"), not(feature = "native")))]
 mod identity;
 
 #[cfg(feature = "storage")]
 pub mod storage;
+
 
 
 #[cfg(any(feature = "std", not(feature = "substrate")))]
@@ -37,7 +38,8 @@ pub mod crypto {
 } 
 
 
-#[cfg(all(feature = "cosmwasm", not(feature = "secretwasm")))]
+
+#[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
 pub mod cosmwasm {
     pub use cosmwasm_std::{
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
@@ -51,7 +53,7 @@ pub mod cosmwasm {
 }
 
 
-#[cfg(feature = "secretwasm")]
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
 pub mod cosmwasm {
     pub use secretwasm_std::{
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
@@ -86,6 +88,7 @@ pub mod substrate {
 
 #[cfg(feature = "wasm")]
 use cosmwasm::*;
+
 #[cfg(feature = "substrate")]
 use substrate::*;
 
@@ -124,6 +127,7 @@ pub trait Verifiable  {
             self.verify()?;
             return Ok(());
         } 
+        #[cfg(not(feature = "native"))]
         Err(AuthError::generic("Not implemented"))
     }
 
@@ -136,7 +140,8 @@ pub trait Verifiable  {
         {
             self.verify()?;
             return Ok(());
-        } 
+        }
+        #[cfg(not(feature = "native"))]
         Err(AuthError::generic("Not implemented"))
     }
 

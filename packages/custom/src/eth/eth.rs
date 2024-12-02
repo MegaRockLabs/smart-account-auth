@@ -48,7 +48,7 @@ impl Verifiable for EthPersonalSign {
     #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
         let signature = &self.signature.to_vec();
-        let key_data = saa_common::crypto::secp256k1_recover_pubkey::secp256k1_recover_pubkey(
+        let key_data = saa_common::crypto::secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
