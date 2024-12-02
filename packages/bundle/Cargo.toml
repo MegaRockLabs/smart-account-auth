@@ -23,7 +23,7 @@ saa-common              = { workspace = true }
 scale                   = { workspace = true, optional = true }
 scale-info              = { workspace = true, optional = true }
 borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true }
+schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
 [features]
@@ -39,23 +39,23 @@ default = [
 std = [
     "scale?/std",
     "scale-info?/std",
-    "saa-curves/std",
+    "saa-custom/std",
+]
+native = [
+    "saa-custom/native",
 ]
 solana = [
     "borsh/derive",
-    "saa-curves/solana",
+    "saa-custom/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-curves/substrate",
+    "saa-custom/substrate",
 ]
 cosmwasm = [
-    "saa-curves/cosmwasm",
+    "saa-custom/cosmwasm",
     "wasm",
-]
-native = [
-    "saa-curves/native",
 ]
 replay    = [
     "saa-common/replay",
@@ -69,16 +69,16 @@ cosmwasm_2_1 = [
     "saa-curves/cosmwasm_2_1",
     "cosmwasm",
 ]
-secretwasm  = [
-    "saa-common/secretwasm",
-    "wasm",
-]
 injective = [
     "saa-custom/injective",
     "cosmwasm",
 ]
+secretwasm  = [
+    "saa-common/secretwasm",
+    "wasm",
+]
 wasm      = [
-    "saa-schema/cosmwasm",
+    "dep:schemars",
 ]
 storage   = []
 
