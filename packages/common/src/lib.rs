@@ -10,7 +10,7 @@ pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 
 
-#[cfg(all(not(feature = "cosmwasm_2_1"), not(feature = "native")))]
+#[cfg(all(not(feature = "cosmwasm_2_0"), not(feature = "native")))]
 mod identity;
 
 #[cfg(feature = "storage")]

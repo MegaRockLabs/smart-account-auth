@@ -65,8 +65,8 @@ iterator  = [
     "saa-common/iterator",
     "storage",
 ]
-cosmwasm_2_1 = [
-    "saa-custom/cosmwasm_2_1",
+cosmwasm_2_0 = [
+    "saa-custom/cosmwasm_2_0",
     "cosmwasm",
 ]
 injective = [

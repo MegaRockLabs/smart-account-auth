@@ -6,7 +6,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.18.3"
+version         = "0.18.4"
 edition         = "2021"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
 description     = "Utilities, types and verification logic for smart contract / program based accounts for various blockchain-based virtual machines"
@@ -20,15 +20,15 @@ sha2                    = { version = "0.10.8", default-features = false }
 semver                  = { version = "1.0.23", default-features = false }
 thiserror               = { version = "2.0.3", default-features = false }
 
-smart-account-auth      = { version = "0.18.3", path = "packages/bundle" }
-saa-custom              = { version = "0.18.3", path = "packages/custom" }
-saa-common              = { version = "0.18.3", path = "packages/common" }
-saa-schema              = { version = "0.18.3", path = "packages/schema" }
-saa-curves              = { version = "0.18.3", path = "packages/curves" }
-saa-macros-proto        = { version = "0.18.3", path = "packages/macros-proto" }
+smart-account-auth      = { version = "0.18.4", path = "packages/bundle" }
+saa-custom              = { version = "0.18.4", path = "packages/custom" }
+saa-common              = { version = "0.18.4", path = "packages/common" }
+saa-schema              = { version = "0.18.4", path = "packages/schema" }
+saa-curves              = { version = "0.18.4", path = "packages/curves" }
+saa-macros-proto        = { version = "0.18.4", path = "packages/macros-proto" }
 
-cosmwasm-std            = { version = "2.1.4", default-features = false, features = ["std"] }
-cw-storage-plus         = { version = "2.0.0"  }
+cosmwasm-std            = { version = "2.0.0", default-features = false, features = ["std"] }
+cw-storage-plus         = { version = "2.0.0", default-features = false }
 
 secretwasm-std          = { version = "1.1.11", default-features = false, package = "secret-cosmwasm-std" }
 secretwasm-storage      = { version = "1.1.11", default-features = false, package = "secret-cosmwasm-storage" }
