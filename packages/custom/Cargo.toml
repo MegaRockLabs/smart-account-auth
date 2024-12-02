@@ -21,71 +21,45 @@ scale                   = { workspace = true, optional = true }
 scale-info              = { workspace = true, optional = true }
 
 borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true }
+schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
 [dev-dependencies]
 cosmwasm-std            = { workspace = true }
-secretwasm-std          = { workspace = true }
+saa-custom              = { path = ".", features = ["cosmwasm"] }
+saa-curves              = { workspace = true, features = ["cosmwasm"] }
 
 
 [features]
 default = [
-    "std", "replay"
+    "std"
+]
+std = [
+    "saa-curves/std",
+    "bech32/std",
+    "scale?/std",
+    "scale-info?/std",
+]
+native = [
+    "saa-curves/native",
 ]
 solana = [
     "dep:borsh",
-    "saa-schema/solana",
-    "saa-common/solana",
     "saa-curves/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-schema/substrate",
-    "saa-common/substrate",
     "saa-curves/substrate",
 ]
 cosmwasm = [
-    "saa-schema/cosmwasm",
-    "saa-common/cosmwasm",
     "saa-curves/cosmwasm",
-    "wasm"
-]
-std = [
-    "scale?/std",
-    "scale-info?/std",
-    "bech32/std",
-    "saa-schema/std",
-    "saa-common/std",
-    "saa-curves/std",
-]
-native = [
-    "saa-common/native",
-    "saa-curves/native",
-]
-replay = [
-    "saa-common/replay",
-    "storage",
-]
-storage = [
-    "saa-common/storage"
 ]
 cosmwasm_2_1 = [
     "saa-curves/cosmwasm_2_1",
-    "saa-common/cosmwasm_2_1",
     "cosmwasm",
-]
-secretwasm = [
-    "saa-common/secretwasm",
-    "saa-curves/secretwasm",
-    "saa-schema/cosmwasm",
-    "wasm"
 ]
 injective = [
     "saa-common/injective",
     "cosmwasm"
-]
-wasm = [
-    "saa-schema/wasm"
 ]

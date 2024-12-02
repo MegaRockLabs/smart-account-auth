@@ -1,5 +1,5 @@
 
-#[cfg(any(feature = "wasm", feature = "native"))]
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
 use {
     saa_common::{hashes::sha256, utils::pubkey_to_address, ensure},
     super::utils::preamble_msg_arb_036
@@ -16,7 +16,7 @@ pub struct CosmosArbitrary {
     pub hrp:       Option<String>
 }
 
-#[cfg(any(feature = "wasm", feature = "native"))]
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
 impl CosmosArbitrary {
 
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
@@ -60,7 +60,7 @@ impl Verifiable for CosmosArbitrary {
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(
         &self, 
         api:  &dyn saa_common::cosmwasm::Api

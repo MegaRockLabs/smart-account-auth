@@ -1,6 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(unreachable_code)]
-
 
 use saa_schema::wasm_serde;
 mod binary;
@@ -11,28 +9,27 @@ pub mod hashes;
 pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 
-#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
-pub mod identity;
+
+#[cfg(all(not(feature = "cosmwasm_2_1"), not(feature = "native")))]
+mod identity;
 
 #[cfg(feature = "storage")]
 pub mod storage;
 
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", not(feature = "substrate")))]
 pub use std::{
     string::{ToString, String},
     vec, vec::Vec, 
     format
 };
 
-#[cfg(not(feature = "std"))]
+#[cfg(all(not(feature = "std"), feature = "substrate"))]
 pub use ink::prelude::{
     string::{ToString, String},
     vec, vec::Vec, 
     format, 
 };
-
-
 
 #[cfg(feature = "native")]
 pub mod crypto {
@@ -60,10 +57,12 @@ pub mod cosmwasm {
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
         from_binary as from_json, to_binary as to_json_binary,
         StdError, VerificationError, RecoverPubkeyError,
-        CustomMsg, Order
+        CustomMsg
     };
     #[cfg(feature = "storage")]
     pub use secretwasm_std::Storage;
+    #[cfg(feature = "iterator")]
+    pub use secretwasm_std::Order;
 }
 
 
@@ -99,7 +98,6 @@ macro_rules! ensure {
         }
     };
 }
-
 
 
 

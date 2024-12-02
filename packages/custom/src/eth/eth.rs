@@ -1,15 +1,12 @@
-#[cfg(feature = "wasm")]
-use saa_common::{cosmwasm::Api, ensure};
-
-#[cfg(feature = "native")] 
-use saa_common::crypto::secp256k1_recover_pubkey;
-
-use saa_schema::wasm_serde;
 
 use saa_common::{CredentialId, AuthError, Binary, String, ToString, Verifiable };
+use saa_schema::wasm_serde;
 
-#[cfg(any(feature = "wasm", feature = "native"))]
-use super::utils::{get_recovery_param, preamble_msg_eth};
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
+use  {
+    super::utils::{get_recovery_param, preamble_msg_eth},
+    saa_common::ensure,
+};
 
 
 #[wasm_serde]
@@ -51,7 +48,7 @@ impl Verifiable for EthPersonalSign {
     #[cfg(feature = "native")] 
     fn verify(&self) -> Result<(), AuthError> {
         let signature = &self.signature.to_vec();
-        let key_data = secp256k1_recover_pubkey(
+        let key_data = saa_common::crypto::secp256k1_recover_pubkey::secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
@@ -66,8 +63,8 @@ impl Verifiable for EthPersonalSign {
     }
 
 
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
         
         let signature = &self.signature.to_vec();
         

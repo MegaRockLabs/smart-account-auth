@@ -1,3 +1,4 @@
+#[cfg(feature = "cosmwasm")]
 mod cosmwasm;
 
 #[cfg(feature = "secretwasm")]

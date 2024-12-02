@@ -39,41 +39,26 @@ default = [
 std = [
     "scale?/std",
     "scale-info?/std",
-    "saa-schema/std",
-    "saa-common/std",
-    "saa-custom/std",
     "saa-curves/std",
 ]
 solana = [
     "borsh/derive",
-    "saa-schema/solana",
-    "saa-common/solana",
     "saa-curves/solana",
-    "saa-custom/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-schema/substrate",
-    "saa-common/substrate",
     "saa-curves/substrate",
-    "saa-custom/substrate",
 ]
 cosmwasm = [
     "saa-curves/cosmwasm",
-    "saa-custom/cosmwasm",
-    "saa-common/cosmwasm",
-    "saa-schema/cosmwasm",
     "wasm",
 ]
 native = [
     "saa-curves/native",
-    "saa-custom/native",
-    "saa-common/native",
 ]
 replay    = [
     "saa-common/replay",
-    "saa-custom/storage",
     "storage",
 ]
 iterator  = [
@@ -81,24 +66,19 @@ iterator  = [
     "storage",
 ]
 cosmwasm_2_1 = [
-    "saa-custom/cosmwasm_2_1",
     "saa-curves/cosmwasm_2_1",
     "cosmwasm",
 ]
 secretwasm  = [
     "saa-common/secretwasm",
-    "saa-custom/secretwasm",
-    "saa-curves/secretwasm",
-    "saa-schema/cosmwasm",
     "wasm",
 ]
 injective = [
     "saa-custom/injective",
-    "saa-common/injective",
     "cosmwasm",
 ]
 wasm      = [
-    "saa-schema/wasm",
+    "saa-schema/cosmwasm",
 ]
 storage   = []
 

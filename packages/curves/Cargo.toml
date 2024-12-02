@@ -32,38 +32,24 @@ default = [
 std = [
     "scale?/std",
     "scale-info?/std",
-    "saa-schema/std",
     "saa-common/std",
+]
+native = [
+    "saa-common/native",
 ]
 solana = [
     "dep:borsh",
-    "saa-schema/solana",
     "saa-common/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-schema/substrate",
     "saa-common/substrate",
 ]
 cosmwasm = [
-    "saa-schema/cosmwasm",
     "saa-common/cosmwasm",
-    "wasm"
-]
-native = [
-    "saa-common/native",
 ]
 cosmwasm_2_1 = [
     "saa-common/cosmwasm_2_1",
     "cosmwasm",
-]
-secretwasm = [
-    "saa-schema/cosmwasm",
-    "saa-common/secretwasm",
-    "wasm"
-]
-wasm = [
-    "serde/serde_derive",
-    "saa-schema/wasm"
 ]

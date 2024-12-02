@@ -6,11 +6,6 @@ use saa_common::{
 
 use saa_schema::wasm_serde;
 
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
-
-
-
 
 #[wasm_serde]
 pub struct Secp256k1 {
@@ -52,8 +47,8 @@ impl Verifiable for Secp256k1 {
     }
 
 
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
         let res = api.secp256k1_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 

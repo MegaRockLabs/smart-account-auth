@@ -1,12 +1,14 @@
 use core::fmt;
-use schemars::JsonSchema;
 use core::ops::Deref;
 use base64::engine::{Engine, GeneralPurpose};
 use serde::{de::{self, DeserializeOwned}, ser, Deserialize, Deserializer, Serialize};
 
 use crate::AuthError;
 
-#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
+#[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[cfg_attr(feature = "wasm", derive(
+    saa_schema::schemars::JsonSchema
+))]
 #[cfg_attr(feature = "substrate", derive(
     saa_schema::scale::Encode, 
     saa_schema::scale::Decode
@@ -18,7 +20,10 @@ use crate::AuthError;
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(
     saa_schema::scale_info::TypeInfo)
 )]
-pub struct Binary(#[schemars(with = "String")] Vec<u8>);
+pub struct Binary(
+    #[cfg_attr(feature = "wasm", schemars(with = "String"))]
+    Vec<u8>
+);
 
 impl Binary {
     /// Creates a new `Binary` containing the given data.

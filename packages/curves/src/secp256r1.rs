@@ -1,6 +1,3 @@
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
-
 use saa_schema::wasm_serde;
 
 use saa_common::{
@@ -45,35 +42,36 @@ impl Verifiable for Secp256r1 {
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, api : &dyn Api) -> Result<(), AuthError> {
-
-        #[cfg(all(feature = "cosmwasm_2_1", not(feature = "secretwasm")))]
+    fn verify_cosmwasm(&self, api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+        #[cfg(feature = "cosmwasm_2_1")]
         let res = api.secp256r1_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        #[cfg(not(feature = "cosmwasm_2_1"))] {
-
-            let res = implementation::secp256r1_verify(
-                &saa_common::hashes::sha256(&self.message), 
-                &self.signature, 
-                &self.pubkey
-            )?;
-            ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        }
+        #[cfg(not(feature = "cosmwasm_2_1"))] 
+        let res = implementation::secp256r1_verify(
+            &saa_common::hashes::sha256(&self.message), 
+            &self.signature, 
+            &self.pubkey
+        )?;
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 }
 
 
+#[cfg(feature = "native")]
+pub mod implementation {
+    pub use saa_common::crypto::secp256r1_verify;
+}
 
-#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
-mod implementation {
+#[cfg(all(not(feature = "native"), not(feature = "cosmwasm_2_1")))]
+pub mod implementation {
+
     use saa_common::{hashes::Identity256, AuthError};
-
 
     const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
     const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
@@ -130,6 +128,3 @@ mod implementation {
     }
 
 }
-
-#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
-pub use implementation::secp256r1_verify;

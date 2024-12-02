@@ -1,7 +1,4 @@
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::Api;
 use saa_schema::wasm_serde;
-
 use saa_common::{
     CredentialId, 
     AuthError, Binary, ToString, Verifiable, ensure
@@ -45,8 +42,8 @@ impl Verifiable for Ed25519 {
     }
 
 
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> 
+    #[cfg(feature = "cosmwasm")]
+    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> 
         where Self: Clone
     {
         let success = api.ed25519_verify(

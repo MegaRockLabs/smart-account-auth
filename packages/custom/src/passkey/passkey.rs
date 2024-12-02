@@ -1,26 +1,26 @@
 use saa_schema::wasm_serde;
-use saa_common::{hashes::sha256, AuthError, Binary, CredentialId, String, Verifiable, ensure};
+use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 
-use sha2::{Digest, Sha256};
+// expand later after adding implementations for other platforms
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
+use {
+    saa_common::hashes::sha256,
+    sha2::{Digest, Sha256}
+};
 
+// Enforce serde for now until figuring how to rename fields with other serialization libraries
 #[derive(
-    Clone, Debug, PartialEq,  
     ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize,
-    ::saa_schema::schemars::JsonSchema,
+    ::saa_schema::serde::Deserialize
 )]
-#[cfg_attr(feature = "cosmwasm", schemars(
-    crate = "::saa_schema::schemars"
-))]
-#[cfg_attr(feature = "substrate", derive(
-    ::saa_schema::scale::Encode, ::saa_schema::scale::Decode
-))]
-#[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, 
-    ::saa_schema::borsh::BorshDeserialize
-))]
-#[cfg_attr(all(feature = "std", feature="substrate"), derive(saa_schema::scale_info::TypeInfo))]
-#[allow(clippy::derive_partial_eq_without_eq)]
+// Manual derivation due to #[deny_unknown_fields] in the macro
+#[cfg_attr(feature = "cosmwasm", derive(
+        Clone, Debug, PartialEq, 
+        ::saa_schema::schemars::JsonSchema
+    ), 
+    schemars(crate = "::saa_schema::schemars")
+)]
+#[cfg_attr(not(feature = "cosmwasm"), wasm_serde)]
 pub struct ClientData {
     #[serde(rename = "type")]
     pub ty: String,
@@ -30,8 +30,10 @@ pub struct ClientData {
     pub cross_origin: bool
 }
 
-
-
+#[cfg_attr(not(feature = "cosmwasm"), derive(
+    ::saa_schema::serde::Serialize,
+    ::saa_schema::serde::Deserialize,
+))]
 #[wasm_serde]
 pub struct PasskeyExtension {
     #[serde(rename = "type")]
@@ -75,8 +77,10 @@ pub struct PasskeyCredential {
     pub pubkey               :       Option<Binary>,
 }
 
+
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
 impl PasskeyCredential {
-    pub fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
         let mut hasher = Sha256::new();
         hasher.update(&self.authenticator_data);
@@ -91,7 +95,6 @@ impl Verifiable for PasskeyCredential {
     fn id(&self) -> CredentialId {
         self.id.as_bytes().to_vec()
     }
-
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(self.authenticator_data.len() >= 37, AuthError::generic("Invalid authenticator data"));
@@ -114,23 +117,22 @@ impl Verifiable for PasskeyCredential {
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
-
-        #[cfg(all(feature = "cosmwasm_2_1", not(feature = "secretwasm")))]
+    fn verify_cosmwasm(&self, api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+        #[cfg(feature = "cosmwasm_2_1")]
         let res = api.secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey.as_ref().unwrap()
+            &self.pubkey.as_ref().unwrap_or(&Binary::default())
         )?;
-        #[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
-        let res = saa_curves::secp256r1::secp256r1_verify(
+        #[cfg(not(feature = "cosmwasm_2_1"))] 
+        let res = saa_curves::secp256r1::implementation::secp256r1_verify(
             &self.message_digest()?, 
             &self.signature, 
-            &self.pubkey.as_ref().unwrap()
+            &self.pubkey.as_ref().unwrap_or(&Binary::default())
         )?;
-        ensure!(res, AuthError::generic("Signature verification failed"));
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 

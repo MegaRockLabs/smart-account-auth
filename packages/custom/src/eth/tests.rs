@@ -1,7 +1,5 @@
 mod tests {
-    #[cfg(feature = "secretwasm")]
-    use secretwasm_std::testing::mock_dependencies;
-    #[cfg(not(feature = "secretwasm"))]
+
     use cosmwasm_std::testing::mock_dependencies;
     use saa_common::{Binary, Verifiable};
 
@@ -22,16 +20,13 @@ mod tests {
             "a/lQuaTyhcTEeRA2XFTPxoDSIdS3yUUH1VSKOm2zz5EURfheGzzLgXea6QAalswOM2njnUzblqIGiOC0P+j2rhw="
         ).unwrap();
 
-            
-       
-
         let cred = EthPersonalSign {
             signer : address.to_string(),
             signature: signature.clone(),
             message,
         };
         let res = cred.verify_cosmwasm(deps.as_ref().api);
-        
+        println!("Res: {:?}", res);
         assert!(res.is_ok())
     }
 }

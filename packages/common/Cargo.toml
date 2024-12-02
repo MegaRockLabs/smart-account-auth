@@ -28,7 +28,6 @@ cosmwasm-std        = { workspace = true, optional = true }
 cw-storage-plus     = { workspace = true, optional = true }
 
 secretwasm-std      = { workspace = true, optional = true }
-secretwasm-storage  = { workspace = true, optional = true }
 secret-toolkit      = { workspace = true, optional = true }
 
 scale               = { workspace = true, optional = true }
@@ -37,7 +36,7 @@ borsh               = { workspace = true, optional = true }
 
 sha2                = { workspace = true } 
 serde               = { workspace = true }
-schemars            = { workspace = true }
+schemars            = { workspace = true, optional = true }
 serde-json-wasm     = { version = "1.0.1", default-features = false }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
@@ -55,7 +54,8 @@ solana      = [
 ]
 cosmwasm    = [
     "dep:cosmwasm-std",
-    "saa-schema/cosmwasm",
+    "dep:cw-storage-plus",
+    "dep:schemars",
     "wasm"
 ]
 cosmwasm_2_1 = [
@@ -77,23 +77,14 @@ std         = [
 native     = [
     "dep:cosmwasm-crypto",
 ]
-replay     = [
-    "storage"
-]
-storage    = [
-    "dep:cw-storage-plus",
-]
 iterator   = [
     "cosmwasm-std?/iterator",
     "secretwasm-std?/iterator",
-    "secretwasm-storage?/iterator",
     "storage",
 ]
 secretwasm  = [
     "dep:secretwasm-std",
     "dep:secret-toolkit",
-    "dep:secretwasm-storage",
-    "saa-schema/cosmwasm",
     "wasm",
 ]
 injective  = [
@@ -101,5 +92,8 @@ injective  = [
 ]
 wasm       = [
     "saa-schema/cosmwasm",
-    "saa-schema/wasm",
 ]
+replay     = [
+    "storage"
+]
+storage    = []

@@ -1,4 +1,4 @@
-#[cfg(feature = "wasm")]
+#[cfg(feature = "cosmwasm")]
 use saa_common::{cosmwasm::{Api, MessageInfo}, utils::prefix_from_address};
 use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
@@ -20,7 +20,7 @@ impl From<&[u8]> for Caller {
 }
 
 
-#[cfg(feature = "wasm")]
+#[cfg(feature = "cosmwasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {
         Caller {
@@ -38,7 +38,7 @@ impl Verifiable for Caller {
     }
 
     fn hrp(&self) -> Option<String> {
-        #[cfg(feature = "wasm")]
+        #[cfg(feature = "cosmwasm")]
         {
             let res = String::from_utf8(self.id.clone());
             if res.is_err() {
@@ -64,7 +64,7 @@ impl Verifiable for Caller {
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(& self, _: &dyn Api) -> Result<(), AuthError> {
         self.validate()
     }

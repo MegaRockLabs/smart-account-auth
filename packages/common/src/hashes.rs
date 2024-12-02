@@ -26,5 +26,6 @@ pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
     output
 }
 
-#[cfg(any(not(feature = "cosmwasm_2_1"), feature = "secretwasm"))]
+
+#[cfg(all(not(feature = "cosmwasm_2_1"), not(feature = "native")))]
 pub use crate::identity::Identity256;

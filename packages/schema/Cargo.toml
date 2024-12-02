@@ -9,23 +9,22 @@ repository          = { workspace = true }
 
 [dependencies]
 saa-macros-proto    = { workspace = true }
+serde               = { workspace = true } 
 
 # Substrate
-scale               = { workspace = true, default-features = false, features = ["derive"], optional = true }
-scale-info          = { workspace = true, default-features = false, features = ["derive"], optional = true }
+scale               = { workspace = true, optional = true }
+scale-info          = { workspace = true, optional = true }
 # CosmWasm
-serde               = { workspace = true   }
-schemars            = { workspace = true }
+schemars            = { workspace = true, optional = true }
 # Solana
-borsh               = { workspace = true, default-features = false, features = ["derive"], optional = true }
+borsh               = { workspace = true, optional = true }
 
 
 [features]
 default        = ["std"]
 solana         = ["dep:borsh",                   "saa-macros-proto/solana"    ]
 substrate      = ["dep:scale", "dep:scale-info", "saa-macros-proto/substrate" ]
-cosmwasm       = ["saa-macros-proto/cosmwasm", "wasm"  ]
-wasm           = ["saa-macros-proto/wasm"]
+cosmwasm       = ["dep:schemars",                "saa-macros-proto/cosmwasm"  ]
 std            = [
     "scale?/std", 
     "scale-info?/std", 
