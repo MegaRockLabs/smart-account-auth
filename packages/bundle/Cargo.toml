@@ -66,7 +66,7 @@ iterator  = [
     "storage",
 ]
 cosmwasm_2_1 = [
-    "saa-curves/cosmwasm_2_1",
+    "saa-custom/cosmwasm_2_1",
     "cosmwasm",
 ]
 injective = [
