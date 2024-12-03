@@ -1766,7 +1766,7 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "saa-common"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "base64 0.22.1",
  "bech32",
@@ -1788,13 +1788,13 @@ dependencies = [
  "serde",
  "serde-json-wasm 1.0.1",
  "sha2 0.10.8",
- "thiserror 2.0.3",
+ "thiserror 2.0.4",
  "tiny-keccak",
 ]
 
 [[package]]
 name = "saa-curves"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "bech32",
  "borsh",
@@ -1810,7 +1810,7 @@ dependencies = [
 
 [[package]]
 name = "saa-custom"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "base64 0.22.1",
  "bech32",
@@ -1830,7 +1830,7 @@ dependencies = [
 
 [[package]]
 name = "saa-macros-proto"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1839,7 +1839,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -2274,7 +2274,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.18.12"
+version = "0.20.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -2451,11 +2451,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.3"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c006c85c7651b3cf2ada4584faa36773bd07bac24acfb39f3c431b36d7e667aa"
+checksum = "2f49a1853cf82743e3b7950f77e0f4d622ca36cf4317cba00c767838bac8d490"
 dependencies = [
- "thiserror-impl 2.0.3",
+ "thiserror-impl 2.0.4",
 ]
 
 [[package]]
@@ -2471,9 +2471,9 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.3"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f077553d607adc1caf65430528a576c757a71ed73944b66ebb58ef2bbd243568"
+checksum = "8381894bb3efe0c4acac3ded651301ceee58a15d47c2e34885ed1908ad667061"
 dependencies = [
  "proc-macro2",
  "quote",
