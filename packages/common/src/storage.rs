@@ -18,13 +18,24 @@ mod inner {
     use crate::{AuthError, CredentialInfo};
     use crate::cosmwasm::StdError;
 
+    #[cfg(feature = "replay")]
     pub fn increment_acc_number(
         storage: &mut dyn crate::cosmwasm::Storage
     ) -> Result<(), AuthError> {
-        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, StdError>(n + 1))?;
+        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+        if !ACCOUNT_NUMBER.exists(storage) {
+            ACCOUNT_NUMBER.save(storage, &1u128)?;
+        } else {
+            ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, StdError>(n + 1))?;
+        }
+        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
+        if ACCOUNT_NUMBER.is_empty(storage) {
+            ACCOUNT_NUMBER.save(storage, &1u128)?;
+        } else {
+            ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, StdError>(n + 1))?;
+        }
         Ok(())
     }
-
 
     pub fn get_cred_info(
         storage: &dyn crate::cosmwasm::Storage,
@@ -33,9 +44,7 @@ mod inner {
         #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
         let info = cosmwasm::CREDENTIAL_INFOS.load(storage, id).ok();
         #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
-        let info = secretwasm::CREDENTIAL_INFOS.get(
-            storage, &id
-        );
+        let info = secretwasm::CREDENTIAL_INFOS.get(storage, &id);
         crate::ensure!(info.is_some(), AuthError::NotFound);
         Ok(info.unwrap())
     }

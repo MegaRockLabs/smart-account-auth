@@ -137,7 +137,6 @@ impl CredentialData {
         env: &Env, 
         info: &MessageInfo
     ) -> Result<(), AuthError> {
-        use saa_common::cosmwasm::StdError;
 
         let new = match &op {
             UpdateOperation::Add(data) => data,
@@ -151,7 +150,7 @@ impl CredentialData {
             ensure!(nonce == new_nonce, AuthError::DifferentNonce);
         }
 
-        ACCOUNT_NUMBER.update(storage, |n| Ok::<u128, StdError>(n + 1))?;
+        increment_acc_number(storage)?;
 
         match op {
             UpdateOperation::Add(data) => {
@@ -197,7 +196,7 @@ impl CredentialData {
         #[cfg(feature = "replay")]
         {
             self.assert_signed(storage, env)?;
-            ACCOUNT_NUMBER.save(storage, &1)?;
+            increment_acc_number(storage)?;
         }  
 
         let mut verifying_found = false;

@@ -114,15 +114,16 @@ impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
 impl MsgDataToVerify {
     pub fn validate_cosmwasm(
         &self, 
-        #[cfg(feature = "storage")]
+        #[cfg(feature = "replay")]
         store: &dyn Storage, 
         env: &Env
     ) -> Result<(), AuthError> {
         ensure!(self.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
         ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
         ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        #[cfg(feature = "storage")]
-        ensure!(crate::storage::ACCOUNT_NUMBER.load(store)?.to_string() == self.nonce, AuthError::DifferentNonce);
+        #[cfg(feature = "replay")]
+        ensure!(crate::storage::ACCOUNT_NUMBER.load(store)
+            .unwrap_or_default().to_string() == self.nonce, AuthError::DifferentNonce);
         Ok(())
     }
 }
@@ -132,13 +133,13 @@ impl MsgDataToVerify {
 impl<M> MsgDataToSign<M> {
     pub fn validate_cosmwasm(
         &self, 
-        #[cfg(feature = "storage")]
+        #[cfg(feature = "replay")]
         store: &dyn Storage, 
         env: &Env
     ) -> Result<(), AuthError> {
         Into::<MsgDataToVerify>::into(self)
         .validate_cosmwasm(
-            #[cfg(feature = "storage")]
+            #[cfg(feature = "replay")]
             store,
             env
         )
