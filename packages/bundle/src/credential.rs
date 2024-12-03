@@ -121,6 +121,7 @@ impl Credential {
     }
 
     pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
+        #[cfg(feature = "passkeys")]
         if let Credential::Passkey(c) = self {
             use saa_custom::passkey::*;
             return Ok(Some(to_json_binary(&PasskeyExtension {
@@ -129,9 +130,8 @@ impl Credential {
                 pubkey: c.pubkey.clone(),
                 user_handle: c.user_handle.clone(),
             })?));
-        } else {
-            Ok(None)
         }
+        Ok(None)
     }
 
     pub fn info(&self) -> CredentialInfo {
