@@ -4,10 +4,7 @@ use bech32::{hrp::Hrp, Bech32};
 
 #[cfg(feature = "wasm")]
 pub fn new_cw_binary(data: Vec<u8>) -> crate::cosmwasm::Binary {
-    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
-    return secretwasm_std::Binary(data);
-    #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
-    return crate::cosmwasm::Binary::new(data.to_vec())
+    return data.into();
 }
 
 
@@ -25,9 +22,7 @@ pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> 
 
 #[cfg(feature = "wasm")]
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> crate::cosmwasm::CanonicalAddr {
-    crate::cosmwasm::CanonicalAddr::from(
-        new_cw_binary(ripemd160(&sha256(pubkey)))
-    )
+    crate::cosmwasm::CanonicalAddr::from(ripemd160(&sha256(pubkey))).into()
 }
 
 

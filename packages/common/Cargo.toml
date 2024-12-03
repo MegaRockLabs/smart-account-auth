@@ -58,14 +58,6 @@ cosmwasm    = [
     "dep:cw-storage-plus",
     "wasm"
 ]
-cosmwasm_2_0 = [
-    "cosmwasm-std/cosmwasm_2_0",
-    "cosmwasm",
-]
-cosmwasm_2_1 = [
-    "cosmwasm-std/cosmwasm_2_1",
-    "cosmwasm",
-]
 substrate   = [
     "dep:ink", 
     "dep:scale",

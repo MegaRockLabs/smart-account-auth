@@ -276,21 +276,14 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 #[cfg(feature = "wasm")]
 impl From<Binary> for crate::cosmwasm::Binary {
     fn from(binary: Binary) -> Self {
-
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
-        return crate::cosmwasm::Binary(binary.to_vec());
-        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
-        crate::cosmwasm::Binary::new(binary.to_vec())
+        binary.to_vec().into()
     }
 }
 
 #[cfg(feature = "wasm")]
 impl Into<Binary> for crate::cosmwasm::Binary {
     fn into(self) -> Binary {
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
-        return Binary(self.0);
-        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
-        Binary::new(self.to_vec())
+        self.to_vec().into()
     }
 }
 

@@ -57,14 +57,6 @@ cosmwasm = [
     "saa-custom/cosmwasm",
     "wasm",
 ]
-cosmwasm_2_0 = [
-    "saa-custom/cosmwasm_2_0",
-    "cosmwasm",
-]
-cosmwasm_2_1 = [
-    "saa-common/cosmwasm_2_0",
-    "cosmwasm_2_0",
-]
 injective = [
     "saa-custom/injective",
     "cosmwasm",
