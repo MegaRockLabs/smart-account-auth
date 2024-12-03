@@ -57,17 +57,12 @@ cosmwasm = [
     "saa-custom/cosmwasm",
     "wasm",
 ]
-replay    = [
-    "saa-common/replay",
-    "storage",
-]
-iterator  = [
-    "saa-common/iterator",
-    "storage",
+cosmwasm_2_0 = [
+    "saa-custom/cosmwasm_2_0",
+    "cosmwasm",
 ]
 cosmwasm_2_1 = [
-    "saa-custom/cosmwasm_2_1",
-    "cosmwasm",
+    "cosmwasm_2_0",
 ]
 injective = [
     "saa-custom/injective",
@@ -81,6 +76,14 @@ secretwasm  = [
 ]
 wasm      = [
     "dep:schemars",
+]
+replay    = [
+    "saa-common/replay",
+    "storage",
+]
+iterator  = [
+    "saa-common/iterator",
+    "storage",
 ]
 storage   = []
 

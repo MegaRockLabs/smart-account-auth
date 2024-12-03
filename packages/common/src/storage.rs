@@ -4,10 +4,10 @@ mod cosmwasm;
 #[cfg(feature = "secretwasm")]
 mod secretwasm;
 
-#[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+#[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
 pub use cosmwasm::*;
 
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
 pub use secretwasm::*;
 
 
@@ -30,9 +30,9 @@ mod inner {
         storage: &dyn crate::cosmwasm::Storage,
         id: crate::CredentialId
     ) -> Result<CredentialInfo, AuthError> {
-        #[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
         let info = cosmwasm::CREDENTIAL_INFOS.load(storage, id).ok();
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
         let info = secretwasm::CREDENTIAL_INFOS.get(
             storage, &id
         );
@@ -43,7 +43,7 @@ mod inner {
 
     #[cfg(
         all(
-            any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))
+            any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))
         ), 
         feature = "iterator"
         )
@@ -68,7 +68,7 @@ mod inner {
         Ok(credentials)
     }
 
-    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1"), feature = "iterator"))]
+    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0"), feature = "iterator"))]
     pub fn get_credentials(
         storage: &dyn secretwasm_std::Storage
     ) -> Result<Vec<(crate::Binary, CredentialInfo)>, AuthError> {
@@ -94,9 +94,9 @@ mod inner {
         id: &crate::CredentialId,
         info: &CredentialInfo
     ) -> Result<(), AuthError> {
-        #[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
         cosmwasm::CREDENTIAL_INFOS.save(storage, id.clone(), info)?;
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
         secretwasm::CREDENTIAL_INFOS.insert(storage, id, info)?;
         Ok(())
     }
@@ -105,9 +105,9 @@ mod inner {
         storage: &dyn crate::cosmwasm::Storage,
         id: &crate::CredentialId
     ) -> bool {
-        #[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
         return cosmwasm::CREDENTIAL_INFOS.has(storage, id.clone());
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
         return secretwasm::CREDENTIAL_INFOS.contains(storage, id);
     }
 
@@ -115,9 +115,9 @@ mod inner {
         storage: &mut dyn crate::cosmwasm::Storage,
         id: &crate::CredentialId
     ) -> Result<(), AuthError> {
-        #[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+        #[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
         cosmwasm::CREDENTIAL_INFOS.remove(storage, id.clone());
-        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+        #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
         secretwasm::CREDENTIAL_INFOS.remove(storage, id)?;
         Ok(())
     }

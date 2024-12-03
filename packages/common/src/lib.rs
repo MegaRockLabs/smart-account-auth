@@ -10,7 +10,7 @@ pub use errors::*;
 pub use binary::{Binary, to_json_binary, from_json};
 
 
-#[cfg(all(not(feature = "cosmwasm_2_1"), not(feature = "native")))]
+#[cfg(all(not(feature = "cosmwasm_2_0"), not(feature = "native")))]
 mod identity;
 
 #[cfg(feature = "storage")]
@@ -39,7 +39,7 @@ pub mod crypto {
 
 
 
-#[cfg(any(feature = "cosmwasm_2_1", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
+#[cfg(any(feature = "cosmwasm_2_0", all(feature = "cosmwasm", not(feature = "secretwasm"))))]
 pub mod cosmwasm {
     pub use cosmwasm_std::{
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
@@ -53,7 +53,7 @@ pub mod cosmwasm {
 }
 
 
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_1")))]
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm_2_0")))]
 pub mod cosmwasm {
     pub use secretwasm_std::{
         Api, Env, Addr, CanonicalAddr, MessageInfo, Binary,
