@@ -2,7 +2,7 @@
 use saa_common::{CredentialId, AuthError, Binary, String, ToString, Verifiable };
 use saa_schema::wasm_serde;
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+#[cfg(any(feature = "wasm", feature = "native"))]
 use  {
     super::utils::{get_recovery_param, preamble_msg_eth},
     saa_common::ensure,
@@ -63,7 +63,7 @@ impl Verifiable for EthPersonalSign {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
         
         let signature = &self.signature.to_vec();

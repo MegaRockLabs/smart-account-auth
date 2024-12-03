@@ -1,5 +1,5 @@
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+#[cfg(any(feature = "wasm", feature = "native"))]
 use {
     saa_common::{hashes::sha256, utils::pubkey_to_address, ensure},
     super::utils::preamble_msg_arb_036
@@ -16,9 +16,8 @@ pub struct CosmosArbitrary {
     pub hrp:       Option<String>
 }
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+#[cfg(any(feature = "wasm", feature = "native"))]
 impl CosmosArbitrary {
-
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for the public key".to_string()));
         Ok(sha256(&preamble_msg_arb_036(
@@ -60,7 +59,7 @@ impl Verifiable for CosmosArbitrary {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(
         &self, 
         api:  &dyn saa_common::cosmwasm::Api

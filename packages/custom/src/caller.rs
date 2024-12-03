@@ -1,4 +1,4 @@
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 use saa_common::{cosmwasm::{Api, MessageInfo}, utils::prefix_from_address};
 use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
 use saa_schema::wasm_serde;
@@ -20,7 +20,7 @@ impl From<&[u8]> for Caller {
 }
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {
         Caller {
@@ -38,7 +38,7 @@ impl Verifiable for Caller {
     }
 
     fn hrp(&self) -> Option<String> {
-        #[cfg(feature = "cosmwasm")]
+        #[cfg(feature = "wasm")]
         {
             let res = String::from_utf8(self.id.clone());
             if res.is_err() {
@@ -54,7 +54,7 @@ impl Verifiable for Caller {
         if !(id.len() > 3) {
             return Err(AuthError::MissingData("Caller must have an id".to_string()));
         }
-        ensure!(String::from_utf8(id).is_ok(), AuthError::generic("Can't derove calling address"));
+        ensure!(String::from_utf8(id).is_ok(), AuthError::generic("Can't derive calling address"));
         Ok(())
     }
 
@@ -64,7 +64,7 @@ impl Verifiable for Caller {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     fn verify_cosmwasm(& self, _: &dyn Api) -> Result<(), AuthError> {
         self.validate()
     }

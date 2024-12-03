@@ -2,7 +2,7 @@ use saa_schema::wasm_serde;
 use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 
 // expand later after adding implementations for other platforms
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+#[cfg(any(feature = "wasm", feature = "native"))]
 use {
     saa_common::hashes::sha256,
     sha2::{Digest, Sha256}
@@ -15,7 +15,7 @@ use {
     ::saa_schema::serde::Deserialize
 )]
 // Manual derivation due to #[deny_unknown_fields] in the macro
-#[cfg_attr(feature = "cosmwasm", 
+#[cfg_attr(feature = "wasm", 
     derive(::saa_schema::schemars::JsonSchema), 
     schemars(crate = "::saa_schema::schemars")
 )]
@@ -39,7 +39,7 @@ pub struct ClientData {
     pub cross_origin: bool
 }
 
-#[cfg_attr(not(feature = "cosmwasm"), derive(
+#[cfg_attr(not(feature = "wasm"), derive(
     ::saa_schema::serde::Serialize,
     ::saa_schema::serde::Deserialize,
 ))]
@@ -87,7 +87,7 @@ pub struct PasskeyCredential {
 }
 
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
+#[cfg(any(feature = "wasm", feature = "native"))]
 impl PasskeyCredential {
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
@@ -126,7 +126,7 @@ impl Verifiable for PasskeyCredential {
     }
 
 
-    #[cfg(feature = "cosmwasm")]
+    #[cfg(feature = "wasm")]
     #[allow(unused_variables)]
     fn verify_cosmwasm(&self, 
         api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {

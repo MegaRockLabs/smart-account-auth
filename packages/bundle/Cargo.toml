@@ -62,6 +62,7 @@ cosmwasm_2_0 = [
     "cosmwasm",
 ]
 cosmwasm_2_1 = [
+    "saa-common/cosmwasm_2_0",
     "cosmwasm_2_0",
 ]
 injective = [
@@ -70,8 +71,8 @@ injective = [
 ]
 secretwasm  = [
     "saa-common/secretwasm",
-    "saa-custom/cosmwasm",
-    "saa-curves/cosmwasm",
+    "saa-custom/wasm",
+    "saa-curves/wasm",
     "wasm",
 ]
 wasm      = [
