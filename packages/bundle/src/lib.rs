@@ -8,7 +8,7 @@ pub use saa_common::{
 
 #[cfg(all(feature = "wasm", feature = "storage"))]
 pub use saa_common::storage;
-pub use saa_custom::caller::Caller;
+pub use saa_auth::caller::Caller;
 pub use saa_schema::wasm_serde;
 
 mod data;
@@ -31,13 +31,13 @@ pub use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r
 pub use saa_curves::ed25519::Ed25519;
 
 #[cfg(feature = "passkeys")]
-pub use saa_custom::passkey::{PasskeyCredential, ClientData};
+pub use saa_auth::passkey::{PasskeyCredential, ClientData};
 
 #[cfg(feature = "ethereum")]
-pub use saa_custom::eth::{EthPersonalSign, utils as eth_utils};
+pub use saa_auth::eth::{EthPersonalSign, utils as eth_utils};
 
 #[cfg(feature = "cosmos")]
-pub use saa_custom::cosmos::{CosmosArbitrary, utils as cosmos_utils};
+pub use saa_auth::cosmos::{CosmosArbitrary, utils as cosmos_utils};
 
 #[cfg(feature = "native")]
 pub use saa_common::crypto;

@@ -231,15 +231,36 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+
+[[package]]
+name = "base64-url"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38e2b6c78c06f7288d5e3c3d683bde35a79531127c83b087e5d0d77c974b4b28"
+dependencies = [
+ "base64 0.22.1",
+]
 
 [[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
+name = "bech32"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d86b93f97252c47b41663388e6d155714a9d0c398b99f1005cbc5f978b29f445"
 
 [[package]]
 name = "bech32"
@@ -304,9 +325,9 @@ dependencies = [
 
 [[package]]
 name = "bnum"
-version = "0.11.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e31ea183f6ee62ac8b8a8cf7feddd766317adfb13ff469de57ce033efd6a790"
+checksum = "56953345e39537a3e18bdaeba4cb0c58a78c1f61f361dc0fa7c5c7340ae87c5f"
 
 [[package]]
 name = "borsh"
@@ -416,6 +437,19 @@ checksum = "5f6ceb8624260d0d3a67c4e1a1d43fc7e9406720afbcb124521501dd138f90aa"
 
 [[package]]
 name = "cosmwasm-crypto"
+version = "1.5.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58535cbcd599b3c193e3967c8292fe1dbbb5de7c2a2d87380661091dd4744044"
+dependencies = [
+ "digest 0.10.7",
+ "ed25519-zebra 3.1.0",
+ "k256 0.13.4",
+ "rand_core 0.6.4",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "cosmwasm-crypto"
 version = "2.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4125381e5fd7fefe9f614640049648088015eca2b60d861465329a5d87dfa538"
@@ -447,34 +481,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmwasm-derive"
-version = "2.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5658b1dc64e10b56ae7a449f678f96932a96f6cfad1769d608d1d1d656480a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.90",
-]
-
-[[package]]
 name = "cosmwasm-std"
-version = "2.1.4"
+version = "1.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70eb7ab0c1e99dd6207496963ba2a457c4128ac9ad9c72a83f8d9808542b849b"
+checksum = "c21fde95ccd20044a23c0ac6fd8c941f3e8c158169dc94b5aa6491a2d9551a8d"
 dependencies = [
- "base64 0.22.1",
- "bech32",
+ "base64 0.21.7",
+ "bech32 0.9.1",
  "bnum",
- "cosmwasm-core",
- "cosmwasm-crypto",
- "cosmwasm-derive 2.1.4",
- "derive_more 1.0.0",
+ "cosmwasm-crypto 1.5.8",
+ "cosmwasm-derive",
+ "derivative",
+ "forward_ref",
  "hex",
- "rand_core 0.6.4",
  "schemars",
  "serde",
- "serde-json-wasm 1.0.1",
+ "serde-json-wasm 0.5.2",
  "sha2 0.10.8",
  "static_assertions",
  "thiserror 1.0.69",
@@ -597,9 +619,9 @@ dependencies = [
 
 [[package]]
 name = "cw-storage-plus"
-version = "2.0.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f13360e9007f51998d42b1bc6b7fa0141f74feae61ed5fd1e5b0a89eec7b5de1"
+checksum = "d5ff29294ee99373e2cd5fd21786a3c0ced99a52fec2ca347d565489c61b723c"
 dependencies = [
  "cosmwasm-std",
  "schemars",
@@ -1338,7 +1360,9 @@ dependencies = [
  "cfg-if",
  "ecdsa 0.16.9",
  "elliptic-curve 0.13.8",
+ "once_cell",
  "sha2 0.10.8",
+ "signature 2.2.0",
 ]
 
 [[package]]
@@ -1765,13 +1789,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
-name = "saa-common"
-version = "0.21.0"
+name = "saa-auth"
+version = "0.23.0"
 dependencies = [
  "base64 0.22.1",
- "bech32",
+ "base64-url",
+ "bech32 0.11.0",
  "borsh",
- "cosmwasm-crypto",
+ "cosmwasm-std",
+ "hex",
+ "parity-scale-codec",
+ "saa-auth",
+ "saa-common",
+ "saa-curves",
+ "saa-schema",
+ "scale-info",
+ "schemars",
+ "serde",
+ "sha2 0.10.8",
+]
+
+[[package]]
+name = "saa-common"
+version = "0.23.0"
+dependencies = [
+ "base64 0.22.1",
+ "bech32 0.11.0",
+ "borsh",
+ "cosmwasm-crypto 2.1.4",
  "cosmwasm-std",
  "cw-storage-plus",
  "digest 0.10.7",
@@ -1794,9 +1839,9 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.21.0"
+version = "0.23.0"
 dependencies = [
- "bech32",
+ "bech32 0.11.0",
  "borsh",
  "digest 0.10.7",
  "p256",
@@ -1809,28 +1854,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "saa-custom"
-version = "0.21.0"
-dependencies = [
- "base64 0.22.1",
- "bech32",
- "borsh",
- "cosmwasm-std",
- "hex",
- "parity-scale-codec",
- "saa-common",
- "saa-curves",
- "saa-custom",
- "saa-schema",
- "scale-info",
- "schemars",
- "serde",
- "sha2 0.10.8",
-]
-
-[[package]]
 name = "saa-macros-proto"
-version = "0.21.0"
+version = "0.23.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1839,7 +1864,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.21.0"
+version = "0.23.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
@@ -2065,7 +2090,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50e4393b01aa6587007161a6bb193859deaa8165ab06c8a35f253d329ff99e4d"
 dependencies = [
  "base64 0.13.1",
- "cosmwasm-derive 1.5.8",
+ "cosmwasm-derive",
  "derivative",
  "forward_ref",
  "hex",
@@ -2141,6 +2166,15 @@ name = "serde-json-wasm"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "479b4dbc401ca13ee8ce902851b834893251404c4f3c65370a49e047a6be09a5"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e9213a07d53faa0b8dd81e767a54a8188a242fdb9be99ab75ec576a774bfdd7"
 dependencies = [
  "serde",
 ]
@@ -2274,13 +2308,13 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.21.0"
+version = "0.23.0"
 dependencies = [
  "borsh",
  "parity-scale-codec",
+ "saa-auth",
  "saa-common",
  "saa-curves",
- "saa-custom",
  "saa-schema",
  "scale-info",
  "schemars",

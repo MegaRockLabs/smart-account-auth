@@ -19,7 +19,7 @@ mod inner {
     use crate::cosmwasm::StdError;
 
     #[cfg(feature = "replay")]
-    pub fn increment_acc_number(
+    pub fn increment_nonce(
         storage: &mut dyn crate::cosmwasm::Storage
     ) -> Result<(), AuthError> {
         #[cfg(feature = "cosmwasm")]
@@ -59,12 +59,10 @@ mod inner {
         .range(storage, None, None, crate::cosmwasm::Order::Ascending)
         .map(|item| {
             let (id, info) = item?;
-            Ok((
-                id.into(), 
-                CredentialInfo {
-                    name: info.name,
-                    hrp: info.hrp,
-                    extension: info.extension,
+            Ok((id.into(), CredentialInfo {
+                name: info.name,
+                hrp: info.hrp,
+                extension: info.extension,
             }))
         })
         .collect::<Result<Vec<(crate::Binary, CredentialInfo)>, AuthError>>()?;

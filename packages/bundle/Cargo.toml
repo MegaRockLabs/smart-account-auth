@@ -15,7 +15,7 @@ crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]
-saa-custom              = { workspace = true }
+saa-auth              = { workspace = true }
 saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
@@ -39,31 +39,31 @@ default = [
 std = [
     "scale?/std",
     "scale-info?/std",
-    "saa-custom/std",
+    "saa-auth/std",
 ]
 native = [
-    "saa-custom/native",
+    "saa-auth/native",
 ]
 solana = [
     "borsh/derive",
-    "saa-custom/solana",
+    "saa-auth/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-custom/substrate",
+    "saa-auth/substrate",
 ]
 cosmwasm = [
-    "saa-custom/cosmwasm",
+    "saa-auth/cosmwasm",
     "wasm",
 ]
 injective = [
-    "saa-custom/injective",
+    "saa-auth/injective",
     "cosmwasm",
 ]
 secretwasm  = [
     "saa-common/secretwasm",
-    "saa-custom/wasm",
+    "saa-auth/wasm",
     "saa-curves/wasm",
     "wasm",
 ]

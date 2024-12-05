@@ -1,6 +1,7 @@
+mod passkey;
+
 pub mod utils;
-mod eth;
-pub use eth::*;
+pub use passkey::*;
 
 #[cfg(test)]
 mod tests;

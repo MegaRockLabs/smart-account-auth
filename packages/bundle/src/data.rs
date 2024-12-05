@@ -5,7 +5,7 @@ use saa_common::{
     CredentialId, CredentialName, 
     Vec, Verifiable, AuthError
 };
-use saa_custom::caller::Caller;
+use saa_auth::caller::Caller;
 use saa_schema::wasm_serde;
 
 #[cfg(feature = "wasm")]
@@ -76,7 +76,7 @@ impl CredentialData {
         &self, 
         storage: &dyn Storage, 
         env: &Env,
-    ) -> Result<String, AuthError> {
+    ) -> Result<(), AuthError> {
         let first = self.credentials.first().unwrap();
         let first_data : MsgDataToVerify = saa_common::from_json(&first.message())?;
         first_data.validate_cosmwasm(storage, env)?;
@@ -90,7 +90,7 @@ impl CredentialData {
             Ok(())
         }).collect::<Result<(), AuthError> >()?;
 
-        Ok(nonce)
+        Ok(())
     }
 
 
@@ -101,12 +101,12 @@ impl CredentialData {
         storage: &dyn Storage, 
         env: &Env,
         info :  &MessageInfo
-    ) -> Result<String, AuthError> {
+    ) -> Result<(), AuthError> {
         if self.with_caller.unwrap_or(false) {
             self.with_caller_cosmwasm(info).validate()?;
             let caller = CALLER.load(storage).unwrap_or(None);
             if caller.is_some() && caller.unwrap() == info.sender.to_string() {
-                return Ok(String::default())
+                return Ok(())
             }
         }  else {
             self.validate()?;
@@ -121,9 +121,9 @@ impl CredentialData {
         );
 
         #[cfg(feature = "replay")]
-        return self.assert_signed(storage, env);
+        self.assert_signed(storage, env)?;
 
-        Ok(String::default())
+        Ok(())
     }
     
 
@@ -143,14 +143,11 @@ impl CredentialData {
             UpdateOperation::Remove(data) => data,
         };
         
-        let nonce = self.assert_cosmwasm(api, storage, env, info)?;
-        let new_nonce = new.assert_signed(storage, env)?;
+        self.assert_cosmwasm(api, storage, env, info)?;
+        new.assert_signed(storage, env)?;
 
-        if !nonce.is_empty() && !new_nonce.is_empty() {
-            ensure!(nonce == new_nonce, AuthError::DifferentNonce);
-        }
-
-        increment_acc_number(storage)?;
+        #[cfg(feature = "replay")]
+        increment_nonce(storage)?;
 
         match op {
             UpdateOperation::Add(data) => {
@@ -164,12 +161,18 @@ impl CredentialData {
                         }
                     }
                 }
+                if data.with_caller.unwrap_or(false) {
+                    CALLER.save(storage, &Some(info.sender.to_string()))?;
+                }
             },
             UpdateOperation::Remove(data) => {
                 for cred in data.credentials() {
                     let id = cred.id();
                     ensure!(VERIFYING_CRED_ID.load(storage)? != id, AuthError::NoVerifying);
                     remove_credential(storage, &id)?;
+                }
+                if data.with_caller.unwrap_or(false) {
+                    CALLER.save(storage, &None)?;
                 }
             }
         }
@@ -196,7 +199,7 @@ impl CredentialData {
         #[cfg(feature = "replay")]
         {
             self.assert_signed(storage, env)?;
-            increment_acc_number(storage)?;
+            increment_nonce(storage)?;
         }  
 
         let mut verifying_found = false;

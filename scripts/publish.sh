@@ -6,7 +6,7 @@ cd packages/common && cargo publish && cd ../..
 sleep 10
 cd packages/curves && cargo publish && cd ../..
 sleep 10
-cd packages/custom && cargo publish && cd ../..
+cd packages/auth && cargo publish && cd ../..
 sleep 10
 cd packages/bundle && cargo publish && cd ../..
 echo "All packages published"

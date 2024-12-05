@@ -36,7 +36,7 @@ pub fn reset_credentials(
 ) -> Result<(), AuthError> {
     VERIFYING_CRED_ID.remove(storage);
     CALLER.remove(storage);
-    #[cfg(all(feature = "secretwasm", not(feature="cosmwasm"), feature = "iterator"))]
+    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
     {
         let keys : Vec<CredentialId> = CREDENTIAL_INFOS
             .iter_keys(storage)?.map(|k| k.unwrap()).collect();
@@ -45,9 +45,8 @@ pub fn reset_credentials(
             CREDENTIAL_INFOS.remove(storage, &key)?;
         }
     }
-    #[cfg(not(feature = "secretwasm"))]
+    #[cfg(feature = "cosmwasm")]
     CREDENTIAL_INFOS.clear(storage);
-
     Ok(())
 }
 
@@ -60,7 +59,7 @@ pub fn verify_signed_queries(
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
     let credential = load_credential(storage, data)?;
-    credential.assert_query_cosmwasm(api, storage, env)?;
+    credential.assert_cosmwasm(api, storage, env)?;
     Ok(())
 }
 
@@ -72,7 +71,8 @@ pub fn verify_signed_actions(
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
     let credential = load_credential(storage, data)?;
-    credential.assert_execute_cosmwasm(api, storage, env)?;
+    credential.assert_cosmwasm(api, storage, env)?;
+    increment_nonce(storage)?;
     Ok(())
 }
 
@@ -80,11 +80,11 @@ pub fn verify_signed_actions(
 #[cfg(all(feature = "wasm", feature = "storage"))]
 fn load_credential(
     storage:   &dyn Storage,
-    data:      SignedDataMsg
+    data_msg:  SignedDataMsg
 ) -> Result<Credential, AuthError> {
     let initial_id = VERIFYING_CRED_ID.load(storage)?;
 
-    let id = match data.payload.clone() {
+    let id = match data_msg.payload.clone() {
         Some(payload) => {
             payload.validate_cosmwasm(storage)?;
             if let Some(id) = payload.credential_id {
@@ -104,11 +104,11 @@ fn load_credential(
     construct_credential(
         id, 
         info.name,
-        data.payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),
+        data_msg.data, 
+        data_msg.signature, 
+        data_msg.payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),
         info.extension,
-        data.payload.map(|p| p.extension).unwrap_or(None),
-        data.data, 
-        data.signature, 
+        data_msg.payload.map(|p| p.extension).flatten(),
     )
 }
 
@@ -117,21 +117,21 @@ fn load_credential(
 fn construct_credential(
     id: CredentialId,
     name: CredentialName,
+    message: Binary,
+    signature: Binary,
     hrp: Option<String>,
     stored_extension: Option<Binary>,
     passed_extension: Option<Binary>,
-    message: Binary,
-    signature: Binary,
 ) -> Result<Credential, AuthError> {
     use saa_common::from_json;
-
+    use saa_auth::passkey::utils::base64_to_url;
 
     let credential = match name {
 
-        CredentialName::Caller => Credential::Caller(saa_custom::caller::Caller { id }),
+        CredentialName::Caller => Credential::Caller(saa_auth::caller::Caller { id }),
 
         #[cfg(feature = "ethereum")]
-        CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_custom::eth::EthPersonalSign {
+        CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_auth::eth::EthPersonalSign {
                 message,
                 signature,
                 signer: String::from_utf8(id)?,
@@ -139,7 +139,7 @@ fn construct_credential(
         ),
 
         #[cfg(feature = "cosmos")]
-        CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_custom::cosmos::CosmosArbitrary {
+        CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_auth::cosmos::CosmosArbitrary {
             pubkey: Binary::new(id),
             message,
             signature,
@@ -148,7 +148,7 @@ fn construct_credential(
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
-            use saa_custom::passkey::*;
+            use saa_auth::passkey::*;
             ensure!(
                 passed_extension.is_some(),
                 AuthError::generic("Payload must be provided for 'passkey'")
@@ -165,12 +165,19 @@ fn construct_credential(
                 pubkey.is_some(),
                 AuthError::generic("No public key provided for 'passkey' credential")
             );
+            let challenge = base64_to_url(&message.to_base64());
+            let client_data = ClientData { 
+                challenge, 
+                ty: "webauthn.get".to_string(), 
+                origin: stored_ext.origin, 
+                cross_origin: stored_ext.cross_origin
+            };
             Credential::Passkey(PasskeyCredential {
                 id: String::from_utf8(id)?,
                 pubkey,
                 signature,
+                client_data,
                 authenticator_data: payload_ext.authenticator_data,
-                client_data: payload_ext.client_data,
                 user_handle: stored_ext.user_handle,
             })
         },

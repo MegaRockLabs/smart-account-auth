@@ -1,6 +1,6 @@
 #![allow(unreachable_code)]
 use saa_common::{to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, Verifiable};
-use saa_custom::caller::Caller;
+use saa_auth::caller::Caller;
 use saa_schema::wasm_serde;
 
 #[cfg(feature = "curves")]
@@ -10,13 +10,13 @@ use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
 use saa_curves::ed25519::Ed25519;
 
 #[cfg(feature = "passkeys")]
-use saa_custom::passkey::PasskeyCredential;
+use saa_auth::passkey::PasskeyCredential;
 
 #[cfg(feature = "ethereum")]
-use saa_custom::eth::EthPersonalSign;
+use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
-use saa_custom::cosmos::CosmosArbitrary;
+use saa_auth::cosmos::CosmosArbitrary;
 
 #[cfg(feature = "wasm")]
 use saa_common::cosmwasm::{Api, Addr, Env, MessageInfo};
@@ -97,23 +97,25 @@ impl Credential {
         }
     }
 
-    pub fn message(&self) -> &[u8] {
+    pub fn message(&self) -> Vec<u8> {
         match self {
-            Credential::Caller(_) => &[],
+            Credential::Caller(_) => Vec::new(),
             #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => c.message.as_ref(),
+            Credential::EthPersonalSign(c) => c.message.to_vec(),
             #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c.message.as_ref(),
+            Credential::CosmosArbitrary(c) => c.message.to_vec(),
             #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => &c.client_data.challenge,
+            Credential::Passkey(c) => saa_auth::passkey::utils::url_to_base64(
+                                                            &c.client_data.challenge
+                                                        ).as_bytes().to_vec(),
             #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
-            Credential::Ed25519(c) => c.message.as_ref(),
+            Credential::Ed25519(c) => c.message.to_vec(),
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
-                    Credential::Secp256k1(c) => &c.message,
-                    Credential::Secp256r1(c) => &c.message,
-                    Credential::Ed25519(c) => &c.message,
+                    Credential::Secp256k1(c) => c.message.to_vec(),
+                    Credential::Secp256r1(c) => c.message.to_vec(),
+                    Credential::Ed25519(c) => c.message.to_vec(),
                     _ => unreachable!(),
                 }
             },
@@ -123,10 +125,10 @@ impl Credential {
     pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
         #[cfg(feature = "passkeys")]
         if let Credential::Passkey(c) = self {
-            use saa_custom::passkey::*;
+            use saa_auth::passkey::*;
             return Ok(Some(to_json_binary(&PasskeyExtension {
-                ty: c.client_data.ty.clone(),
                 origin: c.client_data.origin.clone(),
+                cross_origin: c.client_data.cross_origin.clone(),
                 pubkey: c.pubkey.clone(),
                 user_handle: c.user_handle.clone(),
             })?));
@@ -179,12 +181,12 @@ impl Credential {
 
 
     #[cfg(all(feature = "wasm", feature = "storage"))]
-    pub fn assert_query_cosmwasm(
+    pub fn assert_cosmwasm(
         &self, 
         api     :  &dyn Api, 
         storage :  &dyn Storage,
         env     :  &Env, 
-    ) -> Result<String, AuthError> 
+    ) -> Result<(), AuthError> 
         where Self: Sized
     {   
         ensure!(has_credential(storage, &self.id()), AuthError::NotFound);
@@ -193,22 +195,7 @@ impl Credential {
         {
             let msg : MsgDataToVerify = from_json(&self.message())?;
             msg.validate_cosmwasm(storage, env)?;
-            return Ok(msg.nonce.clone())
         }
-        Ok(String::default())
-    }
-
-    #[cfg(all(feature = "wasm", feature = "replay"))]
-    pub fn assert_execute_cosmwasm(
-        &self, 
-        api     :  &dyn Api,
-        storage :  &mut dyn Storage,
-        env     :  &Env, 
-    ) -> Result<(), AuthError> 
-        where Self: Sized
-    {
-        self.assert_query_cosmwasm(api, storage, env)?;
-        increment_acc_number(storage)?;
         Ok(())
     }
 
@@ -220,9 +207,10 @@ impl Credential {
         env:  &Env,
         info: &MessageInfo
     ) -> Result<(), AuthError> {
+        self.assert_cosmwasm(api, storage, env)?;
         save_credential(storage, &self.id(), &self.info())?;
         #[cfg(feature = "replay")]
-        self.assert_execute_cosmwasm(api, storage, env)?;
+        increment_nonce(storage)?;
         if let Credential::Caller(_) = self {
             CALLER.save(storage, &Some(info.sender.to_string()))?;
         }

@@ -1,5 +1,5 @@
 [package]
-name        = "saa-custom"
+name        = "saa-auth"
 description = "Custom credentials built on top of curves and their verification logic for smart account auth"
 edition     = { workspace = true }
 authors     = { workspace = true }
@@ -25,10 +25,10 @@ schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
 [dev-dependencies]
-cosmwasm-std            = { workspace = true }
-saa-custom              = { path = ".", features = ["cosmwasm"] }
+cosmwasm-std            = { workspace = true, features = ["staking"]}
+saa-auth              = { path = ".", features = ["cosmwasm"] }
 saa-curves              = { workspace = true, features = ["cosmwasm"] }
-
+base64-url              = "3.0.0"
 
 [features]
 default = [

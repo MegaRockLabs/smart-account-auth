@@ -30,14 +30,16 @@ use {
 #[cfg_attr(all(feature = "std", feature="substrate"), derive(
     saa_schema::scale_info::TypeInfo)
 )]
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub struct ClientData {
     #[serde(rename = "type")]
     pub ty: String,
-    pub challenge: Binary,
+    pub challenge: String,
     pub origin: String,
     #[serde(rename = "crossOrigin")]
     pub cross_origin: bool
 }
+
 
 #[cfg_attr(not(feature = "wasm"), derive(
     ::saa_schema::serde::Serialize,
@@ -45,12 +47,13 @@ pub struct ClientData {
 ))]
 #[wasm_serde]
 pub struct PasskeyExtension {
-    #[serde(rename = "type")]
-    pub ty: String,
     /// Origin of the client where the passkey was created
     pub origin: String,
     /// Secpk256r1 Public key used for verification 
     pub pubkey: Option<Binary>,
+    // Flag to allow cross origin requests
+    #[serde(rename = "crossOrigin")]
+    pub cross_origin: bool,
     /// Optional user handle reserved for future use
     pub user_handle: Option<String>,
 }
@@ -60,12 +63,9 @@ pub struct PasskeyExtension {
 pub struct PasskeyPayload {
     /// webauthn Authenticator data
     pub authenticator_data: Binary,
-    /// Passkey client data
-    pub client_data: ClientData,
     /// Public key is essential for verification but can be supplied on the contract side
     pub pubkey: Option<Binary>,
 }
-
 
 
 
@@ -128,12 +128,12 @@ impl Verifiable for PasskeyCredential {
 
     #[cfg(feature = "wasm")]
     #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, 
-        api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api : &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+
         let res = saa_curves::secp256r1::implementation::secp256r1_verify(
-            &self.message_digest()?, 
-            &self.signature, 
-            &self.pubkey.as_ref().unwrap_or(&Binary::default())
+            &self.message_digest()?,
+            &self.signature,
+            &self.pubkey.as_ref().unwrap()
         )?;
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
