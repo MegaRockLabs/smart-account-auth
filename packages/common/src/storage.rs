@@ -19,7 +19,7 @@ mod inner {
     use crate::cosmwasm::StdError;
 
     #[cfg(feature = "replay")]
-    pub fn increment_nonce(
+    pub fn increment_account_number(
         storage: &mut dyn crate::cosmwasm::Storage
     ) -> Result<(), AuthError> {
         #[cfg(feature = "cosmwasm")]

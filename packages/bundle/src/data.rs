@@ -147,7 +147,7 @@ impl CredentialData {
         new.assert_signed(storage, env)?;
 
         #[cfg(feature = "replay")]
-        increment_nonce(storage)?;
+        increment_account_number(storage)?;
 
         match op {
             UpdateOperation::Add(data) => {
@@ -199,7 +199,7 @@ impl CredentialData {
         #[cfg(feature = "replay")]
         {
             self.assert_signed(storage, env)?;
-            increment_nonce(storage)?;
+            increment_account_number(storage)?;
         }  
 
         let mut verifying_found = false;

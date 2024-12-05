@@ -72,7 +72,7 @@ pub fn verify_signed_actions(
 ) -> Result<(), AuthError> {
     let credential = load_credential(storage, data)?;
     credential.assert_cosmwasm(api, storage, env)?;
-    increment_nonce(storage)?;
+    increment_account_number(storage)?;
     Ok(())
 }
 

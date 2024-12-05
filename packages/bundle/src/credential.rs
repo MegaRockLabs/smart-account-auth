@@ -210,7 +210,7 @@ impl Credential {
         self.assert_cosmwasm(api, storage, env)?;
         save_credential(storage, &self.id(), &self.info())?;
         #[cfg(feature = "replay")]
-        increment_nonce(storage)?;
+        increment_account_number(storage)?;
         if let Credential::Caller(_) = self {
             CALLER.save(storage, &Some(info.sender.to_string()))?;
         }
