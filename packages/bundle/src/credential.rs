@@ -105,9 +105,10 @@ impl Credential {
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c.message.to_vec(),
             #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => saa_auth::passkey::utils::url_to_base64(
-                                                            &c.client_data.challenge
-                                                        ).as_bytes().to_vec(),
+            Credential::Passkey(c) => {
+                let base64 =  saa_auth::passkey::utils::url_to_base64(&c.client_data.challenge);
+                Binary::from_base64(&base64).unwrap().to_vec()
+            },
             #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
             Credential::Ed25519(c) => c.message.to_vec(),
             #[cfg(feature = "curves")]

@@ -90,7 +90,6 @@ mod tests {
             user_handle: None
         };
         let res = credential.verify_cosmwasm(deps.api);
-        println!("Res: {:?}", res);
         assert!(res.is_ok());
     }
 
