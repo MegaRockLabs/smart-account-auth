@@ -24,12 +24,13 @@ mod tests {
             pubkey: Some(public_key.clone()), 
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
-            client_data: ClientData {
-                ty: "webauthn.get".to_string(),
-                challenge: "MTIz".into(),
-                origin: "http://localhost:5173".into(),
-                cross_origin: false,
-            }, 
+            client_data: ClientData::new(
+                "webauthn.get".into(),
+                "MTIz".into(),
+                "http://localhost:5173".into(),
+                false,
+                false
+            ), 
             user_handle: None
         };
 
@@ -40,6 +41,51 @@ mod tests {
     }
 
 
+
+
+    #[test]
+    fn can_check_passkeys_data_string() {
+        let deps = mock_dependencies();
+        let deps = deps.as_ref();
+  
+        let public_key = Binary::from_base64("BCY0yONLF00/EUnwdtYaJI4oJqMGS7YT5h4iMLmaG0hJoJLiu/gkUWVfEEM4uo9c9yAgCoMF8A1vzxvaLW8mVjw=").unwrap();
+        let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MdAAAAAA==").unwrap();
+        let signature = Binary::from_base64("769aJAhtP9QZNW/j5iI8KN9joewE/CFN0dRWxfL/cR2TWDPiLo0x4UxzOSF6VQUws8PW2T7YE45BRSMFUeNeNA==").unwrap();
+
+        let sign_data =  MsgDataToSign::<String> {
+            chain_id: "pion-1".to_string(),
+            contract_address: "neutron1uf26dql0t895fzltzp3q7t5g7q77e6e8d790jf7lp78kdwcyahlqe38qg5".to_string(),
+            messages: vec![String::from("Create Proxy Account")],
+            nonce: "0".to_string()
+        };
+
+        let binary =  to_json_binary(&sign_data).unwrap();
+        let challenge = base64_to_url(&binary.to_base64());
+
+        let credential = PasskeyCredential { 
+            id: String::default(),
+            pubkey: Some(public_key.clone()), 
+            signature: signature.clone(), 
+            authenticator_data: authenticator_data.clone(), 
+            client_data: ClientData::new(
+                "webauthn.get".into(),
+                challenge,
+                "http://localhost:5173".into(),
+                false,
+                false
+            ), 
+            user_handle: None
+        };
+        let res = credential.verify_cosmwasm(deps.api);
+        assert!(res.is_ok());
+    }
+
+
+
+
+
+
+
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
     #[serde(rename_all = "snake_case")]
     pub enum Action {
@@ -48,7 +94,7 @@ mod tests {
 
 
     #[test]
-    fn can_check_passkeys_data() {
+    fn can_check_passkeys_data_actions() {
         let deps = mock_dependencies();
         let deps = deps.as_ref();
   
@@ -81,19 +127,18 @@ mod tests {
             pubkey: Some(public_key.clone()), 
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
-            client_data: ClientData {
-                ty: "webauthn.get".to_string(),
+            client_data: ClientData::new(
+                "webauthn.get".into(),
                 challenge,
-                origin: "http://localhost:5173".into(),
-                cross_origin: false,
-            }, 
+                "http://localhost:5173".into(),
+                false,
+                false
+            ), 
             user_handle: None
         };
         let res = credential.verify_cosmwasm(deps.api);
         assert!(res.is_ok());
     }
-
-
 
 
 

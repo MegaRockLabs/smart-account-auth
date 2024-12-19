@@ -166,12 +166,13 @@ fn construct_credential(
                 AuthError::generic("No public key provided for 'passkey' credential")
             );
             let challenge = base64_to_url(&message.to_base64());
-            let client_data = ClientData { 
-                challenge, 
-                ty: "webauthn.get".to_string(), 
-                origin: stored_ext.origin, 
-                cross_origin: stored_ext.cross_origin
-            };
+            let client_data = ClientData::new(
+                "webauthn.get".into(),
+                challenge,
+                stored_ext.origin,
+                stored_ext.cross_origin,
+                payload_ext.other_keys.unwrap_or_default()
+            );
             Credential::Passkey(PasskeyCredential {
                 id: String::from_utf8(id)?,
                 pubkey,

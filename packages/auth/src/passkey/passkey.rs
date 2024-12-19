@@ -31,14 +31,33 @@ use {
     saa_schema::scale_info::TypeInfo)
 )]
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[non_exhaustive]
 pub struct ClientData {
     #[serde(rename = "type")]
     pub ty: String,
     pub challenge: String,
     pub origin: String,
     #[serde(rename = "crossOrigin")]
-    pub cross_origin: bool
+    pub cross_origin: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub other_keys_can_be_added_here: Option<String>,
 }
+
+
+impl ClientData {
+    pub fn new(ty: String, challenge: String, origin: String, cross_origin: bool, others: bool) -> Self {
+        Self {
+            ty,
+            challenge,
+            origin,
+            cross_origin,
+            other_keys_can_be_added_here: if others { 
+                Some("do not compare clientDataJSON against a template. See https://goo.gl/yabPex".to_string()) 
+            } else { None }
+        }
+    }
+}
+
 
 
 #[cfg_attr(not(feature = "wasm"), derive(
@@ -65,6 +84,8 @@ pub struct PasskeyPayload {
     pub authenticator_data: Binary,
     /// Public key is essential for verification but can be supplied on the contract side
     pub pubkey: Option<Binary>,
+    /// client data other keys
+    pub other_keys: Option<bool>,
 }
 
 
