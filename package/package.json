@@ -1,6 +1,6 @@
 {
   "name": "smart-account-auth",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -9,10 +9,10 @@
     "build": "rm -rf dist && bun run build.mjs",
     "prepublishOnly": "bun run build"
   },
-  "homepage": "",
+  "homepage": "https://github.com/MegaRockLabs/smart-account-auth",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/MegaRockLabs/smart-account-auth"
   },
   "files": ["dist"],
   "author": "Kromsten <kromsten@megarock.app>",
