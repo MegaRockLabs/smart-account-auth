@@ -2,7 +2,7 @@
 use core::fmt::Debug;
 use saa_schema::wasm_serde;
 
-use crate::{ensure, AuthError, Binary, CredentialId, CredentialInfo};
+use crate::{ensure, AuthError, Binary, CredentialInfo};
 
 #[cfg(feature = "wasm")]
 use crate::cosmwasm::{CustomMsg, Storage, Env};
@@ -11,7 +11,7 @@ use crate::cosmwasm::{CustomMsg, Storage, Env};
 pub struct AuthPayload<E = Binary> {
     pub hrp: Option<String>,
     pub address: Option<String>,
-    pub credential_id: Option<CredentialId>,
+    pub credential_id: Option<Binary>,
     pub extension: Option<E>
 }
 
@@ -50,7 +50,7 @@ impl<E> AuthPayload<E> {
         if self.credential_id.is_some() {
             let info_res = crate::storage::get_cred_info(
                 store, 
-                self.credential_id.clone().unwrap()
+                self.credential_id.clone().unwrap().to_vec()
             );
             ensure!(info_res.is_ok(), AuthError::NotFound);
 

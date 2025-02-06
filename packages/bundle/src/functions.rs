@@ -88,9 +88,9 @@ fn load_credential(
         Some(payload) => {
             payload.validate_cosmwasm(storage)?;
             if let Some(id) = payload.credential_id {
-                id
+                id.to_vec()
             } else if let Some(address) = payload.address {
-                address.as_bytes().to_vec()
+                address.to_lowercase().as_bytes().to_vec()
             } else {
                 initial_id
             }

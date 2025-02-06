@@ -20,7 +20,7 @@ pub struct EthPersonalSign {
 impl Verifiable for EthPersonalSign {
 
     fn id(&self) -> CredentialId {
-        self.signer.as_bytes().to_vec()
+        self.signer.to_lowercase().as_bytes().to_vec()
     }
 
     fn hrp(&self) -> Option<String> {
@@ -32,6 +32,9 @@ impl Verifiable for EthPersonalSign {
     }
 
     fn validate(&self) -> Result<(), AuthError> {
+        if !self.signer.starts_with("0x") {
+            return Err(AuthError::MissingData("Ethereum `signer` address must start with 0x".to_string()));
+        }
         if self.signature.len() < 65 {
             return Err(AuthError::MissingData("Signature must be at least 65 bytes".to_string()));
         }
