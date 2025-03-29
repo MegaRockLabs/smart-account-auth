@@ -8,6 +8,30 @@ import { fromUtf8, toBase64 } from "@cosmjs/encoding";
 import { random_32 } from "@solar-republic/neutrino";
 
 
+
+export const base64ToUrl = (base64: string)  => {
+  let base64Url = base64.replace(/\+/g, '-').replace(/\//g, '_');
+
+  // Remove padding if present
+  base64Url = base64Url.replace(/=+$/, '');
+
+  return base64Url;
+}
+
+
+export const urlToBase64 = (base64Url: string) => {
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding if needed
+  const padding = base64.length % 4;
+  if (padding) {
+      base64 += '='.repeat(4 - padding);
+  }
+  return base64;
+}
+
+
+
+
 export const registerPasskey = async (
     name                  :   string,
     challenge?            :   string | Uint8Array,
@@ -75,7 +99,7 @@ export const registerPasskey = async (
 
 
 export const getPasskeyCredential = async (
-    challenge          :  string | Uint8Array,
+    challenge        :  string | Uint8Array,
     id?              :  string,
     pubkey?          :  string,
     options?         :  PublicKeyCredentialRequestOptions,
@@ -120,14 +144,16 @@ export const getPasskeyCredential = async (
     const credential = await navigator.credentials.get(credentialRequestOptions);
     const getCredential = assertPublicKeyCredential(credential);
     const response = assertAssertionResponse(getCredential.response);
-    const parsed = JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData
+    const client_data : ClientData = JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData
+
+    client_data.challenge = urlToBase64(client_data.challenge);
 
     const passkey : PasskeyCredential = {
       id,
       pubkey,
       signature: toBase64Sig(new Uint8Array(response.signature)),
       authenticator_data: toBase64(new Uint8Array(response.authenticatorData)),
-      client_data: parsed,
+      client_data,
     }
 
     return { passkey }
