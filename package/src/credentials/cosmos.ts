@@ -58,7 +58,7 @@ export const getCosmosArbitraryCredential = async (
     message         :    string | Uint8Array, 
     signerAddress?  :    string,
     hrp?            :    string,
-) : Promise<Credential> => {
+) : Promise<Credential & { cosmos_arbitrary:  CosmosArbitrary } > => {
 
     let 
         pubkey : string = "", 

@@ -1,4 +1,4 @@
-import type { Credential as AuthCredential, ClientData } from "./types";
+import type { Credential as AuthCredential, ClientData, PasskeyCredential } from "./types";
 import { toUtf8 } from "secretjs";
 import { decode } from "cbor-x";
 import { v4 } from "uuid";
@@ -10,8 +10,8 @@ import { random_32 } from "@solar-republic/neutrino";
 
 export const registerPasskey = async (
     name                  :   string,
-    rp?                   :   PublicKeyCredentialRpEntity,
     challenge?            :   string | Uint8Array,
+    rp?                   :   PublicKeyCredentialRpEntity,
     displayName?          :   string,
     options?              :   PublicKeyCredentialCreationOptions,
     saveToLocalStorage    :   boolean | string = true,
@@ -75,15 +75,15 @@ export const registerPasskey = async (
 
 
 export const getPasskeyCredential = async (
-    message          :  string | Uint8Array,
+    challenge          :  string | Uint8Array,
     id?              :  string,
     pubkey?          :  string,
     options?         :  PublicKeyCredentialRequestOptions,
     loadFromStorage  :  boolean | string = true,
     name?            :  string,
-) : Promise<AuthCredential>  => {
+) : Promise<AuthCredential & { passkey: PasskeyCredential }>  => {
 
-    const challenge = typeof message === "string" ? toUtf8(message) : message
+    challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
 
     if (!id) {
         if (loadFromStorage) {
@@ -107,6 +107,7 @@ export const getPasskeyCredential = async (
         ? [{ id: Buffer.from(id, "base64"), type: "public-key" }] 
         : [];
         
+        
     const credentialRequestOptions: CredentialRequestOptions = {
         publicKey: {
             allowCredentials,
@@ -121,16 +122,15 @@ export const getPasskeyCredential = async (
     const response = assertAssertionResponse(getCredential.response);
     const parsed = JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData
 
-    const cred : AuthCredential = {
-        passkey: {
-            id,
-            pubkey,
-            signature: toBase64Sig(new Uint8Array(response.signature)),
-            authenticator_data: toBase64(new Uint8Array(response.authenticatorData)),
-            client_data: parsed,
-        }
+    const passkey : PasskeyCredential = {
+      id,
+      pubkey,
+      signature: toBase64Sig(new Uint8Array(response.signature)),
+      authenticator_data: toBase64(new Uint8Array(response.authenticatorData)),
+      client_data: parsed,
     }
-    return cred;
+
+    return { passkey }
 }
 
 

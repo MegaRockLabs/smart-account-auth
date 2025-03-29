@@ -1,5 +1,5 @@
 import type { Eip1193Provider } from "ethers";
-import type { Credential } from "./types";
+import type { Credential, EthPersonalSign } from "./types";
 
 import { fromHex, toBase64, toHex, toUtf8 } from "@cosmjs/encoding";
 
@@ -15,7 +15,7 @@ export const getEthPersonalSignCredential = async (
     methodProvider  : Eip1193Provider,
     message         : string | Uint8Array,
     signerAddress?  : string,
-) : Promise<Credential>  => {
+) : Promise<Credential & { eth_personal_sign: EthPersonalSign }> => {
 
     if (typeof message === "string") {
         message = toUtf8(message);

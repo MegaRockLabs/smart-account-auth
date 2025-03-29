@@ -5,6 +5,8 @@
     "module": "commonjs",
     "declaration": true,
     "declarationMap": true,
+    "isolatedModules": false,
+    "preserveSymlinks": true,
     "sourceMap": true,
     "outDir": "./dist",
     "esModuleInterop": true,
