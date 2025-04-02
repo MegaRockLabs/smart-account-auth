@@ -3,6 +3,14 @@ import type { Window as KeplrWindow } from "@keplr-wallet/types";
 import type { Eip1193Provider } from "ethers";
 
 
+export type DataToSign<M = any> = {
+    chain_id: string,
+    contract_address: string,
+    messages: M[],
+    nonce: string
+}
+
+
 export interface EthPersonalSign {
     message: string;
     signature: string;
@@ -30,6 +38,100 @@ export interface PasskeyCredential {
     signature: string;
     user_handle? : string
     pubkey?: string;
+}
+
+
+export interface RegisterPasskeyParams {
+    // syntactic sugar / alias  for using options.rp = { name: ... } |  Default: window.location.hostname
+    rpName?                 :      string;
+    // syntactic sugar / alias for using options.user.displayName  | Default: same as "name" argument 
+    displayName?            :      string;
+    // alias for options.authenticatorSelection.authenticatorAttachment
+    // Set 'true' for 'cross-platform', 'false' for 'platform' and undefined for 'any'
+    crossPlatform?          :      boolean;
+    // whether to save the passkey in local storage
+    saveToLocalStorage?     :      boolean;
+    // parameters for saving registered passkeys in the local storage
+    localStorage?           :      {
+        // name of the local storage key to use: Default: "passkeys"
+        key?                    :      string;
+        // whether to save the passkey in local storage
+        savePublicKey?          :      boolean;
+    } | boolean;
+    // override any of the navigator raw fields
+    options?                :      PublicKeyCredentialCreationOptions;
+    // controlling signal to abort at any point from outside
+    signal?                 :      AbortSignal;
+    // whether to show console debug messages
+    debug?                  :      boolean;
+}
+
+
+/// Parameters that defines the behaviour of the getPasskeyCredential function
+/// By default attempts to request a passkey with a given 'id'
+/// If no id is given, tries to load passkeys from local storage and find the one that matches
+/// the given parameters
+/// If no passkey found with given parameters could be found, attempts to register a new passkey
+/// If any of the options are disabled or couldn't be performed
+
+export interface GetPasskeyParams {
+
+    // restrict to usage of a (public key) credential with a specific id
+    // syntactic sugar for using options.allowCredentials
+    id?                      :      string;
+    
+    // parameters for usage of local storage in order to request a specifc credential
+    // false to disable the usage completely
+    localStorage?            :      {
+        // name of the local storage key to use: Default: "passkeys"
+        key?                 :      string;
+
+        // search or assert based on the public key value  
+        pubkey?              :      string;
+
+        // assert that the stored passkey is indeed stricly a cross-platform passke or stricly local platform based one
+        // or look for one that is either
+        crossPlatform?          :      boolean;
+
+    } | boolean
+
+
+    // name for calling registerPasskey function automatically in case a passkey with the given parameters couldn't be found
+    registerName?            :      string;
+    // challenge to use for the registerPasskey function. Ignored if 'registerName' is not set
+    registerChallenge?       :      string | Uint8Array;
+    // parametes to pass the registerPasskey function. Ignored if 'registerName' is not set
+    registerParams?          :      RegisterPasskeyParams;
+    // a function to call while awaiting for registration
+    registrationCallback?    :      (passkey: Promise<PasskeyInfo>) => void;
+    // override any of the navigator raw fields
+    options?                 :      PublicKeyCredentialRequestOptions;
+    // controlling signal to abort at any point from outside
+    signal?                  :      AbortSignal;
+    // whether to show console debug messages
+    debug?                   :      boolean;
+}
+
+
+/* 
+export const getPasskeyCredential = async (
+    challenge        :  string | Uint8Array,
+    id?              :  string,
+    pubkey?          :  string,
+    options?         :  PublicKeyCredentialRequestOptions,
+    loadFromStorage  :  boolean | string = true,
+    name?            :  string,
+) */
+
+
+
+
+export interface PasskeyInfo {
+    id: string;
+    origin: string;
+    publicKey?: string;
+    crossPlatform?: boolean;
+    userHandle?: string;
 }
 
 

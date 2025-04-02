@@ -1,4 +1,4 @@
-import type { Credential as AuthCredential, ClientData, PasskeyCredential } from "./types";
+import type { Credential as AuthCredential, ClientData, PasskeyCredential, RegisterPasskeyParams, PasskeyInfo, GetPasskeyParams } from "./types";
 import { toUtf8 } from "secretjs";
 import { decode } from "cbor-x";
 import { v4 } from "uuid";
@@ -8,13 +8,10 @@ import { fromUtf8, toBase64 } from "@cosmjs/encoding";
 import { random_32 } from "@solar-republic/neutrino";
 
 
-
 export const base64ToUrl = (base64: string)  => {
   let base64Url = base64.replace(/\+/g, '-').replace(/\//g, '_');
-
   // Remove padding if present
   base64Url = base64Url.replace(/=+$/, '');
-
   return base64Url;
 }
 
@@ -30,101 +27,212 @@ export const urlToBase64 = (base64Url: string) => {
 }
 
 
+/* 
+
+export interface RegisterPasskeyParams {
+    // syntactic sugar instead of using options.rp = { id: ... }
+    id?                     :      string;
+    // syntactic sugar instead of using options.user.displayName
+    displayName?            :      string;
+
+    // whether to save the passkey in local storage
+    localStorage?       :      {
+        // name of the local storage key to use: Default: "passkeys"
+        key?                    :      string;
+        // whether to save the passkey in local storage
+        savePublicKey?          :      boolean;
+    } | boolean
+
+    // override any of the navigator raw fields
+    options?                :      PublicKeyCredentialCreationOptions;
+    // controlling signal to abort at any point from outside
+    signal?                 :      AbortSignal;
+}
+
+*/
 
 
 export const registerPasskey = async (
     name                  :   string,
     challenge?            :   string | Uint8Array,
-    rp?                   :   PublicKeyCredentialRpEntity,
-    displayName?          :   string,
-    options?              :   PublicKeyCredentialCreationOptions,
-    saveToLocalStorage    :   boolean | string = true,
-    signal?               :   AbortSignal,
-) : Promise<{ id: string, pubkey: string }> => {
+    params                :   RegisterPasskeyParams = {},
+) : Promise<PasskeyInfo> => {
 
-    if (challenge) {
-        challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
-    } else {
-        challenge = random_32();
+  if (challenge) {
+      challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
+  } else {
+      challenge = random_32();
+  }
+
+  const origin = params.rpName ?? window.location.hostname;
+  const rp = { name: origin };
+  const displayName = params.displayName ?? name;
+  const debug = params.debug ?? false;
+
+  const user = params.options?.user ?? {
+    id: new Uint8Array(Buffer.from(v4())),
+    name,
+    displayName,
+  }
+
+  const authenticatorSelection : AuthenticatorSelectionCriteria = {
+    requireResidentKey: false,
+    userVerification: "preferred",
+  }
+
+  if (params.crossPlatform != undefined) {
+    authenticatorSelection.authenticatorAttachment = params.crossPlatform ? "cross-platform" : "platform";
+  }
+
+  const createOptions : CredentialCreationOptions = {
+    publicKey: {
+      rp,
+      user,
+      pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+      challenge,
+      timeout: 60000,
+      excludeCredentials: [],
+      authenticatorSelection,
+      ...params.options,
+    },
+    signal: params.signal
+  };
+
+  if (debug) {
+    console.log("Passkey Create User", user);
+    console.log("Passkey Create Challenge", challenge);
+    console.log("Passkey Create Options", createOptions);
+  }
+
+  const credential = await navigator.credentials.create(createOptions);
+  const createCredential = assertPublicKeyCredential(credential);
+  const attestationResponse = assertAttestationResponse(createCredential.response);
+  const decoded = decodeAttestationObject(new Uint8Array(attestationResponse.attestationObject));
+
+  if (debug) {
+    console.log("Credential", createCredential);
+    console.log("PublicKeyCredential", createCredential);
+    console.log("Attestation Response", attestationResponse);
+    console.log("Decoded Attestation Object", decoded);
+  }
+
+  const publicKey = getBase64PublicKey(decoded.authData.attestedCredentialData.credentialPublicKey);
+
+  let newPassKey : PasskeyInfo = { 
+      id: toBase64(decoded.authData.attestedCredentialData.credentialId),
+      userHandle: user.displayName ?? user.name,
+      origin,
+  };
+
+  if (params.crossPlatform != undefined) {
+    newPassKey.crossPlatform = params.crossPlatform;
+  }
+
+  if (Boolean(params.localStorage)) {
+    const [storageKey, savePublicKey] = typeof params.localStorage === "object"
+      ? [params.localStorage.key ?? "passkeys", params.localStorage.savePublicKey ?? true]
+      : ["passkeys", true];
+
+    if (savePublicKey) {
+      newPassKey.publicKey = publicKey;
     }
+    // check for existing keys
+    const stored = localStorage.getItem(storageKey) || "{}";
+    const passkeys = JSON.parse(stored) as Record<string, PasskeyInfo>;
 
-    rp ??= { name: window.location.hostname };
-    displayName ??= name;
+    passkeys[newPassKey.id] = newPassKey;
+    localStorage.setItem(storageKey, JSON.stringify(newPassKey));
+  }
 
-    const id = new Uint8Array(Buffer.from(v4()));
+  newPassKey.publicKey = publicKey;
 
-    const createOptions : CredentialCreationOptions = {
-      publicKey: {
-        rp,
-        user: { id, name, displayName },
-        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-        challenge,
-        timeout: 60000,
-        excludeCredentials: [],
-        authenticatorSelection: {
-          requireResidentKey: false,
-          userVerification: "preferred",
-        },
-        ...options,
-      },
-      signal
-    };
+  if (debug) {
+    console.log("Passkey Created", newPassKey);
+  }
 
-    const credential = await navigator.credentials.create(createOptions);
-    const createCredential = assertPublicKeyCredential(credential);
-    const attestationResponse = assertAttestationResponse(
-        createCredential.response
-    );
-
-    const decoded = decodeAttestationObject(
-        new Uint8Array(attestationResponse.attestationObject)
-    );
-
-    const registered = { 
-        id: toBase64(decoded.authData.attestedCredentialData.credentialId),
-        pubkey: getBase64PublicKey(decoded.authData.attestedCredentialData.credentialPublicKey)
-    };
-
-    if (saveToLocalStorage) {
-        const storageKey = saveToLocalStorage === true ? "passkeys" : saveToLocalStorage;
-        const passkeys = localStorage.getItem(storageKey) || "{}";
-        const parsed = JSON.parse(passkeys) as Record<string, string>;
-        parsed[registered.id] = registered.pubkey;
-        localStorage.setItem(storageKey, JSON.stringify(parsed));
-    }   
-
-    return registered;
+  return newPassKey;
 }
 
-
-
+/// Parameters that defines the behaviour of the getPasskeyCredential function
+/// By default attempts to request a passkey with a given 'id'
+/// If no id is given, tries to load passkeys from local storage and find the one that matches
+/// the given parameters
+/// If no passkey found with given parameters could be found, attempts to register a new passkey if given a name
 export const getPasskeyCredential = async (
     challenge        :  string | Uint8Array,
-    id?              :  string,
+    params           :  GetPasskeyParams = {},
+    /* id?              :  string,
     pubkey?          :  string,
     options?         :  PublicKeyCredentialRequestOptions,
     loadFromStorage  :  boolean | string = true,
-    name?            :  string,
+    name?            :  string, */
 ) : Promise<AuthCredential & { passkey: PasskeyCredential }>  => {
 
     challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
 
-    if (!id) {
-        if (loadFromStorage) {
-            const storageKey = loadFromStorage === true ? "passkeys" : loadFromStorage;
-            const passkeys = localStorage.getItem(storageKey) || "{}";
-            const parsed = JSON.parse(passkeys) as Record<string, string>;
-            const keys = Object.keys(parsed);
-            if (keys.length === 0) throw new Error(`No Passkeys Found`);
-            id = keys[0];
-            pubkey = parsed[id];
-        } else if (name) {
-          const res = await registerPasskey(name);
-          id = res.id;
-          pubkey = res.pubkey;
-        } else {
-            throw new Error(`No Passkey Provided`);
+    let id = params.id;
+    const debug = params.debug ?? false;
+
+
+    let
+      found: PasskeyInfo | undefined = undefined,
+      pubkey: string | undefined = undefined,
+      error : string = "";
+
+    if (Boolean(params.localStorage)) {
+      const storageParams = typeof params.localStorage === "object" ? params.localStorage : {};
+      const storageKey = storageParams.key ?? "passkeys";
+      const stored = localStorage.getItem(storageKey) || "{}";
+      const passkeys = JSON.parse(stored) as Record<string, PasskeyInfo>;
+      if (debug) {
+        console.log("LocalStorage Passkeys Found", passkeys);
+      }
+      if (id) {
+        found = passkeys[id];
+        if (!found) {
+          error = `No stored Passkeys with given ID`; 
+        } else if (storageParams.pubkey && found.publicKey !== found.publicKey) {
+          error = `No Passkey with the given public key could be found`;
+        } else if (storageParams.crossPlatform != undefined && found.crossPlatform !== storageParams.crossPlatform) {
+          error = `Requested passkey has a different crossPlatform flag than the requested one`;
         }
+      } else {
+        const keys = Object.values(passkeys);
+        const values = Object.values(passkeys);
+        if (keys.length === 0) {
+          error = `No Passkeys Found and automatic registration is disabled`;
+        } else if (storageParams.pubkey) {
+          found = values.find((p) => p.publicKey === storageParams.pubkey);
+          if (!found) {
+            error = `No Passkey with the given public key could be found`;
+          } else {
+            pubkey = found.publicKey;
+          }
+        } else if (storageParams.crossPlatform) {
+          found = values.find((p) => p.crossPlatform === storageParams.crossPlatform);
+          if (!found) {
+            error = `No Passkey with the given crossPlatform flag could be found`;
+          }
+        } else {
+          found = values[0];
+        }
+      }
+    }
+
+    if (error) {
+      if (params.registerName) {
+        const registrationPromise = registerPasskey(params.registerName, params.registerChallenge, params.registerParams);
+        if (params.registrationCallback) {
+          params.registrationCallback(registrationPromise);
+        }
+        const registration = await registrationPromise;
+        id = registration.id;
+        if (debug) {
+          console.log("Passkey Registration", registration);
+        }
+      } else {
+        throw new Error(error);
+      }
     }
 
     const allowCredentials : PublicKeyCredentialDescriptor[] = id 
@@ -137,14 +245,30 @@ export const getPasskeyCredential = async (
             allowCredentials,
             challenge,
             timeout: 60000,
-            ...options
+            ...params.options
         },
     };
 
+    if (debug) {
+      console.log("Passkey Request Options", credentialRequestOptions);
+    }
+
     const credential = await navigator.credentials.get(credentialRequestOptions);
+    if (!credential) {
+      throw new Error(`Couldn't get a credential`);
+    } else {
+      id = credential.id;
+    }
+
     const getCredential = assertPublicKeyCredential(credential);
     const response = assertAssertionResponse(getCredential.response);
     const client_data : ClientData = JSON.parse(fromUtf8(new Uint8Array(response.clientDataJSON))) as ClientData
+
+    if (debug) {
+      console.log("Passkey Request Credential", getCredential);
+      console.log("Passkey Request Asserted Response", response);
+      console.log("Passkey Request Client Data", client_data);
+    }
 
     client_data.challenge = urlToBase64(client_data.challenge);
 

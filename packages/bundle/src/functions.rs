@@ -63,6 +63,7 @@ pub fn verify_signed_queries(
     Ok(())
 }
 
+
 #[cfg(all(feature = "wasm", feature = "replay"))]
 pub fn verify_signed_actions(
     api: &dyn Api,
@@ -70,8 +71,7 @@ pub fn verify_signed_actions(
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = load_credential(storage, data)?;
-    credential.assert_cosmwasm(api, storage, env)?;
+    verify_signed_queries(api, storage, env, data)?;
     increment_account_number(storage)?;
     Ok(())
 }

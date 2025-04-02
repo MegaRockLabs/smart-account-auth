@@ -19,11 +19,17 @@ pub struct CosmosArbitrary {
 #[cfg(any(feature = "wasm", feature = "native"))]
 impl CosmosArbitrary {
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        ensure!(self.hrp.is_some(), AuthError::Generic("Must provide prefix for the public key".to_string()));
-        Ok(sha256(&preamble_msg_arb_036(
-            pubkey_to_address(&self.pubkey, self.hrp.as_ref().unwrap())?.as_str(),
-            &self.message.to_string()
-        ).as_bytes()))
+        match self.hrp {
+            Some(ref hrp) => Ok(
+                sha256(
+                    preamble_msg_arb_036(
+                        pubkey_to_address(&self.pubkey, hrp)?.as_str(),
+                        &self.message.to_string()
+                    ).as_bytes()
+                )
+            ),
+            None => Err(AuthError::Generic("Must provide prefix for the public key".to_string()))
+        }
     }
 }
 
