@@ -1,6 +1,6 @@
 {
   "name": "smart-account-auth",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",

@@ -27,35 +27,13 @@ export const urlToBase64 = (base64Url: string) => {
 }
 
 
-/* 
-
-export interface RegisterPasskeyParams {
-    // syntactic sugar instead of using options.rp = { id: ... }
-    id?                     :      string;
-    // syntactic sugar instead of using options.user.displayName
-    displayName?            :      string;
-
-    // whether to save the passkey in local storage
-    localStorage?       :      {
-        // name of the local storage key to use: Default: "passkeys"
-        key?                    :      string;
-        // whether to save the passkey in local storage
-        savePublicKey?          :      boolean;
-    } | boolean
-
-    // override any of the navigator raw fields
-    options?                :      PublicKeyCredentialCreationOptions;
-    // controlling signal to abort at any point from outside
-    signal?                 :      AbortSignal;
-}
-
-*/
-
 
 export const registerPasskey = async (
     name                  :   string,
     challenge?            :   string | Uint8Array,
-    params                :   RegisterPasskeyParams = {},
+    params                :   RegisterPasskeyParams = {
+      localStorage: true,
+    },
 ) : Promise<PasskeyInfo> => {
 
   if (challenge) {
@@ -160,19 +138,16 @@ export const registerPasskey = async (
 /// If no passkey found with given parameters could be found, attempts to register a new passkey if given a name
 export const getPasskeyCredential = async (
     challenge        :  string | Uint8Array,
-    params           :  GetPasskeyParams = {},
-    /* id?              :  string,
-    pubkey?          :  string,
-    options?         :  PublicKeyCredentialRequestOptions,
-    loadFromStorage  :  boolean | string = true,
-    name?            :  string, */
+    params           :  GetPasskeyParams = { 
+      localStorage: true,
+      registerName: "MegaRock Passkey",
+    }
 ) : Promise<AuthCredential & { passkey: PasskeyCredential }>  => {
 
     challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
 
     let id = params.id;
     const debug = params.debug ?? false;
-
 
     let
       found: PasskeyInfo | undefined = undefined,
@@ -219,9 +194,13 @@ export const getPasskeyCredential = async (
       }
     }
 
-    if (error) {
+    if (error || (!found && !id)) {
       if (params.registerName) {
-        const registrationPromise = registerPasskey(params.registerName, params.registerChallenge, params.registerParams);
+        const registrationPromise = registerPasskey(
+          params.registerName, 
+          params.registerChallenge, 
+          params.registerParams
+        );
         if (params.registrationCallback) {
           params.registrationCallback(registrationPromise);
         }
@@ -231,8 +210,14 @@ export const getPasskeyCredential = async (
           console.log("Passkey Registration", registration);
         }
       } else {
+        if (!error) error = `No Passkey found and no registration name given`;
         throw new Error(error);
       }
+    }
+
+    if (debug) {
+      console.log("Passkey ID", id);
+      console.log("Passkey Found", found);
     }
 
     const allowCredentials : PublicKeyCredentialDescriptor[] = id 

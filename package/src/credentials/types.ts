@@ -59,7 +59,7 @@ export interface RegisterPasskeyParams {
         savePublicKey?          :      boolean;
     } | boolean;
     // override any of the navigator raw fields
-    options?                :      PublicKeyCredentialCreationOptions;
+    options?                :      Partial<PublicKeyCredentialCreationOptions>;
     // controlling signal to abort at any point from outside
     signal?                 :      AbortSignal;
     // whether to show console debug messages
@@ -95,7 +95,6 @@ export interface GetPasskeyParams {
 
     } | boolean
 
-
     // name for calling registerPasskey function automatically in case a passkey with the given parameters couldn't be found
     registerName?            :      string;
     // challenge to use for the registerPasskey function. Ignored if 'registerName' is not set
@@ -105,7 +104,7 @@ export interface GetPasskeyParams {
     // a function to call while awaiting for registration
     registrationCallback?    :      (passkey: Promise<PasskeyInfo>) => void;
     // override any of the navigator raw fields
-    options?                 :      PublicKeyCredentialRequestOptions;
+    options?                 :      Partial<PublicKeyCredentialRequestOptions>;
     // controlling signal to abort at any point from outside
     signal?                  :      AbortSignal;
     // whether to show console debug messages
