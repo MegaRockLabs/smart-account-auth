@@ -49,8 +49,6 @@ export interface RegisterPasskeyParams {
     // alias for options.authenticatorSelection.authenticatorAttachment
     // Set 'true' for 'cross-platform', 'false' for 'platform' and undefined for 'any'
     crossPlatform?          :      boolean;
-    // whether to save the passkey in local storage
-    saveToLocalStorage?     :      boolean;
     // parameters for saving registered passkeys in the local storage
     localStorage?           :      {
         // name of the local storage key to use: Default: "passkeys"
@@ -79,6 +77,9 @@ export interface GetPasskeyParams {
     // restrict to usage of a (public key) credential with a specific id
     // syntactic sugar for using options.allowCredentials
     id?                      :      string;
+
+    // enduring that a passkey is stricly a cross-platform  or stricly based on a local platform
+    crossPlatform?          :      boolean;
     
     // parameters for usage of local storage in order to request a specifc credential
     // false to disable the usage completely
@@ -88,10 +89,6 @@ export interface GetPasskeyParams {
 
         // search or assert based on the public key value  
         pubkey?              :      string;
-
-        // assert that the stored passkey is indeed stricly a cross-platform passke or stricly local platform based one
-        // or look for one that is either
-        crossPlatform?          :      boolean;
 
     } | boolean
 

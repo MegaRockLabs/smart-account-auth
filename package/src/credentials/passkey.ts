@@ -1,11 +1,14 @@
 import type { Credential as AuthCredential, ClientData, PasskeyCredential, RegisterPasskeyParams, PasskeyInfo, GetPasskeyParams } from "./types";
-import { toUtf8 } from "secretjs";
 import { decode } from "cbor-x";
 import { v4 } from "uuid";
 
 import { COSEKey } from "./types";
-import { fromUtf8, toBase64 } from "@cosmjs/encoding";
-import { random_32 } from "@solar-republic/neutrino";
+import { fromUtf8, toBase64, toUtf8 } from "@cosmjs/encoding";
+//import { random_32 } from "@solar-republic/neutrino";
+
+
+export const random_32 = () => crypto.getRandomValues(new Uint8Array(32));
+
 
 
 export const base64ToUrl = (base64: string)  => {
@@ -31,10 +34,10 @@ export const urlToBase64 = (base64Url: string) => {
 export const registerPasskey = async (
     name                  :   string,
     challenge?            :   string | Uint8Array,
-    params                :   RegisterPasskeyParams = {
-      localStorage: true,
-    },
+    params?               :   RegisterPasskeyParams
 ) : Promise<PasskeyInfo> => {
+
+  params = params || {};
 
   if (challenge) {
       challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
@@ -42,15 +45,20 @@ export const registerPasskey = async (
       challenge = random_32();
   }
 
-  const origin = params.rpName ?? window.location.hostname;
-  const rp = { name: origin };
-  const displayName = params.displayName ?? name;
-  const debug = params.debug ?? false;
+  const rp  = { name: params.rpName ?? window.location.hostname ?? "localhost" };
 
-  const user = params.options?.user ?? {
+  const debug = params.debug ?? false;
+  const displayName = params.displayName ?? name;
+
+  const user = {
     id: new Uint8Array(Buffer.from(v4())),
-    name,
     displayName,
+    name,
+  }
+
+  if (debug) {
+    console.log("Passkey Register RP", rp);
+    console.log("Passkey Register User", user);
   }
 
   const authenticatorSelection : AuthenticatorSelectionCriteria = {
@@ -71,14 +79,12 @@ export const registerPasskey = async (
       timeout: 60000,
       excludeCredentials: [],
       authenticatorSelection,
-      ...params.options,
+      ...(params.options ?? {}),
     },
     signal: params.signal
   };
 
   if (debug) {
-    console.log("Passkey Create User", user);
-    console.log("Passkey Create Challenge", challenge);
     console.log("Passkey Create Options", createOptions);
   }
 
@@ -90,6 +96,7 @@ export const registerPasskey = async (
   if (debug) {
     console.log("Credential", createCredential);
     console.log("PublicKeyCredential", createCredential);
+    createCredential.authenticatorAttachment
     console.log("Attestation Response", attestationResponse);
     console.log("Decoded Attestation Object", decoded);
   }
@@ -102,11 +109,13 @@ export const registerPasskey = async (
       origin,
   };
 
-  if (params.crossPlatform != undefined) {
+  if (createCredential.authenticatorAttachment) {
+    newPassKey.crossPlatform = createCredential.authenticatorAttachment === "cross-platform";
+  } else if (params.crossPlatform != undefined) {
     newPassKey.crossPlatform = params.crossPlatform;
   }
 
-  if (Boolean(params.localStorage)) {
+  if (params.localStorage != false) {
     const [storageKey, savePublicKey] = typeof params.localStorage === "object"
       ? [params.localStorage.key ?? "passkeys", params.localStorage.savePublicKey ?? true]
       : ["passkeys", true];
@@ -119,7 +128,7 @@ export const registerPasskey = async (
     const passkeys = JSON.parse(stored) as Record<string, PasskeyInfo>;
 
     passkeys[newPassKey.id] = newPassKey;
-    localStorage.setItem(storageKey, JSON.stringify(newPassKey));
+    localStorage.setItem(storageKey, JSON.stringify(passkeys));
   }
 
   newPassKey.publicKey = publicKey;
@@ -138,38 +147,38 @@ export const registerPasskey = async (
 /// If no passkey found with given parameters could be found, attempts to register a new passkey if given a name
 export const getPasskeyCredential = async (
     challenge        :  string | Uint8Array,
-    params           :  GetPasskeyParams = { 
-      localStorage: true,
-      registerName: "MegaRock Passkey",
-    }
+    params?          :  GetPasskeyParams
 ) : Promise<AuthCredential & { passkey: PasskeyCredential }>  => {
-
+    params = params || {};
     challenge = typeof challenge === "string" ? toUtf8(challenge) : challenge
 
     let id = params.id;
     const debug = params.debug ?? false;
 
     let
-      found: PasskeyInfo | undefined = undefined,
+      found: PasskeyInfo[] = [],
       pubkey: string | undefined = undefined,
       error : string = "";
 
-    if (Boolean(params.localStorage)) {
+    if (params.localStorage != false) {
       const storageParams = typeof params.localStorage === "object" ? params.localStorage : {};
       const storageKey = storageParams.key ?? "passkeys";
-      const stored = localStorage.getItem(storageKey) || "{}";
-      const passkeys = JSON.parse(stored) as Record<string, PasskeyInfo>;
+      const storageObject = localStorage.getItem(storageKey) || "{}";
+      const passkeys = JSON.parse(storageObject) as Record<string, PasskeyInfo>;
       if (debug) {
         console.log("LocalStorage Passkeys Found", passkeys);
       }
       if (id) {
-        found = passkeys[id];
-        if (!found) {
+        const pk = passkeys[id];
+        if (!pk) {
           error = `No stored Passkeys with given ID`; 
-        } else if (storageParams.pubkey && found.publicKey !== found.publicKey) {
+        } else if (storageParams.pubkey && pk.publicKey !== pk.publicKey) {
           error = `No Passkey with the given public key could be found`;
-        } else if (storageParams.crossPlatform != undefined && found.crossPlatform !== storageParams.crossPlatform) {
+        } else if (params.crossPlatform != undefined && pk.crossPlatform !== params.crossPlatform) {
           error = `Requested passkey has a different crossPlatform flag than the requested one`;
+        } else {
+          id = pk.id;
+          pubkey = pk.publicKey;
         }
       } else {
         const keys = Object.values(passkeys);
@@ -177,60 +186,70 @@ export const getPasskeyCredential = async (
         if (keys.length === 0) {
           error = `No Passkeys Found and automatic registration is disabled`;
         } else if (storageParams.pubkey) {
-          found = values.find((p) => p.publicKey === storageParams.pubkey);
-          if (!found) {
+          const foundOne = values.find((p) => p.publicKey === storageParams.pubkey);
+          if (!foundOne) {
             error = `No Passkey with the given public key could be found`;
           } else {
-            pubkey = found.publicKey;
+            id = foundOne.id;
+            pubkey = foundOne.publicKey;
           }
-        } else if (storageParams.crossPlatform) {
-          found = values.find((p) => p.crossPlatform === storageParams.crossPlatform);
-          if (!found) {
+        } else if (params.crossPlatform !== undefined) {
+          found = values.filter((p) => p.crossPlatform === params.crossPlatform);
+          if (found.length == 0) {
             error = `No Passkey with the given crossPlatform flag could be found`;
           }
         } else {
-          found = values[0];
+          found = values;
         }
-      }
-    }
-
-    if (error || (!found && !id)) {
-      if (params.registerName) {
-        const registrationPromise = registerPasskey(
-          params.registerName, 
-          params.registerChallenge, 
-          params.registerParams
-        );
-        if (params.registrationCallback) {
-          params.registrationCallback(registrationPromise);
-        }
-        const registration = await registrationPromise;
-        id = registration.id;
-        if (debug) {
-          console.log("Passkey Registration", registration);
-        }
-      } else {
-        if (!error) error = `No Passkey found and no registration name given`;
-        throw new Error(error);
       }
     }
 
     if (debug) {
       console.log("Passkey ID", id);
-      console.log("Passkey Found", found);
+      console.log("Passkey Public Key", pubkey);
+      console.log("Passkey Filter Found", found);
+      console.log("Passkey Error", error);
     }
 
-    const allowCredentials : PublicKeyCredentialDescriptor[] = id 
-        ? [{ id: Buffer.from(id, "base64"), type: "public-key" }] 
-        : [];
-        
+    if (error && params.registerName) {
+      const registrationPromise = registerPasskey(
+        params.registerName, 
+        params.registerChallenge, 
+        { 
+          debug,
+          crossPlatform: params.crossPlatform,
+          ...params.registerParams, 
+        }
+      );
+      if (params.registrationCallback) {
+        params.registrationCallback(registrationPromise);
+      }
+      const registration = await registrationPromise;
+      id = registration.id;
+      pubkey = registration.publicKey;
+      if (debug) {
+        console.log("Passkey Registration", registration);
+      }
+      error = "";
+    } 
+
+    if (error) {
+      throw new Error(error);
+    }
+    
+    let allowCredentials : PublicKeyCredentialDescriptor[] = [];
+    if (found.length > 0) {
+      allowCredentials = found.map((p) => ({id: Buffer.from(p.id, "base64"), type: "public-key"}));
+    } else if (id) {
+      allowCredentials.push({id: Buffer.from(id, "base64"), type: "public-key"});
+    }
         
     const credentialRequestOptions: CredentialRequestOptions = {
         publicKey: {
             allowCredentials,
             challenge,
             timeout: 60000,
-            ...params.options
+            ...(params.options ?? {})
         },
     };
 
