@@ -30,6 +30,27 @@ export const urlToBase64 = (base64Url: string) => {
 }
 
 
+let CACHED : Record<string, PasskeyInfo> | undefined = undefined;
+
+export const loadPasskeysFromStorage = (
+  storageKey: string = "passkeys"
+) : Record<string, PasskeyInfo> => {
+  if (CACHED) return CACHED;
+  const storageObject = localStorage.getItem(storageKey) || "{}";
+  const passkeys = JSON.parse(storageObject) as Record<string, PasskeyInfo>;
+  CACHED = passkeys;
+  return passkeys;
+}
+
+
+export const loadPasskeyById = (
+  id: string,
+  storageKey: string = "passkeys"
+) : PasskeyInfo | undefined => {
+  const passkeys = loadPasskeysFromStorage(storageKey);
+  return passkeys[id];
+}
+
 
 export const registerPasskey = async (
     name                  :   string,
@@ -129,6 +150,7 @@ export const registerPasskey = async (
 
     passkeys[newPassKey.id] = newPassKey;
     localStorage.setItem(storageKey, JSON.stringify(passkeys));
+    CACHED = passkeys;
   }
 
   newPassKey.publicKey = publicKey;
@@ -158,13 +180,13 @@ export const getPasskeyCredential = async (
     let
       found: PasskeyInfo[] = [],
       pubkey: string | undefined = undefined,
+      passkeys: Record<string, PasskeyInfo> = {},
       error : string = "";
 
     if (params.localStorage != false) {
       const storageParams = typeof params.localStorage === "object" ? params.localStorage : {};
-      const storageKey = storageParams.key ?? "passkeys";
-      const storageObject = localStorage.getItem(storageKey) || "{}";
-      const passkeys = JSON.parse(storageObject) as Record<string, PasskeyInfo>;
+      passkeys = loadPasskeysFromStorage(storageParams.key ?? "passkeys")
+
       if (debug) {
         console.log("LocalStorage Passkeys Found", passkeys);
       }
@@ -275,6 +297,7 @@ export const getPasskeyCredential = async (
     }
 
     client_data.challenge = urlToBase64(client_data.challenge);
+    if (!pubkey && id in passkeys) pubkey = passkeys[id]?.publicKey;
 
     const passkey : PasskeyCredential = {
       id,
