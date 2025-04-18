@@ -191,7 +191,7 @@ export const getPasskeyCredential = async (
         console.log("LocalStorage Passkeys Found", passkeys);
       }
       if (id) {
-        const pk = passkeys[id];
+        const pk = passkeys[id] ?? passkeys[urlToBase64(id)];
         if (!pk) {
           error = `No stored Passkeys with given ID`; 
         } else if (storageParams.pubkey && pk.publicKey !== pk.publicKey) {
@@ -297,7 +297,7 @@ export const getPasskeyCredential = async (
     }
 
     client_data.challenge = urlToBase64(client_data.challenge);
-    if (!pubkey && id in passkeys) pubkey = passkeys[id]?.publicKey;
+    if (!pubkey) pubkey = (passkeys[id] ?? passkeys[urlToBase64(id)])?.publicKey;
 
     const passkey : PasskeyCredential = {
       id,

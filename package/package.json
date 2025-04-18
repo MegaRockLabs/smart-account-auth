@@ -1,6 +1,6 @@
 {
   "name": "smart-account-auth",
-  "version": "0.6.4",
+  "version": "0.6.6",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
@@ -18,19 +18,19 @@
   "author": "Kromsten <kromsten@megarock.app>",
   "devDependencies": {
     "@cosmjs/cosmwasm-stargate": "^0.32.4",
-    "@cosmos-kit/core": "^2.13.1",
-    "@keplr-wallet/types": "^0.12.123",
-    "@types/bun": "^1.1.6",
+    "@cosmos-kit/core": "^2.16.0",
+    "@keplr-wallet/types": "^0.12.220",
+    "@types/bun": "^1.2.9",
     "@types/uuid": "^10.0.0",
-    "bun-plugin-dts": "^0.2.3",
-    "ethers": "^6.13.2",
-    "secretjs": "^1.12.5",
-    "typescript": "^5.5.4",
+    "bun-plugin-dts": "^0.2.4",
+    "ethers": "^6.13.5",
+    "secretjs": "^1.15.1",
+    "typescript": "^5.8.3",
     "@cosmjs/amino": "^0.32.4"
   },
   "dependencies": {
     "@cosmjs/encoding": "^0.32.4",
-    "@solar-republic/neutrino": "^1.5.3",
+    "@solar-republic/neutrino": "^1.8.11",
     "cbor-x": "^1.6.0"
   }
 }
