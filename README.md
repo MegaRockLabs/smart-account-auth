@@ -3,7 +3,10 @@
 
 # Smart Account Authentication
 
-SDK with client-side tools for requesting crypthograpghic credentials / authenticators and verifying them in Rust environment. Ideal for smart accounts, wallets and apps with build-in authentication 
+Authentication Library / SDK  for working with various crypthograpghic credentials / authenticators
+- Client-side tools for requesting credentials abd their serilizations 
+- Verification (+ storage) logic for Rust environments. 
+- Ideal for smart accounts, wallets and apps with build-in authentication 
 
 ## Goals and Focus-Area
 - Definition of useful data structure, trais and utlity functions
@@ -52,7 +55,8 @@ cargo add smart-account-auth
 
 You can also give the library an alias to simplify typing
 ```toml
-saa  = { package = "smart-account-auth", features = ["cosmwasm"], version = "0.24.2" }
+# tp import for CosmWasm(v1) contracts with all default features 
+saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwasm"] }
 ```
 
 ### Features
@@ -80,9 +84,13 @@ The following features give you access to additional logic related to beeter con
 - `replay` - enable replay protection and enforce signed messages to follow a specific format that includes a nonce 
 - `std` - whether to enable native Rust std library 
 
-The following credentials are not meant to be specified directly and used only internal purposes
+The following credentials are not meant to be specified directly and used only internal purposes 🚫
 - `wasm` - common logic for cosmwasm and it's derivatives like secretwasm, inhective and others   
 
+The following credentials are included by default
+```ts
+"ethereum", "cosmos", "ed25519", "passkeys", "replay", "iterator", "std"
+```
 
 
 ## Verification
