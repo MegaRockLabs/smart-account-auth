@@ -1,4 +1,8 @@
+![Crates.io Version](https://img.shields.io/crates/v/smart-account-auth?style=flat-square)
+![NPM Version](https://img.shields.io/npm/v/smart-account-auth?style=flat-square&color=%233178C6)
+
 # Smart Account Authentication
+
 
 Rust crates for smart contract authentication and client-side (NPM) tools for requesting them
 
