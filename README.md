@@ -3,18 +3,17 @@
 
 # Smart Account Authentication
 
-
-Rust crates for smart contract authentication and client-side (NPM) tools for requesting them
+SDK with client-side tools for requesting crypthograpghic credentials / authenticators and verifying them in Rust environment. Ideal for smart accounts, wallets and apps with build-in authentication 
 
 ## Goals and Focus-Area
 - Definition of useful data structure, trais and utlity functions
 - Formatting data according to specs. Primarily with use of envelopes
-- Serialisation and deserialisation of the date dependeing on the context
-- Passing data to underlying cryptographic APIs or libraries
-- Dealing with batches of multuple credentials at the same time
+- Serialisation and deserialisation of the date depending on context
+- Passing data to underlying cryptographic APIs and libraries
+- Dealing with batches / multuple credentials at the same time 
 - [FEAT] Protection against replay attacks 
 - [FEAT] Encapsulated storage of the credentials 
-- [FEAT] Encapsulated verifcation logic and abstracting away the whole process
+- [FEAT] Encapsulated reconstruction & verification of credentials from payload
 
 ### Cryptography
 - ⚡ Delegations verifcation to available APIs for efficency 
@@ -23,7 +22,6 @@ Rust crates for smart contract authentication and client-side (NPM) tools for re
 ### Other Info
 
 - **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
-
 
 
 
@@ -252,6 +250,12 @@ const data : CredentialData = {
     primaryIndex: 0
 } 
 ```
+
+### Meta / Usage
+- OpenSource -> Low Funding / Resources -> Contributions are especially needed and welcomed
+- Authors of the library are also its main users. The expirience is iteratively used to improve the SDK by understaning the needs and shifting more and more logic from apps to the lib. 
+- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez). 
+
 
 
 ## Disclaimer
