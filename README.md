@@ -1,6 +1,26 @@
 # Smart Account Authentication
 
-Rust crates for smart contract authentication supporting most of the existing authentication mechanisms
+Rust crates for smart contract authentication and client-side (NPM) tools for requesting them
+
+## Goals and Focus-Area
+- Definition of useful data structure, trais and utlity functions
+- Formatting data according to specs. Primarily with use of envelopes
+- Serialisation and deserialisation of the date dependeing on the context
+- Passing data to underlying cryptographic APIs or libraries
+- Dealing with batches of multuple credentials at the same time
+- [FEAT] Protection against replay attacks 
+- [FEAT] Encapsulated storage of the credentials 
+- [FEAT] Encapsulated verifcation logic and abstracting away the whole process
+
+### Cryptography
+- ⚡ Delegations verifcation to available APIs for efficency 
+- ⚙️ Native version relies on [cosmwasm-crypto](https://crates.io/crates/cosmwasm-crypto)
+
+### Other Info
+
+- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
+
+
 
 
 ## Supported Credentials
@@ -228,5 +248,12 @@ const data : CredentialData = {
     primaryIndex: 0
 } 
 ```
+
+
+## Disclaimer
+
+- 🛠 In-Active development. Breaking changes might occur
+- 👾 Test coverage to be improved and some bugs might occur
+- ⚠️ The project hasn't been audited. Use at your own risk
 
 
