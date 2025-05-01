@@ -46,6 +46,10 @@ schemars            = { version = "0.8.21",  default-features = false, features 
 borsh               = { version = "1.5.3", default-features = false, features = ["derive"] }
 
 
+strum               = { version = "0.27.1" }
+strum_macros        = { version = "0.27.1" }
+
+
 [profile.release.package.smart-account-auth]
 codegen-units = 1
 incremental = false

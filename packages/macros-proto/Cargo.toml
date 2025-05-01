@@ -24,9 +24,11 @@ features = [
     "extra-traits",
 ]
 
+
 [features]
 default        = ["std"]
 std            = [     ]
 substrate      = [     ]
 solana         = [     ]
 cosmwasm       = [     ]
+session        = [     ]

@@ -19,13 +19,14 @@ schemars            = { workspace = true, optional = true }
 # Solana
 borsh               = { workspace = true, optional = true }
 
+strum               = { workspace = true, optional = true }
+strum_macros       = { workspace = true, optional = true }
+
 
 [features]
 default        = ["std"]
 solana         = ["dep:borsh",                   "saa-macros-proto/solana"    ]
 substrate      = ["dep:scale", "dep:scale-info", "saa-macros-proto/substrate" ]
 cosmwasm       = ["dep:schemars",                "saa-macros-proto/cosmwasm"  ]
-std            = [
-    "scale?/std", 
-    "scale-info?/std", 
-]
+std            = ["scale?/std", "scale-info?/std"                             ]
+session        = ["saa-macros-proto/session", "dep:strum_macros", "dep:strum" ]

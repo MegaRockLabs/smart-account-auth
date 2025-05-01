@@ -27,6 +27,8 @@ borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
+strum                   = { workspace = true }
+strum_macros            = { workspace = true }
 
 [features]
 default = [
@@ -44,6 +46,10 @@ std = [
     "scale-info?/std",
     "saa-auth/std",
 ]
+session     = [
+    "saa-common/session",
+]
+
 native = [
     "saa-auth/native",
 ]

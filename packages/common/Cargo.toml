@@ -38,6 +38,8 @@ borsh               = { workspace = true, optional = true }
 sha2                = { workspace = true } 
 serde               = { workspace = true }
 schemars            = { workspace = true, optional = true }
+
+serde_json          = { version = "1.0.140", default-features = false }
 serde-json-wasm     = { version = "1.0.1", default-features = false }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
@@ -73,6 +75,9 @@ std         = [
 native     = [
     "dep:cosmwasm-crypto"
 ]
+session    = [
+    "saa-schema/session",
+]
 iterator   = [
     "cosmwasm-std?/iterator",
     "cw-storage-plus?/iterator",
@@ -97,4 +102,3 @@ replay     = [
     "storage"
 ]
 storage    = []
-session    = []

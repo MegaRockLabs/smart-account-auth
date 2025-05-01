@@ -1,10 +1,12 @@
+use core::str::FromStr;
+
 use saa_common::{messages::SignedDataMsg,  
     stores::VERIFYING_CRED_ID,
     wasm::{storage::load_credential_info, Api, Env, Storage}, 
     AuthError
 };
 
-use crate::credential::{construct_credential, Credential};
+use crate::credential::{construct_credential, Credential, CredentialName};
 
 pub use saa_common::wasm::storage::reset_credentials;
 
@@ -34,7 +36,7 @@ fn load_credential(
 
     construct_credential(
         id, 
-        info.name,
+        CredentialName::from_str(&info.name).unwrap(),
         data_msg.data, 
         data_msg.signature, 
         data_msg.payload.as_ref().map(|p| p.hrp.clone()).unwrap_or(info.hrp),

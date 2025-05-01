@@ -23,13 +23,13 @@ impl<E> AuthPayload<E> {
             );
             ensure!(info_res.is_ok(), AuthError::NotFound);
 
-            if self.hrp.is_some() {
+           /*  if self.hrp.is_some() {
                 let name = info_res.unwrap().name;
                 ensure!(
                     name == crate::CredentialName::CosmosArbitrary || name == crate::CredentialName::Secp256k1,
                     AuthError::generic("'hrp' can only be passed for 'cosmos-arbitrary' or 'secp256k1'")
                 );
-            }
+            } */
         }
         Ok(())
     }

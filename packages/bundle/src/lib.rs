@@ -61,4 +61,4 @@ pub mod utils {
 }
 
 
-pub use saa_common::{AuthError, CredentialId, CredentialName, CredentialInfo, messages};
+pub use saa_common::{AuthError, CredentialId, CredentialInfo, messages};

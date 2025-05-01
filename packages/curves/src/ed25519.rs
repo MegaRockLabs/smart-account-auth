@@ -19,7 +19,6 @@ impl Verifiable for Ed25519 {
         self.pubkey.to_vec()
     }
 
-
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(
             self.signature.len() > 0 &&

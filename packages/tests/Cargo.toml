@@ -42,6 +42,7 @@ default     = [
     "cosmwasm",
     "native",
     "types",
+    "session"
 ]
 
 cosmwasm    = [
@@ -81,3 +82,4 @@ replay     = [
 storage    = []
 cw-utils = ["dep:cw-utils"]
 types = ["smart-account-auth/types"]
+session = ["smart-account-auth/session"]

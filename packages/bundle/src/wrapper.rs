@@ -2,23 +2,27 @@ use saa_common::{Vec, vec, CredentialId, Verifiable};
 
 pub trait CredentialsWrapper : Clone + Verifiable {
 
-    type Credential         : Verifiable + Clone;
+    type Credential  : Verifiable + Clone;
 
 
     fn credentials(&self) -> &Vec<Self::Credential>;
 
-  
-    fn primary_index(&self) -> &Option<u8> {
-        &None
+    
+    fn primary_index(&self) -> Option<u8> {
+        None
     }
 
     fn primary(&self) -> Self::Credential {
         let creds = self.credentials();
-        if self.primary_index().is_some() {
-            return creds[self.primary_index().unwrap() as usize].clone();
+        if let Some(index) = self.primary_index() {
+            return creds[index as usize].clone();
         } else {
-            creds.first().unwrap().clone()
-        }
+            return creds[0].clone();
+        } 
+    }
+
+    fn primary_id(&self) -> CredentialId {
+        self.primary().id()
     }
 
     fn secondaries(&self) -> Vec<Self::Credential> {
@@ -43,10 +47,6 @@ pub trait CredentialsWrapper : Clone + Verifiable {
                     .map(|c| c.clone()).collect()
             }
         }
-    }
-
-    fn primary_id(&self) -> CredentialId {
-        self.primary().id()
     }
 
 }

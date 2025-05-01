@@ -6,22 +6,11 @@ pub type CredentialId = Vec<u8>;
 
 
 
-#[wasm_serde]
-pub enum CredentialName {
-    Caller,
-    CosmosArbitrary,
-    EthPersonalSign,
-    Passkey,
-    Secp256k1,
-    Secp256r1,
-    Ed25519,
-}
-
 
 #[wasm_serde]
 pub struct CredentialInfo {
     /// name of the used credential
-    pub name: CredentialName,
+    pub name: String,
     /// human readable prefix to encode from a public key
     pub hrp: Option<String>,
     /// extension data

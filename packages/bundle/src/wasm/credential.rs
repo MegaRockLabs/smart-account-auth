@@ -1,6 +1,5 @@
-use crate::Credential;
-use saa_common::{wasm::{Addr, Api}, AuthError, CredentialName};
-
+use crate::{credential::CredentialName, Credential};
+use saa_common::{wasm::{Addr, Api}, AuthError};
 
 #[cfg(feature = "storage")]
 use saa_common::{
@@ -17,6 +16,7 @@ use saa_common::{
 
 
 impl Credential {
+
     pub fn is_cosmos_derivable(&self) -> bool {
         self.hrp().is_some()
     }
@@ -25,7 +25,7 @@ impl Credential {
         let name = self.name();
         if name == CredentialName::Caller {
             let address =  String::from_utf8(self.id())
-                    .map(|s| Addr::unchecked(s))?;
+                                .map(|s| Addr::unchecked(s))?;
             return Ok(address)
         }
         #[cfg(all(feature = "injective", feature="ethereum"))]
@@ -57,9 +57,7 @@ impl Credential {
         api     :  &dyn Api, 
         storage :  &dyn Storage,
         env     :  &Env, 
-    ) -> Result<(), AuthError> 
-        where Self: Sized
-    {
+    ) -> Result<(), AuthError> {
         ensure!(has_credential(storage, &self.id()), AuthError::NotFound);
         self.verify_cosmwasm(api)?;
         #[cfg(feature = "replay")]

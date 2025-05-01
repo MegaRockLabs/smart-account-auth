@@ -1917,6 +1917,7 @@ dependencies = [
  "secret-toolkit",
  "serde",
  "serde-json-wasm 1.0.1",
+ "serde_json",
  "sha2 0.10.8",
  "thiserror 2.0.4",
  "tiny-keccak",
@@ -1957,6 +1958,8 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
@@ -2426,6 +2429,8 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]

@@ -1,11 +1,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use saa_macros_proto;
+pub use serde;
 
 pub use saa_macros_proto::{wasm_serde, wasm_string_struct};
 
+#[cfg(feature = "session")]
+pub use {
+    strum, strum_macros,
+    saa_macros_proto::with_session
+};
 
-pub use serde;
 
 #[cfg(feature = "cosmwasm")]
 pub use schemars;
