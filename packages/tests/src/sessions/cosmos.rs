@@ -1,14 +1,13 @@
-use std::{fmt::Display, str::FromStr};
-
+use std::fmt::Display;
 use cosmwasm_schema::cw_serde;
-
 use cw_storage_plus::Item;
-use cosmwasm_std::{testing::{mock_dependencies, mock_env, mock_info}, CosmosMsg};
+use cosmwasm_std::{testing::{mock_dependencies, mock_env, mock_info}, BankMsg, CosmosMsg};
 use saa_schema::with_session;
 use serde::Serialize;
 use smart_account_auth::{messages::{Action, ActionDerivation, ActionName, ActionToDerive, AllowedActions, Authority, SessionKey}, CredentialData};
 
 use smart_account_auth::types::expiration::Expiration;
+
 
 
 #[with_session]
@@ -19,41 +18,7 @@ pub enum ExecuteMsg {
         msgs: Vec<CosmosMsg> 
     },
 
-    MintToken {
-        minter: String,
-        msg: Option<CosmosMsg>
-    },
-
-    TransferToken {
-        collection: String,
-        token_id: String,
-        recipient: String,
-    },
-
-    UpdateAccountData {
-        account_data: Option<CredentialData>,
-    },
-
-    Freeze {},
-
-    Purge {},
-}
-
-
-
-
-/* #[cw_serde]
-#[derive(Display, VariantNames, EnumString, EnumDiscriminants, EnumIter)]
-#[strum(serialize_all = "snake_case")]
-#[strum_discriminants(strum(serialize_all = "snake_case"))]
-#[strum_discriminants(derive(strum_macros::VariantArray))]
-pub enum StrumExecuteMsg {
-
-    #[strum(to_string = "execute: {{ msgs: Vec<CosmosMsg> }}")]
-    Execute { 
-        msgs: Vec<CosmosMsg> 
-    },
-
+    #[strum(to_string = "{{ \"mint_token\": {{ \"minter\": \"{minter}\" }} }}")]
     MintToken {
         minter: String,
         msg: Option<CosmosMsg>
@@ -76,7 +41,6 @@ pub enum StrumExecuteMsg {
 }
 
 
- */
 
 #[cw_serde]
 pub struct ExecuteSession<M : Serialize + Display + ActionName = ExecuteMsg> {
@@ -87,12 +51,7 @@ pub struct ExecuteSession<M : Serialize + Display + ActionName = ExecuteMsg> {
 
 
 
-
-
 pub static SESSION_KEYS : Item<SessionKey<ExecuteMsg>> = Item::new("saa_keys");
-
-
-
 
 
 
@@ -133,15 +92,9 @@ fn simple_named_actions_session_flow() {
         panic!("Session key expired");
     }
 
-    let msg = Action::<ExecuteMsg>::from_str(&execute_session.msg.to_string()).unwrap();
 
-    if let AllowedActions::List(actions) = &key.actions {
-        if !actions.contains(&msg) {
-            panic!("Action not allowed");
-        }
-    } else {
-        panic!("Invalid actions");
-    }
+    assert!(key.actions.is_allowed(&execute_session.msg));
+
 
 }
 
@@ -153,18 +106,17 @@ fn simple_named_actions_session_flow() {
 fn derived_session_actions() {
     let mut mocks = mock_dependencies();
     let deps = mocks.as_mut();
-    let storage = deps.storage;
+    let _storage = deps.storage;
     let env = mock_env();
     let alice = mock_info("alice", &[]);
     let bob = mock_info("bob", &[]);
 
-    let mut derived = Action::Derived(ActionToDerive { 
-        action: ExecuteMsg::MintToken { minter: "minter".into(), msg: None }, 
-        method: ActionDerivation::Name,
-    });
 
     let actions = vec![
-        derived.clone(),
+        Action::Derived(ActionToDerive { 
+            action: ExecuteMsg::MintToken { minter: "minter".into(), msg: None }, 
+            method: ActionDerivation::Name,
+        }),
         Action::Named(String::from("transfer_token"))
     ];
 
@@ -176,46 +128,115 @@ fn derived_session_actions() {
     };
 
    
-    let derived_string = derived.to_string();
-    println!("Derived action: {}", derived.to_string());
+
+    // Ok
+    assert!(key.actions.is_allowed(&ExecuteMsg::MintToken {
+        minter: bob.sender.to_string(),
+        msg: None
+    }));
+
+    // Ok
+    assert!(key.actions.is_allowed(&ExecuteMsg::TransferToken { 
+        collection: String::from("collection"),
+        token_id: String::from("token_id"),
+        recipient: String::from("recipient"),
+    }));
+
+
+    // Not Ok
+    assert!(!key.actions.is_allowed(&ExecuteMsg::Freeze {  }));
+    assert!(!key.actions.is_allowed(&ExecuteMsg::Execute { msgs: vec![] }));
+
+}
 
 
 
-    let execute_session: ExecuteSession = ExecuteSession {
-        owner: alice.sender.to_string(),
-        msg: ExecuteMsg::MintToken {
-            minter: bob.sender.to_string(),
-            msg: None
-        }
+
+
+
+#[test]
+fn advanced_action_derivations() {
+    let env = mock_env();
+
+    let alice = mock_info("alice", &[]);
+    let bob = mock_info("bob", &[]);
+
+
+    let actions = vec![
+   
+        Action::Derived(ActionToDerive { 
+            action: ExecuteMsg::MintToken { minter: "minter".into(), msg: None }, 
+            method: ActionDerivation::String,
+        }),
+        Action::Derived(ActionToDerive { 
+            action: ExecuteMsg::MintToken { minter: "Gimmy".into(), msg: None }, 
+            method: ActionDerivation::String,
+        }),
+        Action::Derived(ActionToDerive { 
+            action: ExecuteMsg::MintToken { 
+                minter: "sensei".into(), 
+                msg: Some(CosmosMsg::Bank(BankMsg::Send {
+                    to_address: String::from("to_address"),
+                    amount: vec![],
+                })), 
+            },
+            method: ActionDerivation::Json,
+        }),
+    ];
+
+    let key = SessionKey {
+        actions: AllowedActions::List(actions.clone()),
+        expiration: Expiration::AtHeight(env.block.height + 100),
+        granter: Authority::Address(alice.sender.to_string()),
+        grantee: Authority::Address(bob.sender.to_string()),
     };
 
+   
+    let json = actions[2].derive();
 
-    let success = match key.actions {
-        AllowedActions::All { } => true,
-        AllowedActions::Current(_) => false,
-        AllowedActions::List(ref actions) => {
-            let mut found = false;
-            for action in actions {
-                match action {
-                    Action::Named(name) => {
-                        if name == &derived_string {
-                            found = true;
-                        }
-                    }
-                    Action::Derived(derived) => {
-                        let same_rule_derive = derived.method.derive_message(&execute_session.msg);
-                        println!("Derived action: {}", same_rule_derive.to_string());
-                        if same_rule_derive == derived_string {
-                            found = true;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            found
-        }
-    };
-    
-    assert!(success, "Action not allowed");
+    // Not Ok: Another methods
+    assert!(!key.actions.is_allowed(&ExecuteMsg::Purge {}));
+    assert!(!key.actions.is_allowed(&ExecuteMsg::Freeze {}));
+    assert!(!key.actions.is_allowed(&ExecuteMsg::TransferToken { 
+        collection: String::from("collection"),
+        token_id: String::from("token_id"),
+        recipient: String::from("recipient"),
+    }));
+
+
+    // Not Ok:  Mint Token enforces the minter to be "Gimmy", "minter" or "sensei"
+    assert!(!key.actions.is_allowed(&ExecuteMsg::MintToken {
+        minter: bob.sender.to_string(),
+        msg: None
+    }));
+
+
+    // Ok: Passed the minted check
+    assert!(key.actions.is_allowed(&ExecuteMsg::MintToken {
+        minter: "Gimmy".to_string(),
+        msg: None
+    }));
+
+
+    // Ok: Passed the json stringify check
+    assert!(key.actions.is_allowed(&ExecuteMsg::MintToken {
+        minter: "sensei".to_string(),
+        msg: Some(CosmosMsg::Bank(BankMsg::Send {
+            to_address: String::from("to_address"),
+            amount: vec![],
+        }))
+    }));
+
+    // Not Ok: Even one field is different
+    assert!(!key.actions.is_allowed(&ExecuteMsg::MintToken {
+        minter: "sensei".to_string(),
+        msg: Some(CosmosMsg::Bank(BankMsg::Send {
+            to_address: String::from("to_another_address"),
+            amount: vec![],
+        }))
+    }));
+
+    // Ok: Also work by passing the json manually
+    assert!(key.actions.is_allowed_string(&json.to_string()));
 
 }
