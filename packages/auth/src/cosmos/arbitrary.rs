@@ -16,6 +16,7 @@ pub struct CosmosArbitrary {
     pub hrp:       Option<String>
 }
 
+
 #[cfg(any(feature = "wasm", feature = "native"))]
 impl CosmosArbitrary {
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
@@ -68,7 +69,7 @@ impl Verifiable for CosmosArbitrary {
     #[cfg(feature = "wasm")]
     fn verify_cosmwasm(
         &self, 
-        api:  &dyn saa_common::cosmwasm::Api
+        api:  &dyn saa_common::wasm::Api
     ) -> Result<(), AuthError> {
         let success = api.secp256k1_verify(
             &self.message_digest()?,

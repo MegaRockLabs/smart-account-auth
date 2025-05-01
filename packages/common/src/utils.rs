@@ -16,8 +16,8 @@ pub fn prefix_from_address(address: &str) -> String {
 
 
 #[cfg(feature = "wasm")]
-pub fn pubkey_to_canonical(pubkey: &[u8]) -> crate::cosmwasm::CanonicalAddr {
-    crate::cosmwasm::CanonicalAddr::from(ripemd160(&sha256(pubkey))).into()
+pub fn pubkey_to_canonical(pubkey: &[u8]) -> crate::wasm::CanonicalAddr {
+    crate::wasm::CanonicalAddr::from(ripemd160(&sha256(pubkey))).into()
 }
 
 

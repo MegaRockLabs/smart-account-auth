@@ -28,4 +28,4 @@ pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
 
 
 #[cfg(not(feature = "native"))]
-pub use crate::identity::Identity256;
+pub use crate::types::identity::Identity256;

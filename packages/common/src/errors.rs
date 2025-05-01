@@ -116,20 +116,20 @@ impl From<cosmwasm_crypto::CryptoError> for AuthError {
 mod implementation{
     use crate::AuthError;
 
-    impl From<crate::cosmwasm::RecoverPubkeyError> for AuthError {
-        fn from(err: crate::cosmwasm::RecoverPubkeyError) -> Self {
+    impl From<crate::wasm::RecoverPubkeyError> for AuthError {
+        fn from(err: crate::wasm::RecoverPubkeyError) -> Self {
             Self::Recovery(err.to_string())
         }
     }
 
-    impl From<crate::cosmwasm::StdError> for AuthError {
-        fn from(err: crate::cosmwasm::StdError) -> Self {
+    impl From<crate::wasm::StdError> for AuthError {
+        fn from(err: crate::wasm::StdError) -> Self {
             Self::Generic(err.to_string())
         }
     }
 
-    impl From<crate::cosmwasm::VerificationError> for AuthError {
-        fn from(err: crate::cosmwasm::VerificationError) -> Self {
+    impl From<crate::wasm::VerificationError> for AuthError {
+        fn from(err: crate::wasm::VerificationError) -> Self {
             Self::Crypto(err.to_string())
         }
     }

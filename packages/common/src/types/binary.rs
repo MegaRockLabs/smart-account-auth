@@ -274,14 +274,14 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 }
 
 #[cfg(feature = "wasm")]
-impl From<Binary> for crate::cosmwasm::Binary {
+impl From<Binary> for crate::wasm::Binary {
     fn from(binary: Binary) -> Self {
         binary.to_vec().into()
     }
 }
 
 #[cfg(feature = "wasm")]
-impl Into<Binary> for crate::cosmwasm::Binary {
+impl Into<Binary> for crate::wasm::Binary {
     fn into(self) -> Binary {
         self.to_vec().into()
     }

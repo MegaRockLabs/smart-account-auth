@@ -43,7 +43,7 @@ impl Verifiable for Ed25519 {
 
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> 
+    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> 
         where Self: Clone
     {
         let success = api.ed25519_verify(

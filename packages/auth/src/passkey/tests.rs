@@ -142,4 +142,62 @@ mod tests {
 
 
 
+    #[test]
+    fn pass_verification_with_other_keys() {
+        let deps = mock_dependencies();
+        let deps = deps.as_ref();
+  
+        let public_key = Binary::from_base64("BO24TMuQ4FKvLq3/H8+IkIdDPzT2vlnt78sDOeZfOEIQ3I1J/QjdLEC8LwWD7shur5D119j9nQw61cfcYobLiIA=").unwrap();
+        let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MdAAAAAA==").unwrap();
+        let signature = Binary::from_base64("U7C9wBtbEKh1V1GJccbFmLzF9SrR+rArjbKgVUt1EKWDMCm+0oPpRH1/0KN8WlKKIov3p/nm12JpzU6pKQAwDw==").unwrap();
+
+        let sign_data =  MsgDataToSign::<String> {
+            chain_id: "elgafar-1".to_string(),
+            contract_address: "stars1fjhqywml8vx26n58s05yy4evtg9h9xjkvya0rtlqkecvkpdysemq2hqy8m".to_string(),
+            messages: vec![String::from("Create TBA account")],
+            nonce: "0".to_string()
+        };
+        
+        let binary =  to_json_binary(&sign_data).unwrap();
+        let challenge = base64_to_url(&binary.to_base64());
+
+
+        let credential = PasskeyCredential { 
+            id: String::default(),
+            pubkey: Some(public_key.clone()), 
+            signature: signature.clone(), 
+            authenticator_data: authenticator_data.clone(), 
+            client_data: ClientData::new(
+                "webauthn.get".into(),
+                challenge.clone(),
+                "http://localhost:5173".into(),
+                false,
+                true
+            ), 
+            user_handle: None
+        };
+        let res = credential.verify_cosmwasm(deps.api);
+        assert!(res.is_ok());
+
+
+        let credential = PasskeyCredential { 
+            id: String::default(),
+            pubkey: Some(public_key.clone()), 
+            signature: signature.clone(), 
+            authenticator_data: authenticator_data.clone(), 
+            client_data: ClientData::new(
+                "webauthn.get".into(),
+                challenge,
+                "http://localhost:5173".into(),
+                false,
+                false
+            ), 
+            user_handle: None
+        };
+        let res = credential.verify_cosmwasm(deps.api);
+        assert!(res.is_err());
+
+    }
+
+
 }

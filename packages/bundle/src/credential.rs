@@ -6,7 +6,7 @@ use saa_schema::wasm_serde;
 #[cfg(feature = "curves")]
 use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
 
-#[cfg(all(not(feature = "curves"), feature = "ed25519" ))]
+#[cfg(all(not(feature = "curves"), feature = "ed25519"))]
 use saa_curves::ed25519::Ed25519;
 
 #[cfg(feature = "passkeys")]
@@ -17,12 +17,6 @@ use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
 use saa_auth::cosmos::CosmosArbitrary;
-
-#[cfg(feature = "wasm")]
-use saa_common::cosmwasm::{Api, Addr, Env, MessageInfo};
-
-#[cfg(all(feature = "wasm", feature = "storage"))]
-use saa_common::{storage::*, cosmwasm::Storage, messages::*, ensure, from_json};
 
 
 #[wasm_serde]
@@ -145,78 +139,7 @@ impl Credential {
         }
     }
 
-    #[cfg(feature = "wasm")]
-    pub fn is_cosmos_derivable(&self) -> bool {
-        self.hrp().is_some()
-    }
-
-    #[cfg(feature = "wasm")]
-    pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        let name = self.name();
-        if name == CredentialName::Caller {
-            let address =  String::from_utf8(self.id())
-                    .map(|s| Addr::unchecked(s))?;
-            return Ok(address)
-        }
-        #[cfg(all(feature = "injective", feature="ethereum"))]
-        {
-            if name == CredentialName::EthPersonalSign {
-                return Ok(Addr::unchecked(
-                    saa_common::utils::pubkey_to_address(
-                        &self.id(), "inj"
-                    )?
-                ))
-            } 
-        }
-        Ok(match self.hrp() {
-            Some(hrp) => Addr::unchecked(
-                saa_common::utils::pubkey_to_address(&self.id(), &hrp)?
-            ),
-            None => {
-                let canon = saa_common::utils::pubkey_to_canonical(&self.id());
-                let addr = api.addr_humanize(&canon)?;
-                addr
-            }
-        })
-    }
-
-
-    #[cfg(all(feature = "wasm", feature = "storage"))]
-    pub fn assert_cosmwasm(
-        &self, 
-        api     :  &dyn Api, 
-        storage :  &dyn Storage,
-        env     :  &Env, 
-    ) -> Result<(), AuthError> 
-        where Self: Sized
-    {   
-        ensure!(has_credential(storage, &self.id()), AuthError::NotFound);
-        self.verify_cosmwasm(api)?;
-        #[cfg(feature = "replay")]
-        {
-            let msg : MsgDataToVerify = from_json(&self.message())?;
-            msg.validate_cosmwasm(storage, env)?;
-        }
-        Ok(())
-    }
-
-    
-    #[cfg(all(feature = "wasm", feature = "storage"))]
-    pub fn save_cosmwasm(&self, 
-        api: &dyn Api, 
-        storage: &mut dyn Storage,
-        env:  &Env,
-        info: &MessageInfo
-    ) -> Result<(), AuthError> {
-        self.assert_cosmwasm(api, storage, env)?;
-        save_credential(storage, &self.id(), &self.info())?;
-        #[cfg(feature = "replay")]
-        increment_account_number(storage)?;
-        if let Credential::Caller(_) = self {
-            CALLER.save(storage, &Some(info.sender.to_string()))?;
-        }
-        Ok(())
-    }
+ 
 
     
 }
@@ -241,7 +164,7 @@ impl Verifiable for Credential {
     }
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self,  api:  &dyn Api) -> Result<(), AuthError>  
+    fn verify_cosmwasm(&self,  api:  &dyn saa_common::wasm::Api) -> Result<(), AuthError>  
         where Self: Sized
     {
         self.validate()?;
@@ -274,3 +197,111 @@ impl Verifiable for Credential {
 
 
 
+pub fn construct_credential(
+    id: CredentialId,
+    name: CredentialName,
+    message: Binary,
+    signature: Binary,
+    hrp: Option<String>,
+    stored_extension: Option<Binary>,
+    passed_extension: Option<Binary>,
+) -> Result<Credential, AuthError> {
+    
+    let credential = match name {
+
+        CredentialName::Caller => Credential::Caller(saa_auth::caller::Caller { id }),
+
+        #[cfg(feature = "ethereum")]
+        CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_auth::eth::EthPersonalSign {
+                message,
+                signature,
+                signer: String::from_utf8(id)?,
+            }
+        ),
+
+        #[cfg(feature = "cosmos")]
+        CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_auth::cosmos::CosmosArbitrary {
+            pubkey: Binary::new(id),
+            message,
+            signature,
+            hrp,
+        }),
+
+        #[cfg(feature = "passkeys")]
+        CredentialName::Passkey => {
+            use saa_common::{from_json, ensure};
+            use saa_auth::passkey::*;
+            ensure!(
+                passed_extension.is_some(),
+                AuthError::generic("Payload must be provided for 'passkey'")
+            );
+            ensure!(
+                stored_extension.is_some(),
+                AuthError::generic("Extension must be stored for 'passkey'")
+            );
+            let extensiom = passed_extension.unwrap();
+            let payload_ext : PasskeyPayload = from_json(&extensiom)?;
+            let stored_ext : PasskeyExtension = from_json(&stored_extension.unwrap())?;
+            let pubkey = payload_ext.pubkey.or(stored_ext.pubkey);
+            ensure!(
+                pubkey.is_some(),
+                AuthError::generic("No public key provided for 'passkey' credential")
+            );
+            let challenge = saa_auth::passkey::utils::base64_to_url(&message.to_base64());
+            let client_data = ClientData::new(
+                "webauthn.get".into(),
+                challenge,
+                stored_ext.origin,
+                stored_ext.cross_origin,
+                payload_ext.other_keys.unwrap_or_default()
+            );
+            Credential::Passkey(PasskeyCredential {
+                id: String::from_utf8(id)?,
+                pubkey,
+                signature,
+                client_data,
+                authenticator_data: payload_ext.authenticator_data,
+                user_handle: stored_ext.user_handle,
+            })
+        },
+        #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+        CredentialName::Ed25519 => Credential::Ed25519(saa_curves::ed25519::Ed25519 {
+            pubkey: Binary::new(id),
+            signature,
+            message,
+        }),
+        #[cfg(feature = "curves")]
+        curves => {
+            let pubkey = Binary::new(id);
+            match curves {
+                CredentialName::Secp256k1 => Credential::Secp256k1(saa_curves::secp256k1::Secp256k1 {
+                    pubkey,
+                    signature,
+                    message,
+                    hrp,
+                }),
+                CredentialName::Secp256r1 => Credential::Secp256r1(saa_curves::secp256r1::Secp256r1 {
+                    pubkey,
+                    signature,
+                    message,
+                }),
+                CredentialName::Ed25519 => Credential::Ed25519(saa_curves::ed25519::Ed25519 {
+                    pubkey,
+                    signature,
+                    message,
+                }),
+                _ => return Err(AuthError::generic("Unsupported curve")),
+            }
+        }
+        #[cfg(any(
+            not(feature = "curves"),
+            not(feature = "ed25519"),
+            not(feature = "passkeys"), 
+            not(feature = "cosmos"), 
+            not(feature = "ethereum"))
+        )]
+        _ => return Err(AuthError::generic("Credential is not enabled")),
+    };
+
+    Ok(credential)
+}

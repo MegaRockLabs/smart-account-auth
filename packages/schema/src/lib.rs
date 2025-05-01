@@ -2,7 +2,7 @@
 
 use saa_macros_proto;
 
-pub use saa_macros_proto::wasm_serde;
+pub use saa_macros_proto::{wasm_serde, wasm_string_struct};
 
 
 pub use serde;

@@ -67,7 +67,7 @@ impl Verifiable for EthPersonalSign {
 
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
         
         let signature = &self.signature.to_vec();
         

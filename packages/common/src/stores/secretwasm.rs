@@ -6,6 +6,7 @@ use crate::{CredentialInfo, CredentialId};
 /// The credential ID to use by default for verifications
 pub const VERIFYING_CRED_ID : Item<CredentialId> = Item::new(b"saa_verifying_id");
 
+
 /// Mapping of credential IDs to credential additional information.
 pub const CREDENTIAL_INFOS: Keymap<CredentialId, CredentialInfo> = Keymap::new(b"saa_credentials");
 

@@ -48,7 +48,7 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::cosmwasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
         let res = api.secp256k1_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 

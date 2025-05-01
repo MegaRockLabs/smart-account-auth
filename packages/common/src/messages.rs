@@ -2,10 +2,8 @@
 use core::fmt::Debug;
 use saa_schema::wasm_serde;
 
-use crate::{ensure, AuthError, Binary, CredentialInfo};
+use crate::{ensure, AuthError, Binary};
 
-#[cfg(feature = "wasm")]
-use crate::cosmwasm::{CustomMsg, Storage, Env};
 
 #[wasm_serde]
 pub struct AuthPayload<E = Binary> {
@@ -38,32 +36,6 @@ impl<E> AuthPayload<E> {
         Ok(())
     }
 
-    #[cfg(feature = "wasm")]
-    pub fn validate_cosmwasm(
-        &self, 
-        #[cfg(feature = "storage")]
-        store: &dyn Storage
-    ) -> Result<(), AuthError> {
-
-        self.validate()?;
-        #[cfg(feature = "storage")]
-        if self.credential_id.is_some() {
-            let info_res = crate::storage::get_cred_info(
-                store, 
-                self.credential_id.clone().unwrap().to_vec()
-            );
-            ensure!(info_res.is_ok(), AuthError::NotFound);
-
-            if self.hrp.is_some() {
-                let name = info_res.unwrap().name;
-                ensure!(
-                    name == crate::CredentialName::CosmosArbitrary || name == crate::CredentialName::Secp256k1,
-                    AuthError::generic("'hrp' can only be passed for 'cosmos-arbitrary' or 'secp256k1'")
-                );
-            }
-        }
-        Ok(())
-    }
     
 }
 
@@ -90,7 +62,7 @@ pub struct MsgDataToSign<M = String> {
 #[cfg_attr(feature = "solana", derive(
     ::saa_schema::borsh::BorshSerialize, ::saa_schema::borsh::BorshDeserialize
 ))]
-#[cfg_attr(all(feature = "std", feature="substrate"), derive(saa_schema::scale_info::TypeInfo))]
+#[cfg_attr(all(feature = "std", feature="substrate"), derive(::saa_schema::scale_info::TypeInfo))]
 #[allow(clippy::derive_partial_eq_without_eq)]
 pub struct MsgDataToVerify {
     pub chain_id: String,
@@ -110,42 +82,6 @@ impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
 }
 
 
-#[cfg(feature = "wasm")]
-impl MsgDataToVerify {
-    pub fn validate_cosmwasm(
-        &self, 
-        #[cfg(feature = "replay")]
-        store: &dyn Storage, 
-        env: &Env
-    ) -> Result<(), AuthError> {
-        ensure!(self.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
-        ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
-        ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        #[cfg(feature = "replay")]
-        ensure!(crate::storage::ACCOUNT_NUMBER.load(store)
-            .unwrap_or_default().to_string() == self.nonce, AuthError::DifferentNonce);
-        Ok(())
-    }
-}
-
-
-#[cfg(feature = "wasm")]
-impl<M> MsgDataToSign<M> {
-    pub fn validate_cosmwasm(
-        &self, 
-        #[cfg(feature = "replay")]
-        store: &dyn Storage, 
-        env: &Env
-    ) -> Result<(), AuthError> {
-        Into::<MsgDataToVerify>::into(self)
-        .validate_cosmwasm(
-            #[cfg(feature = "replay")]
-            store,
-            env
-        )
-    }
-}
-
 
 #[wasm_serde]
 pub struct SignedDataMsg {
@@ -153,17 +89,3 @@ pub struct SignedDataMsg {
     pub signature: Binary,
     pub payload: Option<AuthPayload>,
 }
-
-
-
-#[wasm_serde]
-pub struct AccountCredentials {
-    pub credentials: Vec<(Binary, CredentialInfo)>,
-    pub verifying_id: Binary,
-    pub native_caller: bool,
-}
-
-
-
-#[cfg(feature = "wasm")]
-impl CustomMsg for SignedDataMsg {}

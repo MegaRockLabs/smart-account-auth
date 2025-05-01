@@ -37,6 +37,7 @@ default = [
     "passkeys",
     "replay",
     "iterator",
+    "traits",
 ]
 std = [
     "scale?/std",
@@ -95,3 +96,12 @@ curves      = []
 
 # Set separately for Solana
 ed25519     = []
+
+# Enable the export of inner types that the lib uses
+types       = []
+
+# Enable the export of inner traits that the lib uses
+traits      = []
+
+# Enable the export of inner utils that the lib uses
+utils       = []
