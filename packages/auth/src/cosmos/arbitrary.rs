@@ -49,7 +49,7 @@ impl Verifiable for CosmosArbitrary {
         if !(self.signature.len() > 0 &&
             self.message.to_string().len() > 0 && 
             self.pubkey.len() > 0) {
-            return Err(AuthError::MissingData("Empty credential data".to_string()));
+            return Err(AuthError::MissingData("Missing credential data".to_string()));
         }
         Ok(())
     }

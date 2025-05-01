@@ -1,6 +1,31 @@
+![Crates.io Version](https://img.shields.io/crates/v/smart-account-auth?style=flat-square)
+![NPM Version](https://img.shields.io/npm/v/smart-account-auth?style=flat-square&color=%233178C6)
+
 # Smart Account Authentication
 
-Rust crates for smart contract authentication supporting most of the existing authentication mechanisms
+Authentication Library / SDK  for working with various crypthograpghic credentials / authenticators
+- Client-side tools for requesting credentials abd their serilizations 
+- Verification (+ storage) logic for Rust environments. 
+- Ideal for smart accounts, wallets and apps with build-in authentication 
+
+## Goals and Focus-Area
+- Definition of useful data structure, trais and utlity functions
+- Formatting data according to specs. Primarily with use of envelopes
+- Serialisation and deserialisation of the date depending on context
+- Passing data to underlying cryptographic APIs and libraries
+- Dealing with batches / multuple credentials at the same time 
+- [FEAT] Protection against replay attacks 
+- [FEAT] Encapsulated storage of the credentials 
+- [FEAT] Encapsulated reconstruction & verification of credentials from payload
+
+### Cryptography
+- ⚡ Delegations verifcation to available APIs for efficency 
+- ⚙️ Native version relies on [cosmwasm-crypto](https://crates.io/crates/cosmwasm-crypto)
+
+### Other Info
+
+- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
+
 
 
 ## Supported Credentials
@@ -30,14 +55,15 @@ cargo add smart-account-auth
 
 You can also give the library an alias to simplify typing
 ```toml
-saa  = { package = "smart-account-auth", features = ["cosmwasm"], version = "0.24.2" }
+# tp import for CosmWasm(v1) contracts with all default features 
+saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwasm"] }
 ```
 
 ### Features
 
-Envieronment specific features are mutually exclusive and you should only use one of them depending on your virtual machine
+Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
 - `native` - for native rust code
-- `substrate` - for ink! smart contracts 
+- `substrate` - for smart contracts written in ink (substrate) 
 - `solana` - for solana programs ( serialization only )
 - `cosmwasm` - for cosmwasm 1.x
 - `secretwasm` - for cosmwasm of secret network (testing)
@@ -52,15 +78,24 @@ Credential specifc features allow you to include / exclude specific credential t
 - `curves` - verification of signature over any raw data using any of the supported curves (Ed25519, Secp256k1, Secp256r1) 
 - `ed25519` - same as above but only for Ed25519 curve
 
-The following features give you access to additional logic related to beeter control or additional security
+The following features give you access to additional logic related to better control or additional security
 - `storage` - expose methods and provide storage for storing and retrieving credentials from storage (coswasm only)
 - `iterator`- expose methods for iterating and retrivieng all the credentials (coswasm only)
 - `replay` - enable replay protection and enforce signed messages to follow a specific format that includes a nonce 
 - `std` - whether to enable native Rust std library 
 
-The following credentials are not meant to be specified directly and used only internal purposes
-- `wasm` - common logic for cosmwasm and it's derivatives like secretwasm, inhective and others   
+The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
+- `utils` - inner utilities for serialization and preparing them for cryptography 
+- `types` - enable minimalistic vm agnostic types ported from `cosmwasm_std` and `cw-utils`
+- `traits` - for importing trait `Verifiable` used internally or `CredentialsWrapper` to customise or simply use the wrapper methods 
 
+The following credentials are not meant to be specified directly and used only internal purposes 🚫
+- `wasm` - common logic for cosmwasm and it's derivatives like secretwasm, injective and others   
+
+The following credentials are included by default
+```ts
+"ethereum", "cosmos", "ed25519", "passkeys", "replay", "iterator", "std", "traits"
+```
 
 
 ## Verification
@@ -228,5 +263,18 @@ const data : CredentialData = {
     primaryIndex: 0
 } 
 ```
+
+### Meta / Usage
+- OpenSource -> Low Funding / Resources -> Contributions are especially needed and welcomed
+- Authors of the library are also its main users. The expirience is iteratively used to improve the SDK by understaning the needs and shifting more and more logic from apps to the lib. 
+- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez). 
+
+
+
+## Disclaimer
+
+- 🛠 In-Active development. Breaking changes might occur
+- 👾 Test coverage to be improved and some bugs might occur
+- ⚠️ The project hasn't been audited. Use at your own risk
 
 

@@ -55,6 +55,9 @@ pub mod utils {
 
     #[cfg(feature = "ethereum")]
     pub use saa_auth::eth::utils as eth;
+
+    #[cfg(feature = "passkeys")]
+    pub use saa_auth::passkey::utils as passkey;
 }
 
 

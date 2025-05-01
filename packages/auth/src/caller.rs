@@ -1,12 +1,20 @@
 #[cfg(feature = "wasm")]
 use saa_common::{wasm::{Api, MessageInfo}, utils::prefix_from_address};
-use saa_common::{ensure, AuthError, CredentialId, ToString, Verifiable};
+use saa_common::{AuthError, CredentialId, Verifiable};
 use saa_schema::wasm_serde;
 
 
 #[wasm_serde]
 pub struct Caller {
     pub id: CredentialId
+}
+
+
+impl Caller {
+    pub fn to_addr(&self) -> Result<String, AuthError> {
+        String::from_utf8(self.id.clone())
+        .map_err(|_| AuthError::generic("Can't derive calling address"))
+    }
 }
 
 
@@ -40,21 +48,16 @@ impl Verifiable for Caller {
     fn hrp(&self) -> Option<String> {
         #[cfg(feature = "wasm")]
         {
-            let res = String::from_utf8(self.id.clone());
-            if res.is_err() {
-                return None;
+            return match self.to_addr() {
+                Ok(addr) => Some(prefix_from_address(addr.as_str())),
+                Err(_) => None
             }
-            return Some(prefix_from_address(res.unwrap().as_str()));
         }
         None
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        let id = self.id();
-        if !(id.len() > 3) {
-            return Err(AuthError::MissingData("Caller must have an id".to_string()));
-        }
-        ensure!(String::from_utf8(id).is_ok(), AuthError::generic("Can't derive calling address"));
+        self.to_addr()?;
         Ok(())
     }
 
@@ -63,10 +66,10 @@ impl Verifiable for Caller {
         self.validate()
     }
 
-
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(& self, _: &dyn Api) -> Result<(), AuthError> {
-        self.validate()
+    fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
+        api.addr_validate(self.to_addr()?.as_str())?;
+        Ok(())
     }
 
 }
