@@ -1,98 +1,15 @@
 use core::{fmt::Display, str::FromStr};
-use saa_schema::{strum::IntoDiscriminant, strum_macros, wasm_serde};
+use saa_schema::{strum::IntoDiscriminant, wasm_serde};
 use serde::Serialize;
 
 use crate::AuthError;
 
 
-pub struct DefaultMarker;
-struct SerdeMarker;
-struct DispayMarker;
-
-
-
-pub trait ActionId<Marker = DefaultMarker> {
-    fn derive_name(&self) -> String {
-        String::default()
-    }
-    fn derive_string(&self) -> String where Self: Display {
-        self.to_string()
-    }
-    fn derive_json(&self) -> String where Self: Serialize {
-        serde_json_wasm::to_string(self).unwrap_or_default()
-    }
-}
-
-
-impl <S> ActionId for S where
-    S: IntoDiscriminant<Discriminant : ToString>,
-{
-    fn derive_name(&self) -> String {
-        self.discriminant().to_string()
-    }
-}
-
-
-impl<S : Serialize> ActionId<String> for S {
-
-    fn derive_name(&self) -> String {
-        serde_json::to_value(self)
-            .ok()
-            .map(|val| val.as_object().cloned())
-            .flatten()
-            .map(|obj| obj.keys()
-                .next()
-                .map(|k| k.to_string())
-            )
-            .flatten()
-            .unwrap_or_default()     
-    }
-}
-
-
-
-
-pub trait ActionName<Marker = DefaultMarker> {
-    fn name(&self) -> String;
-}
-
-
-impl<S> ActionName for S where
-    S: IntoDiscriminant<Discriminant : ToString>,
-{
-    fn name(&self) -> String {
-        self.discriminant().to_string()
-    }
-}
-
-impl<S : Display> ActionName<DispayMarker> for S {
-    fn name(&self) -> String {
-        return self.to_string();        
-    }
-}
-
-
-#[cfg(feature = "wasm")]
-impl<S : Serialize> ActionName<SerdeMarker> for S {
-    fn name(&self) -> String {
-        serde_json::to_value(self)
-            .ok()
-            .map(|val| val.as_object().cloned())
-            .flatten()
-            .map(|obj| obj.keys()
-                .next()
-                .map(|k| k.to_string())
-            )
-            .flatten()
-            .unwrap_or_default()     
-    }
-}
-
 
 
 #[wasm_serde]
-#[derive(strum_macros::Display)]
-pub enum Derivation {
+// #[derive(strum_macros::Display)]
+pub enum DerivationMethod {
     Name,
     String,
     #[cfg(feature = "wasm")]
@@ -100,89 +17,146 @@ pub enum Derivation {
 }
 
 
-
-
 #[wasm_serde]
-pub struct  ActionDerivation<M: ActionName + Display + Serialize> {
-    pub message :  M,
-    pub method  :  Derivation
+pub struct  Action {
+    pub result  :  String,
+    pub method  :  DerivationMethod
 }
 
-impl<A : ActionName + Display +  Serialize> Display for ActionDerivation<A> 
-{
+impl Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.method {
-            Derivation::Name => write!(f, "{}", self.message.name()),
-            Derivation::String => write!(f, "{}", self.message.to_string()),
-            #[cfg(feature = "wasm")]
-            Derivation::Json => write!(f, "{}", serde_json_wasm::to_string(&self.message).unwrap_or_default())
-        }
+        write!(f, "{}", self.result)
     }
 }
 
 
-
-#[wasm_serde]
-pub enum Action<A : ActionName + Display + Serialize> {
-    Named(String),
-    Derived(ActionDerivation<A>)
-}
-
-
-
-impl<A : ActionName + Display + Serialize> Display for Action<A> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Action::Named(name) => write!(f, "{}", name),
-            Action::Derived(der) => write!(f, "{}", der.to_string())
-        }
-    }
-}
-
-
-impl<A : ActionName + Display + Serialize> FromStr for Action<A> {
+impl FromStr for Action {
     type Err = AuthError;
-
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Action::Named(s.to_string()))
+        Ok(Action {
+            result: s.to_string(),
+            method: DerivationMethod::Name
+        })
     }
 }
 
 
 
+impl Action {
+
+    pub fn with_str<A : Display>(action: A) -> Self {
+        Self {
+            method: DerivationMethod::String,
+            result: action.to_string()
+        }
+    }
+
+    pub fn with_strum_name<A>(action: A) -> Self  where A: IntoDiscriminant<Discriminant : ToString>{
+        Self {
+            method: DerivationMethod::Name,
+            result: action.discriminant().to_string()
+        }
+    }
+
+    #[cfg(feature = "wasm")]
+    pub fn with_serde_name<A : Serialize>(action: A) -> Result<Self, AuthError> {
+        Ok(Self {
+            method: DerivationMethod::Name,
+            result: serde_json::to_value(action)
+                    .map_err(|_| AuthError::generic("Failed to serialize action"))?
+                    .as_object()
+                    .map(|obj| obj.keys()
+                        .next()
+                        .map(|k| k.to_string())
+                    )
+                    .flatten()
+                    .ok_or(AuthError::generic("Failed to serialize action"))?
+        })
+    }
+
+    #[cfg(feature = "wasm")]
+    pub fn with_serde_json<A : Serialize>(action: A) -> Result<Self, AuthError> {
+        Ok(Self {
+            method: DerivationMethod::Json,
+            result: serde_json_wasm::to_string(&action)
+                    .map_err(|_| AuthError::generic("Failed to serialize action"))?
+        })
+        
+    }
+    
+}
+
+
+
+
 #[wasm_serde]
-pub enum AllowedActions<A : ActionName + Display + Serialize> {
-    Current(Action<A>),
-    List(Vec<Action<A>>),
+pub enum AllowedActions {
+    List(Vec<Action>),
     All {},
 }
 
 
-
-impl<A : ActionName + Display + Serialize> Action<A>{
-
-    pub fn is_allowed<O : ToString>(&self, msg: &O) -> bool {
-        match self {
-            Action::Named(name) => *name == msg.to_string(),
-            Action::Derived(der) => msg.to_string() == der.to_string()
+// a list e.g. Vec of Impl FromStr
+impl<A : ToString> From<Vec<A>> for AllowedActions {
+    fn from(actions: Vec<A>) -> Self {
+        if actions.is_empty() {
+            return AllowedActions::All {};
+        } else {
+            AllowedActions::List(actions.into_iter()
+                .map(|action| {
+                    let result = action.to_string();
+                    Action {
+                        result,
+                        method: DerivationMethod::Name
+                    }
+                })
+                .collect())
         }
     }
-
 }
 
 
-impl<A : ActionName + Display + Serialize> AllowedActions<A> {
+impl AllowedActions {
 
-    pub fn is_allowed<O : ToString>(&self, msg: &O) -> bool {
+    pub fn is_action_allowed(&self, msg: &Action) -> bool {
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::Current(a) => a.is_allowed(msg),
-            AllowedActions::List(ref actions) => actions.iter()
-                .any(|action| action.is_allowed(msg)),
+            AllowedActions::List(ref actions) => actions
+                .iter()
+                .any(|action| action.result == msg.result)
         }
     }
 
+
+    pub fn is_str_allowed<S: ToString>(&self, msg: &S) -> bool {
+        match self {
+            AllowedActions::All {} => true,
+            AllowedActions::List(ref actions) => actions
+                .iter()
+                .any(|action| action.result == msg.to_string())
+        }
+    }
+
+    #[cfg(feature = "wasm")]
+    pub fn is_json_allowed<M : Serialize>(&self, msg: &M) -> bool {
+
+        match self {
+            AllowedActions::All {} => true,
+            AllowedActions::List(ref actions) => actions
+                .iter()
+                .any(|action| {
+                    let res = if let DerivationMethod::Name = action.method {
+                        Action::with_serde_name(msg) 
+                    } else {
+                        Action::with_serde_json(msg)
+                    };
+                    match res {
+                        Ok(res) => action.result == res.result,
+                        Err(_) => false
+                    }
+                })
+        }
+      
+    }
+
 }
-
-
-

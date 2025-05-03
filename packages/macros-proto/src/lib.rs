@@ -52,10 +52,11 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
             ::saa_schema::strum_macros::EnumString, 
             ::saa_schema::strum_macros::EnumDiscriminants
         )]
+        #[strum_discriminants(
+            derive(::saa_schema::strum_macros::Display),
+            strum(serialize_all = "snake_case")
+        )]
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
-        #[strum_discriminants(derive(
-            ::saa_schema::strum_macros::Display, 
-        ))]
         #left 
     }.into()
 }
@@ -63,7 +64,7 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
 
 
 #[proc_macro_attribute]
-pub fn with_session(metadata: TokenStream, input: TokenStream) -> TokenStream {
+pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream {
     session_merger(
         metadata,
         input,
