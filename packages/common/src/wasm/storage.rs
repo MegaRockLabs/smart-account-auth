@@ -98,25 +98,13 @@ pub fn has_credential(
 
 
 
-
-
-
-
 #[cfg(all(feature = "cosmwasm", feature = "iterator"))]
 pub fn get_credentials(
     storage: &dyn Storage
-) -> Result<Vec<(crate::Binary, CredentialInfo)>, AuthError> {
+) -> Result<Vec<(CredentialId, CredentialInfo)>, AuthError> {
     let credentials = CREDENTIAL_INFOS
     .range(storage, None, None, crate::wasm::Order::Ascending)
-    .map(|item| {
-        let (id, info) = item?;
-        Ok((id.into(), CredentialInfo {
-            name: info.name,
-            hrp: info.hrp,
-            extension: info.extension,
-        }))
-    })
-    .collect::<Result<Vec<(crate::Binary, CredentialInfo)>, AuthError>>()?;
+    .collect::<Result<Vec<(CredentialId, CredentialInfo)>, StdError>>()?;
     Ok(credentials)
 }
 
@@ -124,20 +112,9 @@ pub fn get_credentials(
 #[cfg(all(feature = "secretwasm", feature = "iterator", not(feature = "cosmwasm")))]
 pub fn get_credentials(
     storage: &dyn Storage
-) -> Result<Vec<(crate::Binary, CredentialInfo)>, AuthError> {
+) -> Result<Vec<(CredentialId, CredentialInfo)>, AuthError> {
     let credentials = CREDENTIAL_INFOS
     .iter(storage)?
-    .map(|item| {
-        let (id, info) = item?;
-        Ok((
-            crate::Binary::new(id), 
-            CredentialInfo {
-                name: info.name,
-                hrp: info.hrp,
-                extension: info.extension,
-        }))
-    })
-    .collect::<Result<Vec<(crate::Binary, CredentialInfo)>, AuthError>>()?;
-
+    .collect::<Result<Vec<(CredentialId, CredentialInfo)>, StdError>>()?;
     Ok(credentials)
 }

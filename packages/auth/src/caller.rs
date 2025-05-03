@@ -10,29 +10,12 @@ pub struct Caller {
 }
 
 
-impl Caller {
-    pub fn to_addr(&self) -> Result<String, AuthError> {
-        String::from_utf8(self.id.clone())
-        .map_err(|_| AuthError::generic("Can't derive calling address"))
-    }
-}
-
-
-#[cfg(feature = "substrate")]
-impl From<&[u8]> for Caller {
-    fn from(bytes: &[u8]) -> Self {
-        Caller {
-            id: bytes.to_vec()
-        }
-    }
-}
-
 
 #[cfg(feature = "wasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {
         Caller {
-            id: info.sender.as_bytes().to_vec()
+            id: info.sender.to_string()
         }
     }
 }
@@ -48,16 +31,16 @@ impl Verifiable for Caller {
     fn hrp(&self) -> Option<String> {
         #[cfg(feature = "wasm")]
         {
-            return match self.to_addr() {
-                Ok(addr) => Some(prefix_from_address(addr.as_str())),
-                Err(_) => None
-            }
+            return Some(prefix_from_address(&self.id))
         }
         None
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        self.to_addr()?;
+        saa_common::ensure!(
+            self.id.len() > 0,
+            AuthError::MissingData("Missing calling address".to_string())
+        );
         Ok(())
     }
 
@@ -68,7 +51,7 @@ impl Verifiable for Caller {
 
     #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self, api: &dyn Api) -> Result<(), AuthError> {
-        api.addr_validate(self.to_addr()?.as_str())?;
+        api.addr_validate(self.id.as_str())?;
         Ok(())
     }
 

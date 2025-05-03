@@ -38,7 +38,7 @@ impl CosmosArbitrary {
 impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn hrp(&self) -> Option<String> {

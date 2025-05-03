@@ -19,7 +19,7 @@ pub struct Secp256k1 {
 impl Verifiable for Secp256k1 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn hrp(&self) -> Option<String> {

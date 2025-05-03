@@ -162,13 +162,13 @@ pub fn construct_credential(
         CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_auth::eth::EthPersonalSign {
                 message,
                 signature,
-                signer: String::from_utf8(id)?,
+                signer: id,
             }
         ),
 
         #[cfg(feature = "cosmos")]
         CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_auth::cosmos::CosmosArbitrary {
-            pubkey: Binary::new(id),
+            pubkey: Binary::from_base64(&id).unwrap(),
             message,
             signature,
             hrp,
@@ -203,7 +203,7 @@ pub fn construct_credential(
                 payload_ext.other_keys.unwrap_or_default()
             );
             Credential::Passkey(PasskeyCredential {
-                id: String::from_utf8(id)?,
+                id,
                 pubkey,
                 signature,
                 client_data,
@@ -213,13 +213,13 @@ pub fn construct_credential(
         },
         #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
         CredentialName::Ed25519 => Credential::Ed25519(saa_curves::ed25519::Ed25519 {
-            pubkey: Binary::new(id),
+            pubkey: Binary::from_base64(&id)?,
             signature,
             message,
         }),
         #[cfg(feature = "curves")]
         curves => {
-            let pubkey = Binary::new(id);
+            let pubkey = Binary::from_base64(&id)?;
             match curves {
                 CredentialName::Secp256k1 => Credential::Secp256k1(saa_curves::secp256k1::Secp256k1 {
                     pubkey,

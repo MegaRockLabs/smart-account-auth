@@ -18,7 +18,7 @@ pub struct Secp256r1 {
 impl Verifiable for Secp256r1 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

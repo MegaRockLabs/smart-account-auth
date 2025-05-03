@@ -4,7 +4,7 @@ use saa_schema::wasm_serde;
 
 mod replay;
 
-use crate::{ensure, AuthError, Binary};
+use crate::{ensure, AuthError, Binary, CredentialId};
 
 #[cfg(feature = "replay")]
 pub use replay::*;
@@ -26,7 +26,7 @@ pub struct SignedDataMsg {
 pub struct AuthPayload<E = Binary> {
     pub hrp: Option<String>,
     pub address: Option<String>,
-    pub credential_id: Option<Binary>,
+    pub credential_id: Option<CredentialId>,
     pub extension: Option<E>
 }
 

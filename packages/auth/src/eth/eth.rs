@@ -20,7 +20,7 @@ pub struct EthPersonalSign {
 impl Verifiable for EthPersonalSign {
 
     fn id(&self) -> CredentialId {
-        self.signer.to_lowercase().as_bytes().to_vec()
+        self.signer.clone()
     }
 
     fn hrp(&self) -> Option<String> {

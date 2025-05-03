@@ -16,7 +16,7 @@ pub struct Ed25519 {
 impl Verifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

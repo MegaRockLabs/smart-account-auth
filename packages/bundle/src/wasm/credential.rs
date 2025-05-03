@@ -22,28 +22,30 @@ impl Credential {
     }
 
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
+        use saa_common::utils::*;
         let name = self.name();
         if name == CredentialName::Caller {
-            let address =  String::from_utf8(self.id())
-                                .map(|s| Addr::unchecked(s))?;
-            return Ok(address)
+            let addr = api.addr_validate(&self.id())?;
+            return Ok(addr)
         }
         #[cfg(all(feature = "injective", feature="ethereum"))]
         {
             if name == CredentialName::EthPersonalSign {
                 return Ok(Addr::unchecked(
-                    saa_common::utils::pubkey_to_address(
-                        &self.id(), "inj"
+                    pubkey_to_address(
+                        &self.id().as_bytes(), "inj"
                     )?
                 ))
             } 
         }
         Ok(match self.hrp() {
             Some(hrp) => Addr::unchecked(
-                saa_common::utils::pubkey_to_address(&self.id(), &hrp)?
+                pubkey_to_address(self.id().as_bytes(), &hrp)?
             ),
             None => {
-                let canon = saa_common::utils::pubkey_to_canonical(&self.id());
+                let canon = pubkey_to_canonical(
+                    self.id().as_bytes()
+                );
                 let addr = api.addr_humanize(&canon)?;
                 addr
             }

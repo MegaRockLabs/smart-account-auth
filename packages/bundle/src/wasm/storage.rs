@@ -21,9 +21,13 @@ fn load_credential(
         Some(payload) => {
             payload.validate_cosmwasm(storage)?;
             if let Some(id) = payload.credential_id {
-                id.to_vec()
+                id
             } else if let Some(address) = payload.address {
-                address.to_lowercase().as_bytes().to_vec()
+                if address.starts_with("0x") {
+                    "0x".to_string() + &address[2..].to_lowercase()
+                } else {
+                    address.to_lowercase()
+                }
             } else {
                 initial_id
             }
@@ -78,14 +82,16 @@ pub fn get_all_credentials(
 ) -> Result<saa_common::AccountCredentials, AuthError> {
 
     let credentials = saa_common::wasm::storage::get_credentials(storage)?;
-
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
-    let caller = saa_common::stores::CALLER.load(storage).unwrap_or(None);
+
+    let native_caller = saa_common::stores::CALLER.load(
+        storage
+    ).ok().flatten();
 
     Ok(saa_common::AccountCredentials {
         credentials,
-        native_caller: caller.is_some(),
-        verifying_id: saa_common::Binary::new(verifying_id),
+        native_caller,
+        verifying_id,
     })
 
 }

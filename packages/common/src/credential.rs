@@ -1,9 +1,8 @@
 use saa_schema::wasm_serde;
-use crate::Binary;
+use crate::{Binary, String};
 
 
-pub type CredentialId = Vec<u8>;
-
+pub type CredentialId = String;
 
 
 #[wasm_serde]
@@ -21,7 +20,7 @@ pub struct CredentialInfo {
 
 #[wasm_serde]
 pub struct AccountCredentials {
-    pub credentials: Vec<(Binary, CredentialInfo)>,
-    pub verifying_id: Binary,
-    pub native_caller: bool,
+    pub credentials: Vec<(CredentialId, CredentialInfo)>,
+    pub verifying_id: CredentialId,
+    pub native_caller: Option<CredentialId>,
 }

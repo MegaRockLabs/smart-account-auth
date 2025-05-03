@@ -16,20 +16,12 @@ impl<E> AuthPayload<E> {
         self.validate()?;
         
         #[cfg(feature = "storage")]
-        if self.credential_id.is_some() {
+        if let Some(credential_id) = &self.credential_id {
             let info_res = super::storage::load_credential_info(
                 store, 
-                self.credential_id.clone().unwrap().to_vec()
+                credential_id.clone()
             );
             ensure!(info_res.is_ok(), AuthError::NotFound);
-
-           /*  if self.hrp.is_some() {
-                let name = info_res.unwrap().name;
-                ensure!(
-                    name == crate::CredentialName::CosmosArbitrary || name == crate::CredentialName::Secp256k1,
-                    AuthError::generic("'hrp' can only be passed for 'cosmos-arbitrary' or 'secp256k1'")
-                );
-            } */
         }
         Ok(())
     }

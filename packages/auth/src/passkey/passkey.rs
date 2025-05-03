@@ -123,7 +123,7 @@ impl PasskeyCredential {
 impl Verifiable for PasskeyCredential {
 
     fn id(&self) -> CredentialId {
-        self.id.as_bytes().to_vec()
+        self.id.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {

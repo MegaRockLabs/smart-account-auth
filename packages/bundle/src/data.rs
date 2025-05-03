@@ -116,8 +116,8 @@ impl CredentialData {
 
 
     #[cfg(feature = "substrate")]
-    pub fn with_caller_ink(&self, id: impl AsRef<[u8]>) -> Self {
-        self.with_caller(id.as_ref())
+    pub fn with_caller_ink(&self, id: saa_common::String) -> Self {
+        self.with_caller(Caller { id })
     }
 
 }
