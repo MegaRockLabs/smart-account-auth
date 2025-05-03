@@ -19,6 +19,8 @@ pub use credential::*;
 #[cfg(feature = "storage")]
 pub mod stores;
 
+#[cfg(feature = "session")]
+pub mod sessions;
 
 #[cfg(feature = "native")]
 pub mod crypto {pub use cosmwasm_crypto::*;} 

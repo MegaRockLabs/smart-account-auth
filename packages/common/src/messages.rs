@@ -3,7 +3,6 @@ use core::fmt::Debug;
 use saa_schema::wasm_serde;
 
 mod replay;
-mod session;
 
 use crate::{ensure, AuthError, Binary};
 
@@ -11,8 +10,7 @@ use crate::{ensure, AuthError, Binary};
 pub use replay::*;
 
 
-#[cfg(feature = "session")]
-pub use session::*;
+
 
 
 #[wasm_serde]

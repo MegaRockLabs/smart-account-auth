@@ -6,7 +6,6 @@ pub type CredentialId = Vec<u8>;
 
 
 
-
 #[wasm_serde]
 pub struct CredentialInfo {
     /// name of the used credential

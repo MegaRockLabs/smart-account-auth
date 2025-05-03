@@ -31,6 +31,9 @@ pub use saa_common::crypto;
 #[cfg(feature = "wasm")]
 pub use wasm::*;
 
+#[cfg(feature = "session")]
+pub use saa_common::sessions;
+
 
 #[cfg(feature = "traits")]
 pub use {wrapper::CredentialsWrapper, saa_common::Verifiable};

@@ -53,6 +53,9 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
             ::saa_schema::strum_macros::EnumDiscriminants
         )]
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
+        #[strum_discriminants(derive(
+            ::saa_schema::strum_macros::Display, 
+        ))]
         #left 
     }.into()
 }
@@ -110,7 +113,7 @@ pub fn wasm_serde(
                 ::saa_schema::borsh::BorshDeserialize
             ))]
             #[cfg_attr(all(feature = "std", feature="substrate"), derive(
-                saa_schema::scale_info::TypeInfo)
+                ::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #input 

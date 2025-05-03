@@ -1,3 +1,2 @@
-//mod types;
-mod storage;
-mod cosmos;
+mod types;
+mod actions;
