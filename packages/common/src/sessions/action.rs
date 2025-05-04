@@ -1,9 +1,7 @@
 use core::{fmt::Display, str::FromStr};
 use saa_schema::{strum::IntoDiscriminant, wasm_serde};
 use serde::Serialize;
-
 use crate::AuthError;
-
 
 
 

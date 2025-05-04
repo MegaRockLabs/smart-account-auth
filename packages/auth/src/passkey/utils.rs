@@ -11,3 +11,4 @@ pub fn url_to_base64(url: &str) -> String {
     }
     b64
 }
+

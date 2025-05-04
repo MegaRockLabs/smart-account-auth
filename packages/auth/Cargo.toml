@@ -60,4 +60,5 @@ injective = [
     "saa-common/injective",
     "cosmwasm"
 ]
-wasm = []
+utils = []
+wasm  = []

@@ -5,10 +5,11 @@ mod data;
 mod wasm;
 mod wrapper;
 mod credential;
+mod impls;
 
 pub use saa_schema::wasm_serde;
 pub use saa_auth::caller::Caller;
-pub use credential::Credential;
+pub use credential::{Credential, CredentialName};
 pub use data::{CredentialData, UpdateOperation};
 
 

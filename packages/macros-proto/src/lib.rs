@@ -54,7 +54,7 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
         )]
         #[strum_discriminants(
             derive(::saa_schema::strum_macros::Display),
-            strum(serialize_all = "snake_case")
+            strum(serialize_all = "snake_case", crate = "::saa_schema::strum")
         )]
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
         #left 

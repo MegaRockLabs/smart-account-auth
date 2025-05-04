@@ -1,7 +1,4 @@
-#![allow(unreachable_code)]
-use core::ops::Deref;
-
-use saa_common::{to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, Verifiable};
+use saa_common::{AuthError, Binary, CredentialId};
 use saa_auth::caller::Caller;
 use saa_schema::wasm_serde;
 
@@ -19,15 +16,18 @@ use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
 use saa_auth::cosmos::CosmosArbitrary;
-use strum::IntoDiscriminant;
-use strum_macros::{Display, EnumString};
+use strum_macros::{Display, EnumString, EnumDiscriminants};
 
 
 #[wasm_serde]
-#[derive(strum_macros::EnumDiscriminants)]
-#[strum_discriminants(name(CredentialName), derive(Display, EnumString))]
+#[derive(Display, EnumDiscriminants)]
+#[strum_discriminants(
+    name(CredentialName), 
+    derive(Display, EnumString),
+    strum(serialize_all = "snake_case")
+)]
 pub enum Credential {
-    Caller(Caller),
+    Native(Caller),
 
     #[cfg(feature = "ethereum")]
     EthPersonalSign(EthPersonalSign),
@@ -50,101 +50,8 @@ pub enum Credential {
 
 
 
- impl Deref for Credential {
-    type Target = dyn Verifiable;
 
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Credential::Caller(c) => c,
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c,
-            #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => c,
-            #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c,
-            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
-            Credential::Ed25519(c) => c,
-            #[cfg(feature = "curves")]
-            curve => {
-                match curve {
-                    Credential::Secp256k1(c) => c,
-                    Credential::Secp256r1(c) => c,
-                    Credential::Ed25519(c) => c,
-                    _ => unreachable!(),
-                }
-            },
-        }
-    }
-}
-
-
-
-impl Credential {
-
-    pub fn name(&self) -> CredentialName {
-        self.discriminant()
-    }
-
-    pub fn value(&self) -> &dyn Verifiable {
-        self.deref()
-    }
-
-    pub fn message(&self) -> Vec<u8> {
-        match self {
-            Credential::Caller(_) => Vec::new(),
-            #[cfg(feature = "ethereum")]
-            Credential::EthPersonalSign(c) => c.message.to_vec(),
-            #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c.message.to_vec(),
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => {
-                let base64 =  saa_auth::passkey::utils::url_to_base64(&c.client_data.challenge);
-                Binary::from_base64(&base64).unwrap().to_vec()
-            },
-            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
-            Credential::Ed25519(c) => c.message.to_vec(),
-            #[cfg(feature = "curves")]
-            curve => {
-                match curve {
-                    Credential::Secp256k1(c) => c.message.to_vec(),
-                    Credential::Secp256r1(c) => c.message.to_vec(),
-                    Credential::Ed25519(c) => c.message.to_vec(),
-                    _ => unreachable!(),
-                }
-            },
-        }
-    }
-
-    pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
-        #[cfg(feature = "passkeys")]
-        if let Credential::Passkey(c) = self {
-            use saa_auth::passkey::*;
-            return Ok(Some(to_json_binary(&PasskeyExtension {
-                origin: c.client_data.origin.clone(),
-                cross_origin: c.client_data.cross_origin.clone(),
-                pubkey: c.pubkey.clone(),
-                user_handle: c.user_handle.clone(),
-            })?));
-        }
-        Ok(None)
-    }
-
-    pub fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: self.name().to_string(),
-            hrp: self.hrp(),
-            extension: self.extension().unwrap_or(None),
-        }
-    }
-
-    
-}
-
-
-
-
-
-pub fn construct_credential(
+pub(crate) fn construct_credential(
     id: CredentialId,
     name: CredentialName,
     message: Binary,
@@ -156,7 +63,7 @@ pub fn construct_credential(
     
     let credential = match name {
 
-        CredentialName::Caller => Credential::Caller(saa_auth::caller::Caller { id }),
+        CredentialName::Native => Credential::Native(saa_auth::caller::Caller { id }),
 
         #[cfg(feature = "ethereum")]
         CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_auth::eth::EthPersonalSign {
@@ -168,7 +75,7 @@ pub fn construct_credential(
 
         #[cfg(feature = "cosmos")]
         CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(saa_auth::cosmos::CosmosArbitrary {
-            pubkey: Binary::from_base64(&id).unwrap(),
+            pubkey: Binary::from_base64(&id)?,
             message,
             signature,
             hrp,
@@ -196,7 +103,7 @@ pub fn construct_credential(
             );
             let challenge = saa_auth::passkey::utils::base64_to_url(&message.to_base64());
             let client_data = ClientData::new(
-                "webauthn.get".into(),
+                "webauthn.get",
                 challenge,
                 stored_ext.origin,
                 stored_ext.cross_origin,
@@ -249,6 +156,5 @@ pub fn construct_credential(
         )]
         _ => return Err(AuthError::generic("Credential is not enabled")), */
     };
-
     Ok(credential)
 }

@@ -24,7 +24,7 @@ impl Credential {
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
         use saa_common::utils::*;
         let name = self.name();
-        if name == CredentialName::Caller {
+        if name == CredentialName::Native {
             let addr = api.addr_validate(&self.id())?;
             return Ok(addr)
         }
@@ -65,7 +65,7 @@ impl Credential {
         #[cfg(feature = "replay")]
         {
             let msg : saa_common::messages::MsgDataToVerify = from_json(&self.message())?;
-            msg.validate_cosmwasm(storage, env)?;
+            msg.validate(storage, env)?;
         }
         Ok(())
     }
@@ -82,7 +82,7 @@ impl Credential {
         save_credential(storage, &self.id(), &self.info())?;
         #[cfg(feature = "replay")]
         increment_account_number(storage)?;
-        if let Credential::Caller(_) = self {
+        if let Credential::Native(_) = self {
             CALLER.save(storage, &Some(info.sender.to_string()))?;
         }
         Ok(())

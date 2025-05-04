@@ -45,11 +45,17 @@ pub struct ClientData {
 
 
 impl ClientData {
-    pub fn new(ty: String, challenge: String, origin: String, cross_origin: bool, others: bool) -> Self {
+    pub fn new(
+        ty: impl ToString, 
+        challenge: impl ToString, 
+        origin: impl ToString, 
+        cross_origin: bool, 
+        others: bool
+    ) -> Self {
         Self {
-            ty,
-            challenge,
-            origin,
+            ty: ty.to_string(),
+            challenge: challenge.to_string(),
+            origin: origin.to_string(),
             cross_origin,
             other_keys_can_be_added_here: if others { 
                 Some("do not compare clientDataJSON against a template. See https://goo.gl/yabPex".to_string()) 
@@ -110,6 +116,14 @@ pub struct PasskeyCredential {
 
 #[cfg(any(feature = "wasm", feature = "native"))]
 impl PasskeyCredential {
+    
+    pub fn base64_message_bytes(&self) -> Result<Vec<u8>, AuthError> {
+        let base64_str = super::utils::url_to_base64(&self.client_data.challenge);
+        let binary = Binary::from_base64(&base64_str)
+            .map_err(|_| AuthError::PasskeyChallenge)?;
+        Ok(binary.to_vec())
+    }
+
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
         let mut hasher = Sha256::new();
@@ -132,6 +146,7 @@ impl Verifiable for PasskeyCredential {
         ensure!(self.client_data.challenge.len() > 0, AuthError::generic("Empty challenge"));
         ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
         ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
+        self.base64_message_bytes()?;
         Ok(())
     }
 
@@ -142,7 +157,7 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::generic("Signature verification failed"));
+        ensure!(res, AuthError::generic("Passkey Signature verification failed"));
         Ok(())
     }
 
@@ -154,7 +169,7 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        ensure!(res, AuthError::Signature("Passkey Signature verification failed".to_string()));
         Ok(())
     }
 

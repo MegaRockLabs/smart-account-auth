@@ -110,4 +110,4 @@ types       = []
 traits      = []
 
 # Enable the export of inner utils that the lib uses
-utils       = []
+utils       = ["saa-auth/utils"]

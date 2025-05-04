@@ -24,10 +24,7 @@ mod tests {
             pubkey: Some(public_key.clone()), 
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
-            client_data: ClientData::new(
-                "webauthn.get".into(),
-                "MTIz".into(),
-                "http://localhost:5173".into(),
+            client_data: ClientData::new("webauthn.get", "MTIz","http://localhost:5173",
                 false,
                 false
             ), 
@@ -68,9 +65,9 @@ mod tests {
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
             client_data: ClientData::new(
-                "webauthn.get".into(),
+                "webauthn.get",
                 challenge,
-                "http://localhost:5173".into(),
+                "http://localhost:5173",
                 false,
                 false
             ), 
@@ -79,9 +76,6 @@ mod tests {
         let res = credential.verify_cosmwasm(deps.api);
         assert!(res.is_ok());
     }
-
-
-
 
 
 
@@ -128,9 +122,9 @@ mod tests {
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
             client_data: ClientData::new(
-                "webauthn.get".into(),
+                "webauthn.get",
                 challenge,
-                "http://localhost:5173".into(),
+                "http://localhost:5173",
                 false,
                 false
             ), 
@@ -168,9 +162,9 @@ mod tests {
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
             client_data: ClientData::new(
-                "webauthn.get".into(),
+                "webauthn.get",
                 challenge.clone(),
-                "http://localhost:5173".into(),
+                "http://localhost:5173",
                 false,
                 true
             ), 
@@ -186,9 +180,9 @@ mod tests {
             signature: signature.clone(), 
             authenticator_data: authenticator_data.clone(), 
             client_data: ClientData::new(
-                "webauthn.get".into(),
+                "webauthn.get",
                 challenge,
-                "http://localhost:5173".into(),
+                "http://localhost:5173",
                 false,
                 false
             ), 

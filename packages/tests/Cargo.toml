@@ -9,7 +9,8 @@ repository  = { workspace = true }
 
 
 [dependencies]
-smart-account-auth  = { workspace = true, features = ["cosmwasm"] }
+smart-account-auth  = { workspace = true, features = ["cosmwasm", "replay", "iterator", "curves", "utils"] }
+saa-common          = { workspace = true, features = ["cosmwasm", "replay"] }
 saa-schema          = { workspace = true, features = ["cosmwasm"] }
 
 cosmwasm-std        = { workspace = true, optional = true }
@@ -41,7 +42,8 @@ default     = [
     "cosmwasm",
     "native",
     "types",
-    "session"
+    "session",
+    "passkey",
 ]
 
 cosmwasm    = [
@@ -78,6 +80,7 @@ substrate = [
 replay     = [
     "smart-account-auth/replay",
 ]
-storage    = []
 types = ["smart-account-auth/types"]
 session = ["smart-account-auth/session"]
+storage = []
+passkey = []

@@ -10,6 +10,7 @@ pub enum AuthError {
     InvalidLength(String),
     RecoveryParam,
     RecoveryMismatch,
+    InvalidSignedData,
     Signature(String),
     Recovery(String),
     Generic(String),
@@ -59,6 +60,12 @@ pub enum AuthError {
 
     #[error("Wrong account number")]
     DifferentNonce,
+
+    #[error("The signed data is expected to be a replay attach protection envelope")]
+    InvalidSignedData,
+
+    #[error("Passkey challenge must be base64url to base64 encoded string")]
+    PasskeyChallenge,
 
     #[error("{0}")]
     Signature(String),

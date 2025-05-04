@@ -9,6 +9,7 @@ pub trait Verifiable  {
     fn hrp(&self) -> Option<String> {
         None
     }
+    
 
     fn validate(&self) -> Result<(), AuthError>;
 
@@ -29,11 +30,6 @@ pub trait Verifiable  {
 
 }
 
-
-#[cfg(feature = "session")]
-pub trait ActionName {
-    fn action_name(&self) -> String;
-}
 
 
 

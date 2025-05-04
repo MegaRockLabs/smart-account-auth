@@ -11,6 +11,14 @@ pub struct Caller {
 
 
 
+impl From<&str> for Caller {
+    fn from(s: &str) -> Self {
+        Caller {
+            id: s.to_string()
+        }
+    }
+}
+
 #[cfg(feature = "wasm")]
 impl From<&MessageInfo> for Caller {
     fn from(info: &MessageInfo) -> Self {

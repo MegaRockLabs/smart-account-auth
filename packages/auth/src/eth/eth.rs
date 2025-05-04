@@ -20,7 +20,8 @@ pub struct EthPersonalSign {
 impl Verifiable for EthPersonalSign {
 
     fn id(&self) -> CredentialId {
-        self.signer.clone()
+        //format!("0x{}", self.signer.to_lowercase())
+        self.signer.to_string()
     }
 
     fn hrp(&self) -> Option<String> {
@@ -57,11 +58,12 @@ impl Verifiable for EthPersonalSign {
             get_recovery_param(signature[64])?
         )?;
         let hash = saa_common::hashes::keccak256(&key_data[1..]);
-        let recovered = String::from_utf8(
-            hash[12..].to_vec()
-        ).map_err(|_| AuthError::RecoveryMismatch)?;
+
+        let addr_bytes = hex::decode(&self.signer[2..])
+        .map_err(|e| AuthError::generic(e.to_string()))?;
     
-        ensure!(self.signer == recovered, AuthError::RecoveryMismatch);
+        ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
+        
         Ok(())
     }
 
@@ -83,6 +85,7 @@ impl Verifiable for EthPersonalSign {
             .map_err(|e| AuthError::generic(e.to_string()))?;
         
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
+
         Ok(())
     }
 

@@ -1,49 +1,15 @@
 use std::{fmt::Display, str::FromStr};
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
-use cosmwasm_std::{testing::{mock_dependencies, mock_env, mock_info}, BankMsg, CosmosMsg};
-use saa_schema::session_action;
+use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use serde::Serialize;
-use smart_account_auth::{sessions::{
+use smart_account_auth::sessions::{
         action::{Action, AllowedActions},
-        key::{SessionKey, Authority}
-    }, 
-    CredentialData
-};
+        key::SessionKey
+    };
 
 use smart_account_auth::types::expiration::Expiration;
-
-
-
-#[session_action]
-#[cw_serde]
-pub enum ExecuteMsg {
-
-    Execute { 
-        msgs: Vec<CosmosMsg> 
-    },
-
-    #[strum(to_string = "{{ \"mint_token\": {{ \"minter\": \"{minter}\" }} }}")]
-    MintToken {
-        minter: String,
-        msg: Option<CosmosMsg>
-    },
-
-    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{id}\",\"to\":\"{to}\"}}}}")]
-    TransferToken {
-        id: String,
-        to: String,
-    },
-
-    UpdateAccountData {
-        account_data: Option<CredentialData>,
-    },
-
-    #[strum(to_string = "freeeeeze")]
-    Freeze {},
-
-    Purge {},
-}
+use crate::types::{BankMsg, CosmosMsg, ExecuteMsg};
 
 
 
@@ -78,8 +44,8 @@ fn session_actions_simple() {
     let key = SessionKey {
         actions: AllowedActions::List(actions),
         expiration: Expiration::AtHeight(env.block.height + 100),
-        granter: Authority::Address(alice.sender.to_string()),
-        grantee: Authority::Address(bob.sender.to_string()),
+        granter: Some(alice.sender.to_string()),
+        grantee: bob.sender.to_string(),
     };
 
     SESSION_KEYS.save(storage, &key).unwrap();
@@ -207,25 +173,20 @@ fn json_derivations() {
         to: String::from("alice"),
     };
 
-    let transfer_action = Action::with_serde_json(
-        transfer_msg.clone()
-    ).unwrap();
-
-    let mint_action = Action::with_serde_json(
-        ExecuteMsg::MintToken { 
-            minter: "rock1...".into(), 
-            msg: Some(CosmosMsg::Bank(BankMsg::Send {
-                to_address: String::from("to_address"),
-                amount: vec![],
-            })), 
-        }
-    ).unwrap();
+    let mint_msg = ExecuteMsg::MintToken { 
+        minter: "rock1...".into(), 
+        msg: Some(CosmosMsg::Bank(BankMsg::Send {
+            to_address: String::from("to_address"),
+            amount: vec![],
+        })), 
+    };
 
 
-    let actions = AllowedActions::List(vec![
-        mint_action,
-        transfer_action
-    ]);
+    let mint_action = Action::with_serde_json(mint_msg.clone()).unwrap();
+    let transfer_action = Action::with_serde_json(transfer_msg.clone()).unwrap();
+
+
+    let actions = AllowedActions::List(vec![mint_action, transfer_action]);
 
 
     // Not Ok: Different id
@@ -267,8 +228,13 @@ fn json_derivations() {
         }))
     }));
 
+
+    // Not Ok: to_string() includes extra spaces and doesn include msg
+    assert!(!actions.is_str_allowed(&Action::with_str(mint_msg)));
+
     // Ok: to_sring() is same as serde_json::to_string()
     assert!(actions.is_str_allowed(&Action::with_str(transfer_msg)));
+
 }
 
 

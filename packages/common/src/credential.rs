@@ -18,9 +18,10 @@ pub struct CredentialInfo {
 
 
 
-#[wasm_serde]
+/* #[wasm_serde]
 pub struct AccountCredentials {
     pub credentials: Vec<(CredentialId, CredentialInfo)>,
     pub verifying_id: CredentialId,
     pub native_caller: Option<CredentialId>,
 }
+ */

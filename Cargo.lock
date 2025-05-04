@@ -1918,6 +1918,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "parity-scale-codec",
+ "saa-common",
  "saa-schema",
  "scale-info",
  "schemars",

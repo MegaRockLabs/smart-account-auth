@@ -1,10 +1,17 @@
 use crate::{
-    stores::{ACCOUNT_NUMBER, CALLER, CREDENTIAL_INFOS, VERIFYING_CRED_ID}, 
-    AuthError, CredentialInfo
+    AuthError, CredentialInfo, CredentialId,
+    wasm::{Storage, StdError, Order},
+    stores::{ACCOUNT_NUMBER, CALLER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, 
 };
 
-use crate::wasm::{Storage, StdError};
-use crate::CredentialId;
+
+
+pub fn load_count(storage: &dyn Storage) -> usize {
+    #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
+    return CREDENTIAL_INFOS.get_len(storage).unwrap_or(0) as usize;
+    #[cfg(feature = "cosmwasm")]
+    CREDENTIAL_INFOS.keys(storage, None, None, Order::Ascending).count()
+}
 
 
 pub fn increment_account_number(
@@ -27,7 +34,7 @@ pub fn increment_account_number(
 
 
 
-pub fn load_credential_info(
+pub fn load_credential(
     storage: &dyn Storage,
     id: CredentialId
 ) -> Result<CredentialInfo, AuthError> {
@@ -54,6 +61,8 @@ pub fn save_credential(
 }
 
 
+
+
 pub fn remove_credential(
     storage: &mut dyn Storage,
     id: &CredentialId
@@ -66,10 +75,60 @@ pub fn remove_credential(
 }
 
 
+pub fn checked_remaining(
+    storage: &mut dyn Storage,
+    remaining: Vec<(CredentialId, CredentialInfo)>,
+    check_verifying: bool,
+    check_natives: bool,
+    verifying_id: Option<CredentialId>,
+) -> Result<(), AuthError> {
+    if remaining.is_empty() {
+        if check_verifying {
+            VERIFYING_CRED_ID.remove(storage);
+        }
+        if check_natives {
+            HAS_NATIVES.save(storage, &false)?;
+        }
+        return Ok(());
+    }
+    
+    if check_verifying {
+        let id = verifying_id.unwrap_or(remaining[0].0.clone());
+        VERIFYING_CRED_ID.save(storage, &id)?;
+    }
+
+    if check_natives {
+        let has: bool = remaining.iter().any(|(_, info)| info.name == "native");
+        HAS_NATIVES.save(storage, &has)?;
+    }
+    Ok(())
+}
+
+
+pub fn remove_credential_smart(
+    storage: &mut dyn Storage,
+    id: &CredentialId,
+) -> Result<(), AuthError> {
+    remove_credential(storage, id)?;
+    let remaining = get_all_credentials(storage)?;
+    let check_ver = VERIFYING_CRED_ID.load(storage)? == *id;
+
+    checked_remaining(
+        storage, 
+        remaining, 
+        check_ver,
+        true, 
+        None
+    )
+}
+
+
+
 pub fn reset_credentials(
     storage: &mut dyn Storage,
 ) -> Result<(), AuthError> {
     VERIFYING_CRED_ID.remove(storage);
+    HAS_NATIVES.remove(storage);
     CALLER.remove(storage);
     #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
     {
@@ -99,7 +158,7 @@ pub fn has_credential(
 
 
 #[cfg(all(feature = "cosmwasm", feature = "iterator"))]
-pub fn get_credentials(
+pub fn get_all_credentials(
     storage: &dyn Storage
 ) -> Result<Vec<(CredentialId, CredentialInfo)>, AuthError> {
     let credentials = CREDENTIAL_INFOS
@@ -110,7 +169,7 @@ pub fn get_credentials(
 
 
 #[cfg(all(feature = "secretwasm", feature = "iterator", not(feature = "cosmwasm")))]
-pub fn get_credentials(
+pub fn get_all_credentials(
     storage: &dyn Storage
 ) -> Result<Vec<(CredentialId, CredentialInfo)>, AuthError> {
     let credentials = CREDENTIAL_INFOS

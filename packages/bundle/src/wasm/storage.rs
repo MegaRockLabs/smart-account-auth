@@ -2,16 +2,30 @@ use core::str::FromStr;
 
 use saa_common::{messages::SignedDataMsg,  
     stores::VERIFYING_CRED_ID,
-    wasm::{storage::load_credential_info, Api, Env, Storage}, 
+    wasm::{Api, Env, Storage, storage}, 
     AuthError
 };
 
-use crate::credential::{construct_credential, Credential, CredentialName};
+use crate::credential::{
+    construct_credential, 
+    Credential, 
+    CredentialName
+};
 
-pub use saa_common::wasm::storage::reset_credentials;
+pub use storage::reset_credentials;
+
+#[cfg(feature = "types")]
+pub use saa_common::stores;
+#[cfg(feature = "utils")]
+pub use storage::{load_count, remove_credential, save_credential, load_credential, remove_credential_smart};
+#[cfg(feature = "iterator")]
+pub use storage::get_all_credentials;
 
 
-fn load_credential(
+
+
+
+fn credential_from_message(
     storage:   &dyn Storage,
     data_msg:  SignedDataMsg
 ) -> Result<Credential, AuthError> {
@@ -19,7 +33,7 @@ fn load_credential(
 
     let id = match data_msg.payload.clone() {
         Some(payload) => {
-            payload.validate_cosmwasm(storage)?;
+            payload.validate()?;
             if let Some(id) = payload.credential_id {
                 id
             } else if let Some(address) = payload.address {
@@ -36,7 +50,7 @@ fn load_credential(
             initial_id
         }
     };
-    let info = load_credential_info(storage, id.clone())?;
+    let info = storage::load_credential(storage, id.clone())?;
 
     construct_credential(
         id, 
@@ -51,13 +65,14 @@ fn load_credential(
 
 
 
+
 pub fn verify_signed_queries(
     api: &dyn Api,
     storage: &dyn Storage,
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = load_credential(storage, data)?;
+    let credential = credential_from_message(storage, data)?;
     credential.assert_cosmwasm(api, storage, env)?;
     Ok(())
 }
@@ -70,18 +85,18 @@ pub fn verify_signed_actions(
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
-    super::verify_signed_queries(api, storage, env, data)?;
+    verify_signed_queries(api, storage, env, data)?;
     saa_common::wasm::storage::increment_account_number(storage)?;
     Ok(())
 }
 
-
+/* 
 #[cfg(feature = "iterator")]
 pub fn get_all_credentials(
     storage:  &dyn Storage,
 ) -> Result<saa_common::AccountCredentials, AuthError> {
 
-    let credentials = saa_common::wasm::storage::get_credentials(storage)?;
+    let credentials = saa_common::wasm::storage::get_all_credentials(storage)?;
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
 
     let native_caller = saa_common::stores::CALLER.load(
@@ -94,4 +109,4 @@ pub fn get_all_credentials(
         verifying_id,
     })
 
-}
+} */
