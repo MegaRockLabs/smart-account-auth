@@ -75,52 +75,6 @@ pub fn remove_credential(
 }
 
 
-pub fn checked_remaining(
-    storage: &mut dyn Storage,
-    remaining: Vec<(CredentialId, CredentialInfo)>,
-    check_verifying: bool,
-    check_natives: bool,
-    verifying_id: Option<CredentialId>,
-) -> Result<(), AuthError> {
-    if remaining.is_empty() {
-        if check_verifying {
-            VERIFYING_CRED_ID.remove(storage);
-        }
-        if check_natives {
-            HAS_NATIVES.save(storage, &false)?;
-        }
-        return Ok(());
-    }
-    
-    if check_verifying {
-        let id = verifying_id.unwrap_or(remaining[0].0.clone());
-        VERIFYING_CRED_ID.save(storage, &id)?;
-    }
-
-    if check_natives {
-        let has: bool = remaining.iter().any(|(_, info)| info.name == "native");
-        HAS_NATIVES.save(storage, &has)?;
-    }
-    Ok(())
-}
-
-
-pub fn remove_credential_smart(
-    storage: &mut dyn Storage,
-    id: &CredentialId,
-) -> Result<(), AuthError> {
-    remove_credential(storage, id)?;
-    let remaining = get_all_credentials(storage)?;
-    let check_ver = VERIFYING_CRED_ID.load(storage)? == *id;
-
-    checked_remaining(
-        storage, 
-        remaining, 
-        check_ver,
-        true, 
-        None
-    )
-}
 
 
 

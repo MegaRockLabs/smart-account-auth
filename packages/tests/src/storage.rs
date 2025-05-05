@@ -1,7 +1,55 @@
-use cosmwasm_std::testing::{mock_dependencies, mock_info};
-use saa_common::{stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::storage::save_credential, Verifiable};
-use smart_account_auth::{storage::{get_all_credentials, load_count, remove_credential, remove_credential_smart, reset_credentials, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}}, Caller, Credential, CredentialName, CredentialsWrapper};
+use cosmwasm_std::{testing::{mock_dependencies, mock_info}, Storage};
+use saa_common::{stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::storage::save_credential, AuthError, CredentialId, CredentialInfo, Verifiable};
+use smart_account_auth::{storage::{get_all_credentials, load_count, remove_credential, reset_credentials, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}, update_credentials}, Caller, Credential, CredentialData, CredentialName, CredentialsWrapper, UpdateOperation};
 use crate::vars::{cred_data_non_native, cred_data_only_native, credential_data, default_cred_count, get_cosmos_arbitrary, get_eth_personal, get_mock_env, get_passkey};
+
+
+fn checked_remaining(
+    storage: &mut dyn Storage,
+    remaining: Vec<(CredentialId, CredentialInfo)>,
+    check_verifying: bool,
+    check_natives: bool,
+    verifying_id: Option<CredentialId>,
+) -> Result<(), AuthError> {
+    if remaining.is_empty() {
+        if check_verifying {
+            VERIFYING_CRED_ID.remove(storage);
+        }
+        if check_natives {
+            HAS_NATIVES.save(storage, &false)?;
+        }
+        return Ok(());
+    }
+    
+    if check_verifying {
+        let id = verifying_id.unwrap_or(remaining[0].0.clone());
+        VERIFYING_CRED_ID.save(storage, &id)?;
+    }
+
+    if check_natives {
+        let has: bool = remaining.iter().any(|(_, info)| info.name == "native");
+        HAS_NATIVES.save(storage, &has)?;
+    }
+    Ok(())
+}
+
+
+fn remove_credential_smart(
+    storage: &mut dyn Storage,
+    id: &CredentialId,
+) -> Result<(), AuthError> {
+    remove_credential(storage, id)?;
+    let remaining = get_all_credentials(storage)?;
+    let check_ver = VERIFYING_CRED_ID.load(storage)? == *id;
+
+    checked_remaining(
+        storage, 
+        remaining, 
+        check_ver,
+        true, 
+        None
+    )
+}
 
 
 #[test]
@@ -130,3 +178,74 @@ fn save_cred_data_with_native_caller() {
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), *id);
     assert_eq!(CredentialName::Native.to_string(), info.name);
 }
+
+
+
+
+
+
+#[test]
+fn update_cred_data_remove_simple() {
+    let mut mocks = mock_dependencies();
+    let deps = mocks.as_mut();
+    let api = deps.api;
+    let storage = deps.storage;
+    let env = get_mock_env();
+
+    let alice = mock_info("alice", &[]);
+    let bob = mock_info("bob", &[]);
+
+    let eth_cred : Credential = get_eth_personal().into();
+    let cosmos_cred : Credential = get_cosmos_arbitrary().into();
+    let passkey_cred : Credential = get_passkey().into();
+    let alice_cred : Credential = Caller::from(&alice).into();
+
+    let data= CredentialData{
+                credentials: vec![passkey_cred.clone(), eth_cred.clone()],
+                use_native: Some(true),
+                primary_index: None,
+            }
+            .with_native_caller(&alice)
+            .save(api, storage, &env)
+            .unwrap();
+
+    assert_eq!(load_count(storage), 3);
+    
+    // error due to invalid arguments
+    let empty = UpdateOperation::Remove(vec![]);
+    assert!(update_credentials(api, storage, &env, &alice, empty, None).is_err());
+
+    // ok but no change cause the id is not there
+    let op = UpdateOperation::Remove(vec![cosmos_cred.id()]);
+    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    // error: data is valid but the caller is no authorized
+    assert!(update_credentials(api, storage, &env, &bob, op.clone(), None).is_err());
+    assert!(load_count(storage) == 3);
+
+
+    // ok but removing verifying credential
+    let op = UpdateOperation::Remove(vec![passkey_cred.id()]);
+    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    assert!(load_count(storage) == 2);
+    assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), eth_cred.id());
+
+    // ok but same thing doesnt't do anything
+    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+
+
+    // ok but can't use alice anymore
+    let op = UpdateOperation::Remove(vec![alice_cred.id()]);
+    assert!(HAS_NATIVES.load(storage).unwrap());
+    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    // should update has natives flag to false
+    assert!(!HAS_NATIVES.load(storage).unwrap());
+    assert!(load_count(storage) == 1);
+    
+    /* let res = update_credentials(api, storage, &env, &alice, op, None);
+    println!("Update res passkey: {:?}, count after {:?}", res, load_count(storage));
+ */
+    assert!(false);
+}
+
+
+

@@ -68,10 +68,10 @@ impl CredentialData {
         }
         let mut has_natives = false;
         for cred in self.credentials() {
-            ensure!(!has_credential(storage, &cred.id()), AuthError::AlreadyExists);
-            cred.validate()?;
+            let id = &cred.id();
+            //println!("Saving credential: {:?} with id {:?}", cred.name(), id);
             cred.verify_cosmwasm(api)?;
-            save_credential(storage, &cred.id(), &cred.info())?;
+            save_credential(storage, id, &cred.info())?;
             if cred.name() == CredentialName::Native { has_natives = true }
         }
         HAS_NATIVES.save(storage, &has_natives)?;

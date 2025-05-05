@@ -15,7 +15,7 @@ pub use storage::reset_credentials;
 #[cfg(feature = "types")]
 pub use saa_common::stores;
 #[cfg(feature = "utils")]
-pub use storage::{load_count, remove_credential, save_credential, load_credential, remove_credential_smart};
+pub use storage::{load_count, remove_credential, save_credential, load_credential};
 #[cfg(feature = "iterator")]
 pub use storage::get_all_credentials;
 
@@ -120,6 +120,7 @@ pub fn update_credentials(
 
     match op {
         UpdateOperation::Add(data) => {
+            ensure!(!data.credentials.is_empty(), AuthError::generic("Must supply at least one credential to add"));
             let data = match msg {
                 Some(msg) => {
                     let cred = credential_from_message(storage, msg)?;
@@ -141,11 +142,11 @@ pub fn update_credentials(
         },
 
         UpdateOperation::Remove(idx) => {
+            ensure!(!idx.is_empty(), AuthError::generic("Must supply at least one credential to remove"));
             match msg {
                 Some(msg) => verify_signed(api, storage, env, msg)?,
                 None => verify_caller(api, storage, env, info)?
             };
-    
             remove_credentials(storage, idx, had_natives)
         }
     }
@@ -197,6 +198,9 @@ fn remove_credentials(
     let left = all_creds.len() - idx.len();
     ensure!(left > 0, AuthError::generic("Must leave at least one credential"));
 
+    println!("Removing credentials Names before {:?}", all_creds.iter().map(|(_, i)| i.name.clone()).collect::<Vec<_>>());
+    println!("Removing credentials Ids before {:?}", all_creds.iter().map(|(id, _)| id.clone()).collect::<Vec<_>>());
+    println!("Removing credentials with id {:?}", idx);
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
     let mut native_changed = false;
     let mut verifying_removed = false;
@@ -211,11 +215,14 @@ fn remove_credentials(
                 if *id == verifying_id {
                     verifying_removed = true;
                 }
+                println!("Removing credential with id {:?}", id);
                 remove_credential(storage, &id).is_err()
             } else {
                 true
             }
         }).collect();
+    
+    println!("Removing credentials All after {:?}", remaining.iter().map(|(_, i)| i.name.clone()).collect::<Vec<_>>());
         
     if had_natives && native_changed {
         let still_has = remaining
