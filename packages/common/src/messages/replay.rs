@@ -10,6 +10,8 @@ pub struct MsgDataToSign<M = String> {
 }
 
 
+
+
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "wasm", derive(
     ::saa_schema::serde::Serialize,

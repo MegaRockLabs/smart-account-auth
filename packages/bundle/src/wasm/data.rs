@@ -1,6 +1,6 @@
 use saa_common::{ 
     ensure, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{
-        storage::{has_credential, increment_account_number, save_credential}, 
+        storage::{increment_account_number, save_credential}, 
         Api, Env, Storage
     }, AuthError, Verifiable
 };

@@ -15,9 +15,6 @@ pub const HAS_NATIVES : Item<bool> = Item::new(b"saa_has_natives");
 pub const CREDENTIAL_INFOS: Keymap<CredentialId, CredentialInfo> = Keymap::new(b"saa_credentials");
 
 
-/// An EOA address that is authorized to actions withoit any signature
-pub const CALLER : Item<Option<String>> = Item::new(b"saa_with_caller");
-
 /// Storage of used nonces  to prevent replay attacks. &str to boolean
 #[cfg(feature = "replay")]
 pub const ACCOUNT_NUMBER : Item<u128> = Item::new(b"saa_acc_num");

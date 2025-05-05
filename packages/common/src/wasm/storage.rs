@@ -1,7 +1,7 @@
 use crate::{
     AuthError, CredentialInfo, CredentialId,
     wasm::{Storage, StdError, Order},
-    stores::{ACCOUNT_NUMBER, CALLER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, 
+    stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, 
 };
 
 
@@ -82,8 +82,8 @@ pub fn reset_credentials(
     storage: &mut dyn Storage,
 ) -> Result<(), AuthError> {
     VERIFYING_CRED_ID.remove(storage);
+    ACCOUNT_NUMBER.remove(storage);
     HAS_NATIVES.remove(storage);
-    CALLER.remove(storage);
     #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
     {
         let keys : Vec<CredentialId> = CREDENTIAL_INFOS

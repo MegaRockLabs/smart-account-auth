@@ -1,5 +1,5 @@
 use saa_common::{
-    ensure, messages::SignedDataMsg, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{storage::{self, has_credential}, 
+    ensure, from_json, messages::SignedDataMsg, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{storage::{self, has_credential}, 
     Api, Env, MessageInfo, Storage
 }, AuthError, CredentialId, CredentialInfo, Verifiable};
 use core::str::FromStr;
@@ -9,6 +9,12 @@ use crate::{credential::{
     Credential, 
     CredentialName
 }, CredentialData, UpdateOperation};
+
+#[cfg(feature = "replay")]
+use saa_common::{
+    wasm::storage::increment_account_number,
+    messages::MsgDataToSign
+};
 
 pub use storage::reset_credentials;
 
@@ -75,6 +81,23 @@ pub fn verify_caller(
 }
 
 
+#[cfg(feature = "replay")]
+pub fn verify_signed<T : serde::de::DeserializeOwned>(
+    api: &dyn Api,
+    storage: &mut dyn Storage,
+    env: &Env,
+    msg: SignedDataMsg
+) -> Result<Vec<T>, AuthError> {
+    let credential = credential_from_message(storage, msg.clone())?;
+    credential.verify_cosmwasm(api)?;
+    increment_account_number(storage)?;
+    let msgs : MsgDataToSign<T> = from_json(msg.data)?;
+    msgs.validate(storage, env)?;
+    Ok(msgs.messages)
+}
+
+
+#[cfg(not(feature = "replay"))]
 pub fn verify_signed(
     api: &dyn Api,
     #[cfg(feature = "replay")]
@@ -84,13 +107,10 @@ pub fn verify_signed(
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = credential_from_message(storage, data)?;
-    #[cfg(feature = "replay")]
-    {   credential.assert_signed_data(storage, env)?;
-        saa_common::wasm::storage::increment_account_number(storage)?;
-    }
-    credential.verify_cosmwasm(api)
+    credential_from_message(storage, data)?
+    .verify_cosmwasm(api)
 }
+
 
 
 
@@ -107,48 +127,60 @@ pub fn save_credentials(
 }
 
 
+#[cfg(feature = "replay")]
+pub fn update_credentials_signed(
+    api: &dyn Api,
+    storage: &mut dyn Storage,
+    env: &Env,
+    info: &MessageInfo,
+    msg: SignedDataMsg
+) -> Result<(), AuthError> {
+
+    let cred = credential_from_message(storage, msg.clone())?;
+    cred.verify_cosmwasm(api)?;
+
+    let sender = info.sender.as_str();
+    let to_sign : MsgDataToSign<UpdateOperation> = from_json(msg.data)?;
+    let ops = to_sign.messages.clone();
+
+    let mut adds_found = false;
+
+    for op in ops {
+        let had_natives = HAS_NATIVES.load(storage)?;
+        match op {
+            UpdateOperation::Add(data) => {
+                adds_found = true;
+                data.with_credential(cred.clone()).assert_signed_data(storage, env)?;
+                add_credentials(api, storage, data.with_native_caller(sender), had_natives)?;
+            },
+            UpdateOperation::Remove(idx) => {
+                remove_credentials(storage, idx, had_natives)?;
+            }
+        }
+    }
+    if !adds_found {
+        to_sign.validate(storage, env)?;
+        saa_common::wasm::storage::increment_account_number(storage)?;
+    }
+
+    Ok(())
+}
+
+
+
 pub fn update_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
     env: &Env,
     info: &MessageInfo,
     op: UpdateOperation,
-    msg: Option<SignedDataMsg>
 ) -> Result<(), AuthError> {
-
     let had_natives = HAS_NATIVES.load(storage)?;
-
+    ensure!(had_natives, AuthError::generic("Must supplly signed message to construct a credential"));
+    verify_caller(api, storage, env, info)?;
     match op {
-        UpdateOperation::Add(data) => {
-            ensure!(!data.credentials.is_empty(), AuthError::generic("Must supply at least one credential to add"));
-            let data = match msg {
-                Some(msg) => {
-                    let cred = credential_from_message(storage, msg)?;
-                    cred.verify_cosmwasm(api)?;
-        
-                    #[cfg(feature = "replay")]
-                    data.with_credential(cred)
-                        .assert_signed_data(storage, env)?;
-        
-                    data.with_native_caller(info.sender.as_str())
-                },
-                None => {
-                    ensure!(had_natives, AuthError::generic("Must supplly signed message to construct a credential"));
-                    verify_caller(api, storage, env, info)?;
-                    data
-                }
-            };
-            add_credentials(api, storage, data, had_natives)
-        },
-
-        UpdateOperation::Remove(idx) => {
-            ensure!(!idx.is_empty(), AuthError::generic("Must supply at least one credential to remove"));
-            match msg {
-                Some(msg) => verify_signed(api, storage, env, msg)?,
-                None => verify_caller(api, storage, env, info)?
-            };
-            remove_credentials(storage, idx, had_natives)
-        }
+        UpdateOperation::Add(data) => add_credentials(api, storage, data, had_natives),
+        UpdateOperation::Remove(idx) => remove_credentials(storage, idx, had_natives)
     }
 }
 
@@ -162,6 +194,7 @@ fn add_credentials(
     data: CredentialData,
     had_natives: bool
 ) -> Result<(), AuthError> {
+    ensure!(!data.credentials.is_empty(), AuthError::generic("Must supply at least one credential to add"));
     
     data.validate()?;
     data.verify_cosmwasm(api)?;
@@ -194,13 +227,12 @@ fn remove_credentials(
     idx: Vec<CredentialId>,
     had_natives: bool
 ) -> Result<(), AuthError> {
+    ensure!(!idx.is_empty(), AuthError::generic("Must supply at least one credential to remove"));
+
     let all_creds = get_all_credentials(storage)?;
     let left = all_creds.len() - idx.len();
     ensure!(left > 0, AuthError::generic("Must leave at least one credential"));
 
-    println!("Removing credentials Names before {:?}", all_creds.iter().map(|(_, i)| i.name.clone()).collect::<Vec<_>>());
-    println!("Removing credentials Ids before {:?}", all_creds.iter().map(|(id, _)| id.clone()).collect::<Vec<_>>());
-    println!("Removing credentials with id {:?}", idx);
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
     let mut native_changed = false;
     let mut verifying_removed = false;
@@ -215,14 +247,11 @@ fn remove_credentials(
                 if *id == verifying_id {
                     verifying_removed = true;
                 }
-                println!("Removing credential with id {:?}", id);
                 remove_credential(storage, &id).is_err()
             } else {
                 true
             }
         }).collect();
-    
-    println!("Removing credentials All after {:?}", remaining.iter().map(|(_, i)| i.name.clone()).collect::<Vec<_>>());
         
     if had_natives && native_changed {
         let still_has = remaining
@@ -232,9 +261,16 @@ fn remove_credentials(
     }
 
     if verifying_removed {
-        let first = all_creds.first().unwrap();
+        let first = remaining.first().unwrap();
         VERIFYING_CRED_ID.save(storage, &first.0)?;
     }
 
     Ok(())
+}
+
+
+pub fn has_natives(
+    storage: &dyn Storage
+) -> bool {
+    HAS_NATIVES.load(storage).unwrap_or(false)
 }

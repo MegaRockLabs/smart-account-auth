@@ -213,38 +213,59 @@ fn update_cred_data_remove_simple() {
     
     // error due to invalid arguments
     let empty = UpdateOperation::Remove(vec![]);
-    assert!(update_credentials(api, storage, &env, &alice, empty, None).is_err());
+    assert!(update_credentials(api, storage, &env, &alice, empty).is_err());
 
     // ok but no change cause the id is not there
     let op = UpdateOperation::Remove(vec![cosmos_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
     // error: data is valid but the caller is no authorized
-    assert!(update_credentials(api, storage, &env, &bob, op.clone(), None).is_err());
+    assert!(update_credentials(api, storage, &env, &bob, op.clone()).is_err());
     assert!(load_count(storage) == 3);
 
 
     // ok but removing verifying credential
     let op = UpdateOperation::Remove(vec![passkey_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
     assert!(load_count(storage) == 2);
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), eth_cred.id());
 
     // ok but same thing doesnt't do anything
-    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
 
 
     // ok but can't use alice anymore
     let op = UpdateOperation::Remove(vec![alice_cred.id()]);
     assert!(HAS_NATIVES.load(storage).unwrap());
-    assert!(update_credentials(api, storage, &env, &alice, op.clone(), None).is_ok());
+    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
     // should update has natives flag to false
     assert!(!HAS_NATIVES.load(storage).unwrap());
     assert!(load_count(storage) == 1);
-    
-    /* let res = update_credentials(api, storage, &env, &alice, op, None);
-    println!("Update res passkey: {:?}, count after {:?}", res, load_count(storage));
- */
-    assert!(false);
+
+
+    // reset credentials
+    reset_credentials(storage).unwrap();
+    data.save(api, storage, &env).unwrap();
+
+    // error: can't remove all three
+    let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id(), alice_cred.id()]);
+    assert!(update_credentials(api, storage, &env, &alice, op).is_err());
+
+
+    // leave last one
+    assert_eq!(load_count(storage), 3);
+    assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), passkey_cred.id());
+    assert!(HAS_NATIVES.load(storage).unwrap());
+
+    let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id()]);
+    assert!(update_credentials(api, storage, &env, &alice, op).is_ok());
+    assert!(HAS_NATIVES.load(storage).unwrap());
+    assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), alice_cred.id());
+    assert_eq!(load_count(storage), 1);
+
+    //assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_err());
+    let op = UpdateOperation::Remove(vec![alice_cred.id()]);
+    let res = update_credentials(api, storage, &env, &alice, op).unwrap_err();
+    assert!(res.to_string().contains("at least one credential"));
 }
 
 
