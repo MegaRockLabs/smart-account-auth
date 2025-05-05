@@ -13,6 +13,22 @@ use saa_common::{
     ensure
 };
 
+#[cfg(feature = "replay")]
+impl Credential {
+    pub fn assert_signed_data(
+        &self, 
+        storage: &dyn Storage, 
+        env: &Env,
+    ) -> Result<(), AuthError> {
+        use saa_common::{messages::MsgDataToVerify as Msg, from_json};
+        let msg_data : Msg  = from_json(&self.message()).map_err(|_| AuthError::InvalidSignedData)?;
+        msg_data.validate(storage, env)?;
+        Ok(())
+    }
+}
+
+
+
 
 
 impl Credential {

@@ -170,9 +170,9 @@ impl Verifiable for CredentialData {
 
     fn validate(&self) -> Result<(), AuthError> {
         let creds = self.credentials();
-        let with_caller = self.use_native.unwrap_or(false);
+        let using_caller = self.use_native.unwrap_or(false);
 
-        let (min_len, max_len) = if with_caller {
+        let (min_len, max_len) = if using_caller {
             let count = creds
                 .iter()
                 .filter(|c| c.discriminant() == CredentialName::Native)
@@ -190,7 +190,7 @@ impl Verifiable for CredentialData {
         }
 
         if let Some(index) = self.primary_index() {
-            let len = creds.len() + if with_caller { 1 } else { 0 };
+            let len = creds.len() + if using_caller { 1 } else { 0 };
             ensure!((index as usize) < len, AuthError::generic(
                 format!("Primary index {} is out of bounds", index)
             ));
@@ -218,11 +218,12 @@ impl Verifiable for CredentialData {
 
 impl CredentialData {
 
-    fn caller_index(&self, _new_id: &CredentialId) -> Option<usize> {
+    fn cred_index(&self, name: CredentialName, id: Option<CredentialId>) -> Option<usize> {
         self.credentials.iter()
-            .position(|c| 
-                c.name() == CredentialName::Native
-                // && c.id() == self.caller_id
+            .position(|c| c.name() == name && 
+                    id.as_ref()
+                        .map(|i| c.id() == *i)
+                        .unwrap_or(true)
             )
     }
 
@@ -231,24 +232,34 @@ impl CredentialData {
     /// @param cal: native caller of the environment
     /// @return: checked wrapper and a flag indicating whether the copy deviated from the original Self
     pub fn with_native_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
-
         if !self.use_native.unwrap_or(false) {
             return self.clone()
         }
-
         let caller : Caller = cal.into();
         let mut credentials = self.credentials.clone();
 
-        match self.caller_index(&caller.id) {
+        match self.cred_index(CredentialName::Native, Some(caller.id.clone())) {
             Some(index) => credentials[index] = caller.into(),
             None => credentials.push(caller.into())
         };
-
         Self { 
             credentials, 
             use_native: Some(true),
             primary_index: self.primary_index
-        } 
+        }
+    }
+
+    pub fn with_credential(&self, new: Credential) -> Self {
+        let mut credentials = self.credentials.clone();
+        match self.cred_index(new.name(), Some(new.id())) {
+            Some(index) => credentials[index] = new,
+            None => credentials.push(new)
+        };
+        Self { 
+            credentials, 
+            use_native: self.use_native,
+            primary_index: self.primary_index
+        }
     }
 
 

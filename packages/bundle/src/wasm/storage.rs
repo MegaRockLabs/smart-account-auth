@@ -1,16 +1,14 @@
+use saa_common::{
+    ensure, messages::SignedDataMsg, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{storage::{self, has_credential}, 
+    Api, Env, MessageInfo, Storage
+}, AuthError, CredentialId, CredentialInfo, Verifiable};
 use core::str::FromStr;
 
-use saa_common::{messages::SignedDataMsg,  
-    stores::VERIFYING_CRED_ID,
-    wasm::{Api, Env, Storage, storage}, 
-    AuthError
-};
-
-use crate::credential::{
+use crate::{credential::{
     construct_credential, 
     Credential, 
     CredentialName
-};
+}, CredentialData, UpdateOperation};
 
 pub use storage::reset_credentials;
 
@@ -23,19 +21,17 @@ pub use storage::get_all_credentials;
 
 
 
-
-
 fn credential_from_message(
     storage:   &dyn Storage,
     data_msg:  SignedDataMsg
 ) -> Result<Credential, AuthError> {
-    let initial_id = VERIFYING_CRED_ID.load(storage)?;
+    let initial_id = VERIFYING_CRED_ID.load(storage).unwrap_or_default();
 
     let id = match data_msg.payload.clone() {
         Some(payload) => {
             payload.validate()?;
             if let Some(id) = payload.credential_id {
-                id
+                id.to_lowercase()
             } else if let Some(address) = payload.address {
                 if address.starts_with("0x") {
                     "0x".to_string() + &address[2..].to_lowercase()
@@ -65,48 +61,173 @@ fn credential_from_message(
 
 
 
+pub fn verify_caller(
+    _api: &dyn Api,
+    storage: &dyn Storage,
+    _env: &Env,
+    info: &MessageInfo
+) -> Result<(), AuthError> {
+    if has_credential(storage, &info.sender.to_string()) {
+        Ok(())
+    } else {
+        Err(AuthError::Unauthorized(String::from("Unauthorized caller")))
+    }
+}
 
-pub fn verify_signed_queries(
+
+pub fn verify_signed(
     api: &dyn Api,
+    #[cfg(feature = "replay")]
+    storage: &mut dyn Storage,
+    #[cfg(not(feature = "replay"))]
     storage: &dyn Storage,
     env: &Env,
     data: SignedDataMsg
 ) -> Result<(), AuthError> {
     let credential = credential_from_message(storage, data)?;
-    credential.assert_cosmwasm(api, storage, env)?;
-    Ok(())
+    #[cfg(feature = "replay")]
+    {   credential.assert_signed_data(storage, env)?;
+        saa_common::wasm::storage::increment_account_number(storage)?;
+    }
+    credential.verify_cosmwasm(api)
 }
 
 
-#[cfg(feature = "replay")]
-pub fn verify_signed_actions(
+
+pub fn save_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
     env: &Env,
-    data: SignedDataMsg
+    info: &MessageInfo,
+    data: &CredentialData
 ) -> Result<(), AuthError> {
-    verify_signed_queries(api, storage, env, data)?;
-    saa_common::wasm::storage::increment_account_number(storage)?;
+    data.with_native_caller(info)
+        .save(api, storage, env)?;
     Ok(())
 }
 
-/* 
-#[cfg(feature = "iterator")]
-pub fn get_all_credentials(
-    storage:  &dyn Storage,
-) -> Result<saa_common::AccountCredentials, AuthError> {
 
-    let credentials = saa_common::wasm::storage::get_all_credentials(storage)?;
+pub fn update_credentials(
+    api: &dyn Api,
+    storage: &mut dyn Storage,
+    env: &Env,
+    info: &MessageInfo,
+    op: UpdateOperation,
+    msg: Option<SignedDataMsg>
+) -> Result<(), AuthError> {
+
+    let had_natives = HAS_NATIVES.load(storage)?;
+
+    match op {
+        UpdateOperation::Add(data) => {
+            let data = match msg {
+                Some(msg) => {
+                    let cred = credential_from_message(storage, msg)?;
+                    cred.verify_cosmwasm(api)?;
+        
+                    #[cfg(feature = "replay")]
+                    data.with_credential(cred)
+                        .assert_signed_data(storage, env)?;
+        
+                    data.with_native_caller(info.sender.as_str())
+                },
+                None => {
+                    ensure!(had_natives, AuthError::generic("Must supplly signed message to construct a credential"));
+                    verify_caller(api, storage, env, info)?;
+                    data
+                }
+            };
+            add_credentials(api, storage, data, had_natives)
+        },
+
+        UpdateOperation::Remove(idx) => {
+            match msg {
+                Some(msg) => verify_signed(api, storage, env, msg)?,
+                None => verify_caller(api, storage, env, info)?
+            };
+    
+            remove_credentials(storage, idx, had_natives)
+        }
+    }
+}
+
+
+
+
+
+fn add_credentials(
+    api: &dyn Api,
+    storage: &mut dyn Storage,
+    data: CredentialData,
+    had_natives: bool
+) -> Result<(), AuthError> {
+    
+    data.validate()?;
+    data.verify_cosmwasm(api)?;
+
+    let mut has_natives = had_natives;
+
+    if let Some(ix) = data.primary_index {
+        VERIFYING_CRED_ID.save(storage, &data.credentials[ix as usize].id())?;
+    }
+
+    for cred in data.credentials {
+        let id = cred.id();
+        ensure!(!has_credential(storage, &id), AuthError::AlreadyExists);
+        if !has_natives && cred.name() == CredentialName::Native {
+            has_natives = true;
+        }
+        save_credential(storage, &id, &cred.info())?;
+    }
+
+    if !had_natives && has_natives {
+        HAS_NATIVES.save(storage, &true)?;
+    }
+    Ok(())
+}
+
+
+
+fn remove_credentials(
+    storage: &mut dyn Storage,
+    idx: Vec<CredentialId>,
+    had_natives: bool
+) -> Result<(), AuthError> {
+    let all_creds = get_all_credentials(storage)?;
+    let left = all_creds.len() - idx.len();
+    ensure!(left > 0, AuthError::generic("Must leave at least one credential"));
+
     let verifying_id = VERIFYING_CRED_ID.load(storage)?;
+    let mut native_changed = false;
+    let mut verifying_removed = false;
 
-    let native_caller = saa_common::stores::CALLER.load(
-        storage
-    ).ok().flatten();
+    let remaining : Vec<&(String, CredentialInfo)> = all_creds
+        .iter()
+        .filter(|(id, info)| {
+            if idx.contains(&id) {
+                if info.name == CredentialName::Native.to_string() {
+                    native_changed = true;
+                }
+                if *id == verifying_id {
+                    verifying_removed = true;
+                }
+                remove_credential(storage, &id).is_err()
+            } else {
+                true
+            }
+        }).collect();
+        
+    if had_natives && native_changed {
+        let still_has = remaining
+            .iter()
+            .any(|(_, info)| info.name == CredentialName::Native.to_string());
+        HAS_NATIVES.save(storage, &still_has)?;
+    }
 
-    Ok(saa_common::AccountCredentials {
-        credentials,
-        native_caller,
-        verifying_id,
-    })
+    if verifying_removed {
+        let first = all_creds.first().unwrap();
+        VERIFYING_CRED_ID.save(storage, &first.0)?;
+    }
 
-} */
+    Ok(())
+}

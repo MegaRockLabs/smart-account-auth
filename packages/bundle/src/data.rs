@@ -1,4 +1,4 @@
-use saa_common::Vec;
+use saa_common::{CredentialId, Vec};
 use saa_schema::wasm_serde;
 use crate::Credential;
 
@@ -19,10 +19,10 @@ pub struct CredentialData {
 }
 
 
+
+
 #[wasm_serde]
-pub enum UpdateOperation<A = CredentialData> {
-    Add(A),
-    Remove(A),
+pub enum UpdateOperation {
+    Add(CredentialData),
+    Remove(Vec<CredentialId>),
 }
-
-

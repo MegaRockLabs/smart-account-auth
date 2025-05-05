@@ -67,6 +67,9 @@ pub enum AuthError {
     #[error("Passkey challenge must be base64url to base64 encoded string")]
     PasskeyChallenge,
 
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+
     #[error("{0}")]
     Signature(String),
 

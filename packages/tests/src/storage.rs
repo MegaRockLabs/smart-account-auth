@@ -66,10 +66,9 @@ fn save_credential_data_work() {
     let deps = mocks.as_mut();
     let storage = deps.storage;
     let env = get_mock_env();
-    let info = mock_info("", &[]);
 
     let data = cred_data_non_native();
-    let saved = data.save(deps.api, storage, &env, &info).unwrap();
+    let saved = data.save(deps.api, storage, &env).unwrap();
     
     // asserted saved data is same as initial
     assert_eq!(saved.count(), data.count());
@@ -107,7 +106,7 @@ fn save_cred_data_with_native_caller() {
     let alice = mock_info("alice", &[]);
     let data = credential_data()
                 .with_native_caller(&alice)
-                .save(deps.api, storage, &env, &alice)
+                .save(deps.api, storage, &env)
                 .unwrap();
 
     // extra Caller credential is saved
@@ -121,7 +120,7 @@ fn save_cred_data_with_native_caller() {
 
 
     let data = cred_data_only_native(alice.sender.as_str())
-                    .save(deps.api, storage, &env, &alice)
+                    .save(deps.api, storage, &env)
                     .unwrap();
     
     let all = get_all_credentials(storage).unwrap();
