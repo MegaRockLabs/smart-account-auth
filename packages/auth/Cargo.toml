@@ -56,9 +56,13 @@ cosmwasm = [
     "saa-curves/cosmwasm",
     "wasm"
 ]
+cosmwasm_1 = [
+    "saa-curves/cosmwasm_1",
+    "wasm",
+]
 injective = [
     "saa-common/injective",
     "cosmwasm"
 ]
-utils = []
 wasm  = []
+utils = []

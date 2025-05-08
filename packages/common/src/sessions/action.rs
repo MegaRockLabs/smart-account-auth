@@ -6,7 +6,6 @@ use crate::AuthError;
 
 
 #[wasm_serde]
-// #[derive(strum_macros::Display)]
 pub enum DerivationMethod {
     Name,
     String,

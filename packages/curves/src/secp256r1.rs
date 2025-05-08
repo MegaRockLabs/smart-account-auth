@@ -43,8 +43,18 @@ impl Verifiable for Secp256r1 {
 
 
     #[cfg(feature = "wasm")]
-    #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, api : &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(
+        &self,
+        #[allow(unused_variables)]
+        api : &dyn saa_common::wasm::Api
+    ) -> Result<(), AuthError> {
+        #[cfg(feature = "cosmwasm")]
+        let res = api.secp256r1_verify(
+            &saa_common::hashes::sha256(&self.message),
+            &self.signature,
+            &self.pubkey
+        )?;
+        #[cfg(not(feature = "cosmwasm"))]
         let res = implementation::secp256r1_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 
@@ -56,12 +66,15 @@ impl Verifiable for Secp256r1 {
 }
 
 
+
+
 #[cfg(feature = "native")]
 pub mod implementation {
     pub use saa_common::crypto::secp256r1_verify;
 }
 
-#[cfg(not(feature = "native"))]
+
+#[cfg(all(not(feature="native"), not(feature = "cosmwasm")))]
 pub mod implementation {
 
     use saa_common::{hashes::Identity256, AuthError};

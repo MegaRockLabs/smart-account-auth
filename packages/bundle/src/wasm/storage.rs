@@ -1,19 +1,25 @@
 use saa_common::{
-    ensure, from_json, messages::SignedDataMsg, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{storage::{self, has_credential}, 
+    from_json, messages::{SignedDataMsg, MsgDataToVerify}, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{storage::{self, has_credential}, 
     Api, Env, MessageInfo, Storage
-}, AuthError, CredentialId, CredentialInfo, Verifiable};
+}, AuthError, Verifiable};
 use core::str::FromStr;
 
 use crate::{credential::{
     construct_credential, 
     Credential, 
     CredentialName
-}, CredentialData, UpdateOperation};
+}, CredentialData};
 
 #[cfg(feature = "replay")]
 use saa_common::{
     wasm::storage::increment_account_number,
     messages::MsgDataToSign
+};
+#[cfg(feature = "iterator")]
+pub use {
+    saa_common::{CredentialId, CredentialInfo, ensure},
+    storage::get_all_credentials, 
+    crate::UpdateOperation
 };
 
 pub use storage::reset_credentials;
@@ -22,8 +28,6 @@ pub use storage::reset_credentials;
 pub use saa_common::stores;
 #[cfg(feature = "utils")]
 pub use storage::{load_count, remove_credential, save_credential, load_credential};
-#[cfg(feature = "iterator")]
-pub use storage::get_all_credentials;
 
 
 
@@ -35,15 +39,8 @@ fn credential_from_message(
 
     let id = match data_msg.payload.clone() {
         Some(payload) => {
-            payload.validate()?;
             if let Some(id) = payload.credential_id {
                 id.to_lowercase()
-            } else if let Some(address) = payload.address {
-                if address.starts_with("0x") {
-                    "0x".to_string() + &address[2..].to_lowercase()
-                } else {
-                    address.to_lowercase()
-                }
             } else {
                 initial_id
             }
@@ -68,21 +65,30 @@ fn credential_from_message(
 
 
 pub fn verify_caller(
-    _api: &dyn Api,
     storage: &dyn Storage,
-    _env: &Env,
-    info: &MessageInfo
+    address: &String
 ) -> Result<(), AuthError> {
-    if has_credential(storage, &info.sender.to_string()) {
-        Ok(())
-    } else {
-        Err(AuthError::Unauthorized(String::from("Unauthorized caller")))
-    }
+    ensure!(has_credential(storage, address), AuthError::Unauthorized(String::from("Unauthorized caller")));
+    Ok(())
+}
+
+
+pub fn verify_signed(
+    api: &dyn Api,
+    storage: &dyn Storage,
+    env: &Env,
+    msg: SignedDataMsg
+) -> Result<(), AuthError> {
+    let credential = credential_from_message(storage, msg.clone())?;
+    let msgs : MsgDataToVerify = from_json(msg.data)?;
+    msgs.validate(storage, env)?;
+    credential.verify_cosmwasm(api)?;
+    Ok(())
 }
 
 
 #[cfg(feature = "replay")]
-pub fn verify_signed<T : serde::de::DeserializeOwned>(
+pub fn verify_signed_actions<T : serde::de::DeserializeOwned>(
     api: &dyn Api,
     storage: &mut dyn Storage,
     env: &Env,
@@ -97,21 +103,6 @@ pub fn verify_signed<T : serde::de::DeserializeOwned>(
 }
 
 
-#[cfg(not(feature = "replay"))]
-pub fn verify_signed(
-    api: &dyn Api,
-    #[cfg(feature = "replay")]
-    storage: &mut dyn Storage,
-    #[cfg(not(feature = "replay"))]
-    storage: &dyn Storage,
-    env: &Env,
-    data: SignedDataMsg
-) -> Result<(), AuthError> {
-    credential_from_message(storage, data)?
-    .verify_cosmwasm(api)
-}
-
-
 
 
 pub fn save_credentials(
@@ -121,13 +112,14 @@ pub fn save_credentials(
     info: &MessageInfo,
     data: &CredentialData
 ) -> Result<(), AuthError> {
-    data.with_native_caller(info)
+    data
+        .with_native_caller(info)
         .save(api, storage, env)?;
     Ok(())
 }
 
 
-#[cfg(feature = "replay")]
+#[cfg(all(feature = "iterator", feature = "replay"))]
 pub fn update_credentials_signed(
     api: &dyn Api,
     storage: &mut dyn Storage,
@@ -168,16 +160,16 @@ pub fn update_credentials_signed(
 
 
 
+#[cfg(feature = "iterator")]
 pub fn update_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
-    env: &Env,
-    info: &MessageInfo,
+    address: &String,
     op: UpdateOperation,
 ) -> Result<(), AuthError> {
     let had_natives = HAS_NATIVES.load(storage)?;
     ensure!(had_natives, AuthError::generic("Must supplly signed message to construct a credential"));
-    verify_caller(api, storage, env, info)?;
+    verify_caller( storage, address)?;
     match op {
         UpdateOperation::Add(data) => add_credentials(api, storage, data, had_natives),
         UpdateOperation::Remove(idx) => remove_credentials(storage, idx, had_natives)
@@ -186,8 +178,7 @@ pub fn update_credentials(
 
 
 
-
-
+#[cfg(feature = "iterator")]
 fn add_credentials(
     api: &dyn Api,
     storage: &mut dyn Storage,
@@ -211,7 +202,7 @@ fn add_credentials(
         if !has_natives && cred.name() == CredentialName::Native {
             has_natives = true;
         }
-        save_credential(storage, &id, &cred.info())?;
+        storage::save_credential(storage, &id, &cred.info())?;
     }
 
     if !had_natives && has_natives {
@@ -222,10 +213,11 @@ fn add_credentials(
 
 
 
+#[cfg(feature = "iterator")]
 fn remove_credentials(
     storage: &mut dyn Storage,
     idx: Vec<CredentialId>,
-    had_natives: bool
+    had_natives: bool,
 ) -> Result<(), AuthError> {
     ensure!(!idx.is_empty(), AuthError::generic("Must supply at least one credential to remove"));
 
@@ -247,7 +239,7 @@ fn remove_credentials(
                 if *id == verifying_id {
                     verifying_removed = true;
                 }
-                remove_credential(storage, &id).is_err()
+                storage::remove_credential(storage, &id).is_err()
             } else {
                 true
             }
@@ -273,4 +265,11 @@ pub fn has_natives(
     storage: &dyn Storage
 ) -> bool {
     HAS_NATIVES.load(storage).unwrap_or(false)
+}
+
+#[cfg(feature = "replay")]
+pub fn account_number(
+    storage: &dyn Storage
+) -> u128 {
+    saa_common::stores::ACCOUNT_NUMBER.load(storage).unwrap_or(0)
 }

@@ -1,6 +1,10 @@
-#![allow(dead_code)]
+#[cfg(all(feature = "cosmwasm_1", not(feature = "cosmwasm")))]
+pub use cw_storage_plus_one as cw_storage_plus;
+
 
 use cw_storage_plus::{Item, Map};
+
+
 use crate::{CredentialInfo, CredentialId};
 
 /// The credential ID to use by default for verifications

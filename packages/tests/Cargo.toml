@@ -9,7 +9,7 @@ repository  = { workspace = true }
 
 
 [dependencies]
-smart-account-auth  = { workspace = true, features = ["cosmwasm", "replay", "iterator", "curves", "utils"] }
+smart-account-auth  = { workspace = true, features = ["cosmwasm", "replay", "iterator", "curves", "utils", "traits"] }
 saa-common          = { workspace = true, features = ["cosmwasm", "replay"] }
 saa-schema          = { workspace = true, features = ["cosmwasm"] }
 
@@ -57,6 +57,8 @@ cosmwasm    = [
 std         = [
     "saa-schema/std",
     "smart-account-auth/std",
+    "serde_json/std",
+    "serde-json-wasm/std",
 ]
 native     = [
     "dep:cosmwasm-crypto",

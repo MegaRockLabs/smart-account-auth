@@ -47,6 +47,7 @@ impl<T: Deref<Target = dyn Verifiable>> Verifiable for T {
         self.deref().validate()
     }
 
+    #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
         self.deref().verify()
     }

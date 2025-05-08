@@ -1,4 +1,4 @@
-use cosmwasm_std::testing::{mock_dependencies, mock_info};
+use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr};
 use smart_account_auth::{Caller, Credential, CredentialData, CredentialsWrapper, Verifiable};
 
 use crate::vars::{default_cred_count, cred_data_non_native};
@@ -17,8 +17,6 @@ fn data_is_verifyable() {
     for cred in data.credentials.iter() {
         assert!(cred.verify().is_ok(), "Native verify code of Credential failed");
         assert!(cred.verify_cosmwasm(api).is_ok(), "Cosmwasm verify code of Credential failed");
-        assert!(cred.value().verify().is_ok(), "Native verify code of Credential Inner Value failed");
-        assert!(cred.value().verify_cosmwasm(api).is_ok(), "Cosmwasm verify code of Credential Inner Value failed");
     }
 
     // Verify the whole wrapper data
@@ -48,7 +46,7 @@ fn with_caller_works() {
     assert!(data.validate().is_ok());
 
     // Try to call again. Should overwrite the previous one; // NOTE: works MessageInfo same as with String
-    let data = data.with_native_caller(&mock_info("alice", &[]));
+    let data = data.with_native_caller(&message_info(&Addr::unchecked("alice"), &[]));
 
     // should still be of the same length and not have duplicates
     assert_eq!(creds_count + 1, data.credentials.len());

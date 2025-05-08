@@ -2,16 +2,19 @@
 
 
 mod data;
-mod wasm;
-mod wrapper;
+
+
 mod credential;
 mod impls;
 
 pub use saa_schema::wasm_serde;
 pub use saa_auth::caller::Caller;
 pub use credential::{Credential, CredentialName};
-pub use data::{CredentialData, UpdateOperation};
+pub use data::{CredentialData, UpdateOperation, UpdateMethod};
 
+
+#[cfg(feature = "traits")]
+mod wrapper;
 
 #[cfg(feature = "passkeys")]
 pub use saa_auth::passkey::PasskeyCredential;
@@ -29,8 +32,14 @@ pub use saa_curves::ed25519::Ed25519;
 pub use saa_common::crypto;
 
 
+
 #[cfg(feature = "wasm")]
+mod wasm;
+
+// the storage restrinction is not needed but there aren't any exports
+#[cfg(all(feature = "wasm", feature = "storage"))]
 pub use wasm::*;
+
 
 #[cfg(feature = "session")]
 pub use saa_common::sessions;

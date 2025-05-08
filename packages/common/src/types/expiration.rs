@@ -4,7 +4,7 @@ use std::fmt;
 use std::ops::Add;
 
 use crate::AuthError;
-use super::timestamp::Timestamp;
+use super::Timestamp;
 
 
 #[wasm_serde]

@@ -1,4 +1,3 @@
-use saa_common::{AuthError, Binary, CredentialId};
 use saa_auth::caller::Caller;
 use saa_schema::wasm_serde;
 
@@ -16,11 +15,17 @@ use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
 use saa_auth::cosmos::CosmosArbitrary;
+
+
 use strum_macros::{Display, EnumString, EnumDiscriminants};
 
 
+#[cfg(feature = "storage")]
+use saa_common::{Binary, CredentialId};
+
+
 #[wasm_serde]
-#[derive(Display, EnumDiscriminants)]
+#[derive(EnumDiscriminants)]
 #[strum_discriminants(
     name(CredentialName), 
     derive(Display, EnumString),
@@ -49,8 +54,9 @@ pub enum Credential {
 }
 
 
-
-
+// doesn'r have to be storage only but isn't used anywhere else at the moment
+#[allow(unused_variables)]
+#[cfg(feature = "storage")]
 pub(crate) fn construct_credential(
     id: CredentialId,
     name: CredentialName,
@@ -59,7 +65,7 @@ pub(crate) fn construct_credential(
     hrp: Option<String>,
     stored_extension: Option<Binary>,
     passed_extension: Option<Binary>,
-) -> Result<Credential, AuthError> {
+) -> Result<Credential, saa_common::AuthError> {
     
     let credential = match name {
 
@@ -83,7 +89,7 @@ pub(crate) fn construct_credential(
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
-            use saa_common::{from_json, ensure};
+            use saa_common::{AuthError, from_json, ensure};
             use saa_auth::passkey::*;
             ensure!(
                 passed_extension.is_some(),
@@ -144,17 +150,9 @@ pub(crate) fn construct_credential(
                     signature,
                     message,
                 }),
-                _ => return Err(AuthError::generic("Unsupported curve")),
+                _ => return Err(saa_common::AuthError::generic("Unsupported curve")),
             }
         }
-    /*     #[cfg(any(
-            not(feature = "curves"),
-            not(feature = "ed25519"),
-            not(feature = "passkeys"), 
-            not(feature = "cosmos"), 
-            not(feature = "ethereum"))
-        )]
-        _ => return Err(AuthError::generic("Credential is not enabled")), */
     };
     Ok(credential)
 }

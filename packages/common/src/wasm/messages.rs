@@ -6,7 +6,6 @@ use crate::wasm::{CustomMsg, Storage, Env};
 
 
 
-
 impl MsgDataToVerify {
     pub fn validate(
         &self, 

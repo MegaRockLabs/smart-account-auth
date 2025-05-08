@@ -105,15 +105,15 @@ pub fn wasm_serde(
                 serde(deny_unknown_fields, crate = "::saa_schema::serde"),
                 schemars(crate = "::saa_schema::schemars")
             )]
-            #[cfg_attr(feature = "substrate", derive(
+            #[cfg_attr(all(feature = "substrate", not(feature="cosmwasm")), derive(
                 ::saa_schema::scale::Encode, 
                 ::saa_schema::scale::Decode
             ))]
-            #[cfg_attr(feature = "solana", derive(
+            #[cfg_attr(all(feature = "solana", not(feature="cosmwasm")), derive(
                 ::saa_schema::borsh::BorshSerialize, 
                 ::saa_schema::borsh::BorshDeserialize
             ))]
-            #[cfg_attr(all(feature = "std", feature="substrate"), derive(
+            #[cfg_attr(all(feature = "std", feature="substrate", not(feature="cosmwasm")), derive(
                 ::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
@@ -134,16 +134,16 @@ pub fn wasm_serde(
                 serde(deny_unknown_fields, rename_all = "snake_case", crate = "::saa_schema::serde"),
                 schemars(crate = "::saa_schema::schemars")
             )]
-            #[cfg_attr(feature = "solana", derive(
+            #[cfg_attr(all(feature = "solana", not(feature="cosmwasm")), derive(
                 ::saa_schema::borsh::BorshSerialize, 
                 ::saa_schema::borsh::BorshDeserialize
             ))]
-            #[cfg_attr(feature = "substrate", derive(
+            #[cfg_attr(all(feature = "substrate", not(feature="cosmwasm")), derive(
                 ::saa_schema::scale::Encode, 
                 ::saa_schema::scale::Decode
             ))]
-            #[cfg_attr(all(feature = "std", feature = "substrate"), derive(
-                saa_schema::scale_info::TypeInfo)
+            #[cfg_attr(all(feature = "std", feature="substrate", not(feature="cosmwasm")), 
+                derive(::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #input 

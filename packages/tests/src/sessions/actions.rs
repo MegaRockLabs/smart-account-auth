@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
-use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
+use cosmwasm_std::{testing::{message_info, mock_dependencies, mock_env}, Addr};
 use serde::Serialize;
 use smart_account_auth::sessions::{
         action::{Action, AllowedActions},
@@ -33,8 +33,8 @@ fn session_actions_simple() {
     let storage = deps.storage;
     let env = mock_env();
 
-    let alice = mock_info("alice", &[]);
-    let bob = mock_info("bob", &[]);
+    let alice = message_info(&Addr::unchecked("alice"), &[]);
+    let bob = message_info(&Addr::unchecked("bob"), &[]);
 
     let actions = vec![
         Action::from_str("mint_token").unwrap(), 

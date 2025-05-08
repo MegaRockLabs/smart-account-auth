@@ -1,8 +1,9 @@
 
 #![allow(dead_code)]
 use cosmwasm_std::{testing::mock_env, Addr, Env};
+use saa_common::Binary;
 use smart_account_auth::{
-    types::{binary::Binary, ClientData}, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, EthPersonalSign, PasskeyCredential
+    types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, EthPersonalSign, PasskeyCredential
 };
 
 
@@ -14,6 +15,8 @@ pub const SIGN_NONCE : &str = "0";
 pub const SIGN_MESSAGE_PLAIN : &str = r#"{"chain_id":"elgafar-1","contract_address":"stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn","messages":["Testing smart-account-auth library"],"nonce":"0"}"#;
 pub const SIGN_MESSAGE_BASE64 : &str = "eyJjaGFpbl9pZCI6ImVsZ2FmYXItMSIsImNvbnRyYWN0X2FkZHJlc3MiOiJzdGFyczF3Z2VzejVqcngzdXZ0MjlhOWF3a2FmeTRwMDZydXR4djJ4ZG5xcGVyZGU0dG16eDRuMnlxOTVtdW1uIiwibWVzc2FnZXMiOlsiVGVzdGluZyBzbWFydC1hY2NvdW50LWF1dGggbGlicmFyeSJdLCJub25jZSI6IjAifQ==";
 
+
+pub const ALICE_ADDR : &str = "cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs";
 
 
 pub fn get_eth_personal() -> EthPersonalSign {

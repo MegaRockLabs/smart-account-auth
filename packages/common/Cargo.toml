@@ -20,12 +20,15 @@ ripemd              = { version = "0.1.3",  default-features = false }
 digest              = { version = "0.10.7", default-features = false }
 
 
-cosmwasm-crypto     = { version = "2.1.4", optional = true, default-features = false }
+cosmwasm-crypto     = { workspace = true, optional = true, default-features = false }
 ink                 = { version = "5.0.0", optional = true, default-features = false }
 
 
 cosmwasm-std        = { workspace = true, optional = true }
 cw-storage-plus     = { workspace = true, optional = true }
+
+cosmwasm-std-one    = { workspace = true, optional = true }
+cw-storage-plus-one = { workspace = true, optional = true }
 
 secretwasm-std      = { workspace = true, optional = true }
 secretwasm-storage  = { workspace = true, optional = true }
@@ -58,7 +61,13 @@ solana      = [
 cosmwasm    = [
     "dep:cosmwasm-std",
     "dep:cw-storage-plus",
-    "wasm"
+    "std",
+    "cwasm"
+]
+cosmwasm_1 = [
+    "dep:cosmwasm-std-one",
+    "dep:cw-storage-plus-one",
+    "cwasm"
 ]
 substrate   = [
     "dep:ink", 
@@ -71,6 +80,8 @@ std         = [
     "scale?/std",
     "scale-info?/std",
     "saa-schema/std",
+    "serde_json/std",
+    "serde-json-wasm/std",
 ]
 native     = [
     "dep:cosmwasm-crypto"
@@ -80,7 +91,9 @@ session    = [
 ]
 iterator   = [
     "cosmwasm-std?/iterator",
+    "cosmwasm-std-one?/iterator",
     "cw-storage-plus?/iterator",
+    "cw-storage-plus-one?/iterator",
     "secretwasm-std?/iterator",
     "secretwasm-storage?/iterator",
     "storage",
@@ -94,6 +107,9 @@ secretwasm  = [
 injective  = [
     "cosmwasm"
 ]
+cwasm      = [
+    "wasm"
+]
 wasm       = [
     "dep:schemars",
     "saa-schema/cosmwasm",
@@ -102,3 +118,4 @@ replay     = [
     "storage"
 ]
 storage    = []
+ethereum   = []

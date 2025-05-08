@@ -1,17 +1,18 @@
 use saa_common::{ 
-    ensure, stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{
-        storage::{increment_account_number, save_credential}, 
+    stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::{
+        storage::save_credential, 
         Api, Env, Storage
     }, AuthError, Verifiable
 };
 
 
-use crate::{credential::CredentialName, Credential, CredentialData, CredentialsWrapper};
 
+#[cfg(feature = "traits")]
+use crate::CredentialsWrapper;
 
 
 #[cfg(feature = "replay")]
-impl CredentialData {
+impl crate::CredentialData {
     pub fn assert_signed_data(
         &self, 
         storage: &dyn Storage, 
@@ -19,11 +20,11 @@ impl CredentialData {
     ) -> Result<(), AuthError> {
         use saa_common::{
             messages::MsgDataToVerify,
-            from_json
+            from_json, ensure
         };
-        let credentials : Vec<&Credential> = self.credentials
+        let credentials : Vec<&crate::credential::Credential> = self.credentials
             .iter().filter(|c| 
-                c.name() != CredentialName::Native 
+                c.name() != crate::credential::CredentialName::Native 
                 //&& !c.message().is_empty()
             )
             .collect();
@@ -37,22 +38,20 @@ impl CredentialData {
         first_data.validate(storage, env)?;
         let nonce = first_data.nonce.clone();
         
-        credentials.iter().skip(1).map(|c| {
+        credentials.into_iter().skip(1).try_for_each(|c| {
             let data : MsgDataToVerify = from_json(&c.message()).map_err(|_| AuthError::InvalidSignedData)?;
             ensure!(data.chain_id == first_data.chain_id, AuthError::ChainIdMismatch);
             ensure!(data.contract_address == first_data.contract_address, AuthError::ContractMismatch);
             ensure!(data.nonce == nonce, AuthError::DifferentNonce);
-            Ok(())
-        }).collect::<Result<(), AuthError> >()?;
+            Ok::<(), AuthError>(())
+        })?;
         Ok(())
     }
 }
 
 
-
-#[cfg(feature = "storage")]
-impl CredentialData {
-
+#[allow(unused_variables)]
+impl crate::CredentialData {
 
     pub fn save(
         &self, 
@@ -64,18 +63,24 @@ impl CredentialData {
         #[cfg(feature = "replay")]
         {
             self.assert_signed_data(storage, env)?;
-            increment_account_number(storage)?;
+            saa_common::wasm::storage::increment_account_number(storage)?;
         }
         let mut has_natives = false;
-        for cred in self.credentials() {
+        for cred in self.credentials.iter() {
             let id = &cred.id();
             //println!("Saving credential: {:?} with id {:?}", cred.name(), id);
             cred.verify_cosmwasm(api)?;
             save_credential(storage, id, &cred.info())?;
-            if cred.name() == CredentialName::Native { has_natives = true }
+            if cred.name() == crate::credential::CredentialName::Native { has_natives = true }
         }
         HAS_NATIVES.save(storage, &has_natives)?;
-        VERIFYING_CRED_ID.save(storage, &self.primary_id())?;
+
+        #[cfg(feature = "traits")]
+        let id: String = self.primary_id();
+        #[cfg(not(feature = "traits"))]
+        let id = self.credentials.first().unwrap().id();
+
+        VERIFYING_CRED_ID.save(storage, &id)?;
         Ok(self.clone())
     }
 

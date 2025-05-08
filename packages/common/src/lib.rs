@@ -1,10 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod types;
-pub mod utils;
-pub mod messages;
-pub mod hashes;
-
 mod errors;
 mod traits;
 mod macros;
@@ -14,6 +9,10 @@ pub use errors::*;
 pub use traits::*;
 pub use credential::*;
 
+pub mod types;
+pub mod utils;
+pub mod messages;
+pub mod hashes;
 
 
 #[cfg(feature = "storage")]
@@ -63,5 +62,9 @@ pub mod substrate {
 
 
 
+#[cfg(not(feature = "wasm"))]
 pub use types::binary::{Binary, to_json_binary, from_json};
+
+#[cfg(feature = "wasm")]
+pub use wasm::{Binary, to_json_binary, from_json};
 

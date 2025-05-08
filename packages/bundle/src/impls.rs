@@ -1,10 +1,9 @@
 use core::ops::Deref;
 
 use strum::IntoDiscriminant;
-use saa_auth::{caller::Caller, cosmos::CosmosArbitrary, eth::EthPersonalSign, passkey::PasskeyCredential};
-use saa_common::{ensure, to_json_binary, AuthError, Binary, CredentialId, CredentialInfo, Verifiable};
-use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
-use crate::{credential::CredentialName, Credential, CredentialData, CredentialsWrapper};
+use saa_auth::caller::Caller;
+use saa_common::{ensure, AuthError, Binary, CredentialId, CredentialInfo, Verifiable};
+use crate::{credential::CredentialName, Credential, CredentialData};
 
 
 impl From<Caller> for Credential {
@@ -14,45 +13,45 @@ impl From<Caller> for Credential {
 }
 
 #[cfg(feature = "ethereum")]
-impl From<EthPersonalSign> for Credential {
-    fn from(c: EthPersonalSign) -> Self {
+impl From<saa_auth::eth::EthPersonalSign> for Credential {
+    fn from(c: saa_auth::eth::EthPersonalSign) -> Self {
         Credential::EthPersonalSign(c)
     }
 }
 
 #[cfg(feature = "cosmos")]
-impl From<CosmosArbitrary> for Credential {
-    fn from(c: CosmosArbitrary) -> Self {
+impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
+    fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
     }
 }
 
 
 #[cfg(feature = "passkeys")]
-impl From<PasskeyCredential> for Credential {
-    fn from(c: PasskeyCredential) -> Self {
+impl From<saa_auth::passkey::PasskeyCredential> for Credential {
+    fn from(c: saa_auth::passkey::PasskeyCredential) -> Self {
         Credential::Passkey(c)
     }
 }
 
 #[cfg(feature = "curves")]
-impl From<Secp256k1> for Credential {
-    fn from(c: Secp256k1) -> Self {
+impl From<saa_curves::secp256k1::Secp256k1> for Credential {
+    fn from(c: saa_curves::secp256k1::Secp256k1) -> Self {
         Credential::Secp256k1(c)
     }
 }
 
 #[cfg(feature = "curves")]
-impl From<Secp256r1> for Credential {
-    fn from(c: Secp256r1) -> Self {
+impl From<saa_curves::secp256r1::Secp256r1> for Credential {
+    fn from(c: saa_curves::secp256r1::Secp256r1) -> Self {
         Credential::Secp256r1(c)
     }
 }
 
 
 #[cfg(any(feature = "curves", feature = "ed25519"))]
-impl From<Ed25519> for Credential {
-    fn from(c: Ed25519) -> Self {
+impl From<saa_curves::ed25519::Ed25519> for Credential {
+    fn from(c: saa_curves::ed25519::Ed25519) -> Self {
         Credential::Ed25519(c)
     }
 }
@@ -95,9 +94,6 @@ impl Credential {
         self.discriminant()
     }
 
-    pub fn value(&self) -> &dyn Verifiable {
-        self.deref()
-    }
 
     pub fn message(&self) -> Vec<u8> {
         match self {
@@ -127,7 +123,7 @@ impl Credential {
         #[cfg(feature = "passkeys")]
         if let Credential::Passkey(c) = self {
             use saa_auth::passkey::*;
-            return Ok(Some(to_json_binary(&PasskeyExtension {
+            return Ok(Some(saa_common::to_json_binary(&PasskeyExtension {
                 origin: c.client_data.origin.clone(),
                 cross_origin: c.client_data.cross_origin.clone(),
                 pubkey: c.pubkey.clone(),
@@ -151,8 +147,11 @@ impl Credential {
 
 
 
+#[cfg(feature = "traits")]
+use crate::wrapper::CredentialsWrapper;
 
-impl CredentialsWrapper for CredentialData {
+#[cfg(feature = "traits")]
+impl crate::wrapper::CredentialsWrapper for CredentialData {
     type Credential = Credential;
 
     fn credentials(&self) -> &Vec<Self::Credential> {
@@ -165,11 +164,15 @@ impl CredentialsWrapper for CredentialData {
 impl Verifiable for CredentialData {
 
     fn id(&self) -> CredentialId {
-        self.primary_id()
+        #[cfg(feature = "traits")]
+        return self.primary_id();
+        #[cfg(not(feature = "traits"))]
+        self.credentials.first().unwrap().id().clone()
+
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        let creds = self.credentials();
+        let creds = &self.credentials;
         let using_caller = self.use_native.unwrap_or(false);
 
         let (min_len, max_len) = if using_caller {
@@ -189,7 +192,7 @@ impl Verifiable for CredentialData {
             return Err(AuthError::Generic(format!("Too many credentials: {}", creds.len())));
         }
 
-        if let Some(index) = self.primary_index() {
+        if let Some(index) = self.primary_index {
             let len = creds.len() + if using_caller { 1 } else { 0 };
             ensure!((index as usize) < len, AuthError::generic(
                 format!("Primary index {} is out of bounds", index)
@@ -201,13 +204,13 @@ impl Verifiable for CredentialData {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        self.credentials().iter().try_for_each(|c| c.verify())
+        self.credentials.iter().try_for_each(|c| c.verify())
     }
 
 
     #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self,  api : &dyn saa_common::wasm::Api) -> Result<(), AuthError>  {
-        self.credentials().iter().try_for_each(|c| c.verify_cosmwasm(api))
+        self.credentials.iter().try_for_each(|c| c.verify_cosmwasm(api))
     }
 
 }

@@ -1,5 +1,6 @@
-use saa_common::{CredentialId, Vec};
+use saa_common::{messages::SignedDataMsg, CredentialId, Vec};
 use saa_schema::wasm_serde;
+use serde::Serialize;
 use crate::Credential;
 
 
@@ -20,9 +21,16 @@ pub struct CredentialData {
 
 
 
+#[wasm_serde]
+pub enum UpdateOperation<D : Serialize = CredentialData> {
+    Add(D),
+    Remove(Vec<CredentialId>),
+}
+
 
 #[wasm_serde]
-pub enum UpdateOperation {
-    Add(CredentialData),
-    Remove(Vec<CredentialId>),
+pub enum UpdateMethod<D : Serialize = CredentialData> {
+    Native(UpdateOperation<D>),
+    Signed(SignedDataMsg)
+    
 }

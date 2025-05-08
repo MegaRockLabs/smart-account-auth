@@ -1,12 +1,15 @@
-#[cfg(feature = "cosmwasm")]
+
+#[cfg(feature = "cwasm")]
 mod cosmwasm;
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
-mod secretwasm;
 
 
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "cwasm")]
 pub use cosmwasm::*;
 
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
+
+#[cfg(all(feature = "secretwasm", not(feature = "cwasm")))]
+mod secretwasm;
+#[cfg(all(feature = "secretwasm", not(feature = "cwasm")))]
 pub use secretwasm::*;
+
 

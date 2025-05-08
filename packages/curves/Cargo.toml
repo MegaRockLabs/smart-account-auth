@@ -48,6 +48,11 @@ substrate = [
 ]
 cosmwasm = [
     "saa-common/cosmwasm",
-    "wasm"
+    "cwasm"
 ]
-wasm = []
+cosmwasm_1 = [
+    "saa-common/cosmwasm_1",
+    "cwasm",
+]
+cwasm = ["wasm"]
+wasm  = []

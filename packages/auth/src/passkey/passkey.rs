@@ -114,7 +114,6 @@ pub struct PasskeyCredential {
 }
 
 
-#[cfg(any(feature = "wasm", feature = "native"))]
 impl PasskeyCredential {
     
     pub fn base64_message_bytes(&self) -> Result<Vec<u8>, AuthError> {
@@ -124,6 +123,7 @@ impl PasskeyCredential {
         Ok(binary.to_vec())
     }
 
+    #[cfg(any(feature = "wasm", feature = "native"))]
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
         let mut hasher = Sha256::new();
@@ -163,7 +163,20 @@ impl Verifiable for PasskeyCredential {
 
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, _ : &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(
+        &self,  
+        #[allow(unused_variables)]    
+        api : &dyn saa_common::wasm::Api
+    ) -> Result<(), AuthError> {
+
+        #[cfg(feature = "cosmwasm")]
+        let res = api.secp256r1_verify(
+            &self.message_digest()?,
+            &self.signature,
+            &self.pubkey.as_ref().unwrap()
+        )?;
+
+        #[cfg(not(feature = "cosmwasm"))]
         let res = saa_curves::secp256r1::implementation::secp256r1_verify(
             &self.message_digest()?,
             &self.signature,

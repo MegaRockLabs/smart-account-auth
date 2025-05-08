@@ -16,7 +16,7 @@ crate-type = ["cdylib", "rlib"]
 
 
 [dependencies]
-saa-auth              = { workspace = true }
+saa-auth                = { workspace = true }
 saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
@@ -30,6 +30,7 @@ serde                   = { workspace = true }
 strum                   = { workspace = true }
 strum_macros            = { workspace = true }
 
+
 [features]
 default = [
     "std", 
@@ -39,7 +40,6 @@ default = [
     "passkeys",
     "replay",
     "iterator",
-    "traits",
 ]
 std = [
     "scale?/std",
@@ -66,6 +66,10 @@ cosmwasm = [
     "saa-auth/cosmwasm",
     "wasm",
 ]
+cosmwasm_1 = [
+    "saa-auth/cosmwasm_1",
+    "wasm",
+]
 injective = [
     "saa-auth/injective",
     "cosmwasm",
@@ -89,12 +93,11 @@ iterator  = [
 ]
 storage   = []
 
-
 # Passkey credential 
 passkeys    = []
 
 # Blockchain specific authenticators
-ethereum    = []
+ethereum    = ["saa-common/ethereum"]
 cosmos      = []
 
 # Enable raw curve credentials without envelops

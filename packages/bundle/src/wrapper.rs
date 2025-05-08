@@ -1,10 +1,12 @@
-use saa_common::{Vec, vec, CredentialId, Verifiable};
+use saa_common::{Vec, CredentialId, Verifiable};
+
+#[cfg(feature = "utils")]
 use strum::IntoDiscriminant;
 
 pub trait CredentialsWrapper : Clone + Verifiable {
 
     #[cfg(feature = "utils")]
-    type Credential  : Verifiable + Clone + IntoDiscriminant<Discriminant : ToString>;
+    type Credential  : Verifiable + Clone + strum::IntoDiscriminant<Discriminant : ToString>;
     #[cfg(not(feature = "utils"))]
     type Credential  : Verifiable + Clone;
 
@@ -30,6 +32,8 @@ pub trait CredentialsWrapper : Clone + Verifiable {
 
     #[cfg(feature = "utils")]
     fn secondaries(&self) -> Vec<Self::Credential> {
+        use saa_common::vec;
+
         let creds = self.credentials();
 
         if self.primary_index().is_some() {

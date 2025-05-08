@@ -1,7 +1,7 @@
-use cosmwasm_std::{testing::{mock_dependencies, mock_info}, Storage};
+use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr, Storage};
 use saa_common::{stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::storage::save_credential, AuthError, CredentialId, CredentialInfo, Verifiable};
 use smart_account_auth::{storage::{get_all_credentials, load_count, remove_credential, reset_credentials, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}, update_credentials}, Caller, Credential, CredentialData, CredentialName, CredentialsWrapper, UpdateOperation};
-use crate::vars::{cred_data_non_native, cred_data_only_native, credential_data, default_cred_count, get_cosmos_arbitrary, get_eth_personal, get_mock_env, get_passkey};
+use crate::vars::{cred_data_non_native, cred_data_only_native, credential_data, default_cred_count, get_cosmos_arbitrary, get_eth_personal, get_mock_env, get_passkey, ALICE_ADDR};
 
 
 fn checked_remaining(
@@ -81,7 +81,7 @@ fn credential_crds_work() {
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), passkey_cred.id());
     
     // remove all
-    reset_credentials(storage).unwrap();
+    reset_credentials(storage, true).unwrap();
     assert_eq!(load_count(storage), 0);
 
     let native : Credential = Caller::from("alice").into();
@@ -151,20 +151,20 @@ fn save_cred_data_with_native_caller() {
     let storage = deps.storage;
     let env = get_mock_env();
 
-    let alice = mock_info("alice", &[]);
+    let alice = message_info(&Addr::unchecked(ALICE_ADDR), &[]);
     let data = credential_data()
-                .with_native_caller(&alice)
+                .with_native_caller(alice.sender.as_str())
                 .save(deps.api, storage, &env)
                 .unwrap();
 
     // extra Caller credential is saved
     assert_eq!(load_count(storage), default_cred_count() + 1);
-    assert_eq!(data.credentials.last().unwrap(), &Credential::Native(Caller::from(&alice)));
+    assert_eq!(data.credentials.last().unwrap(), &Credential::Native(Caller::from(alice.sender.as_str())));
 
     // should have natives callers
     assert!(HAS_NATIVES.load(storage).unwrap_or(false));
 
-    reset_credentials(storage).unwrap();
+    reset_credentials(storage, true).unwrap();
 
 
     let data = cred_data_only_native(alice.sender.as_str())
@@ -173,7 +173,7 @@ fn save_cred_data_with_native_caller() {
     
     let all = get_all_credentials(storage).unwrap();
     let (id, info) = all.first().unwrap();
-    assert!(id == &data.primary_id() && id == "alice");
+    assert!(id == &data.primary_id() && id == ALICE_ADDR);
     assert!(HAS_NATIVES.load(storage).unwrap_or_default());
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), *id);
     assert_eq!(CredentialName::Native.to_string(), info.name);
@@ -192,20 +192,20 @@ fn update_cred_data_remove_simple() {
     let storage = deps.storage;
     let env = get_mock_env();
 
-    let alice = mock_info("alice", &[]);
-    let bob = mock_info("bob", &[]);
+    let alice = message_info(&Addr::unchecked(ALICE_ADDR), &[]);
+    let bob = message_info(&Addr::unchecked("bob"), &[]);
 
     let eth_cred : Credential = get_eth_personal().into();
     let cosmos_cred : Credential = get_cosmos_arbitrary().into();
     let passkey_cred : Credential = get_passkey().into();
-    let alice_cred : Credential = Caller::from(&alice).into();
+    let alice_cred : Credential = Caller::from(alice.sender.as_str()).into();
 
     let data= CredentialData{
                 credentials: vec![passkey_cred.clone(), eth_cred.clone()],
                 use_native: Some(true),
                 primary_index: None,
             }
-            .with_native_caller(&alice)
+            .with_native_caller(alice.sender.as_str())
             .save(api, storage, &env)
             .unwrap();
 
@@ -213,42 +213,42 @@ fn update_cred_data_remove_simple() {
     
     // error due to invalid arguments
     let empty = UpdateOperation::Remove(vec![]);
-    assert!(update_credentials(api, storage, &env, &alice, empty).is_err());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), empty).is_err());
 
     // ok but no change cause the id is not there
     let op = UpdateOperation::Remove(vec![cosmos_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), op.clone()).is_ok());
     // error: data is valid but the caller is no authorized
-    assert!(update_credentials(api, storage, &env, &bob, op.clone()).is_err());
+    assert!(update_credentials(api, storage,  &bob.sender.to_string(), op.clone()).is_err());
     assert!(load_count(storage) == 3);
 
 
     // ok but removing verifying credential
     let op = UpdateOperation::Remove(vec![passkey_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), op.clone()).is_ok());
     assert!(load_count(storage) == 2);
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), eth_cred.id());
 
     // ok but same thing doesnt't do anything
-    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), op.clone()).is_ok());
 
 
     // ok but can't use alice anymore
     let op = UpdateOperation::Remove(vec![alice_cred.id()]);
     assert!(HAS_NATIVES.load(storage).unwrap());
-    assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_ok());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), op.clone()).is_ok());
     // should update has natives flag to false
     assert!(!HAS_NATIVES.load(storage).unwrap());
     assert!(load_count(storage) == 1);
 
 
     // reset credentials
-    reset_credentials(storage).unwrap();
+    reset_credentials(storage, true).unwrap();
     data.save(api, storage, &env).unwrap();
 
     // error: can't remove all three
     let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id(), alice_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op).is_err());
+    assert!(update_credentials(api, storage,  &alice.sender.to_string(), op).is_err());
 
 
     // leave last one
@@ -257,14 +257,14 @@ fn update_cred_data_remove_simple() {
     assert!(HAS_NATIVES.load(storage).unwrap());
 
     let op = UpdateOperation::Remove(vec![eth_cred.id(), passkey_cred.id()]);
-    assert!(update_credentials(api, storage, &env, &alice, op).is_ok());
+    assert!(update_credentials(api, storage, &alice.sender.to_string(), op).is_ok());
     assert!(HAS_NATIVES.load(storage).unwrap());
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), alice_cred.id());
     assert_eq!(load_count(storage), 1);
 
-    //assert!(update_credentials(api, storage, &env, &alice, op.clone()).is_err());
+    //assert!(update_credentials(api, storage, &env, &alice.sender.to_string(), op.clone()).is_err());
     let op = UpdateOperation::Remove(vec![alice_cred.id()]);
-    let res = update_credentials(api, storage, &env, &alice, op).unwrap_err();
+    let res = update_credentials(api, storage, &alice.sender.to_string(), op).unwrap_err();
     assert!(res.to_string().contains("at least one credential"));
 }
 
