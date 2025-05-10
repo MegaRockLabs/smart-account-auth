@@ -15,8 +15,6 @@ use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
 use saa_auth::cosmos::CosmosArbitrary;
-
-
 use strum_macros::{Display, EnumString, EnumDiscriminants};
 
 
@@ -31,6 +29,12 @@ use saa_common::{Binary, CredentialId};
     derive(Display, EnumString),
     strum(serialize_all = "snake_case")
 )]
+#[cfg_attr(feature = "wasm", strum_discriminants(derive(
+    ::saa_schema::serde::Serialize,
+    ::saa_schema::serde::Deserialize,
+    ::saa_schema::schemars::JsonSchema
+), schemars(crate = "::saa_schema::schemars"
+)))]
 pub enum Credential {
     Native(Caller),
 
@@ -52,6 +56,36 @@ pub enum Credential {
     #[cfg(any(feature = "curves", feature = "ed25519" ))]
     Ed25519(Ed25519),
 }
+
+
+
+
+
+
+#[wasm_serde]
+pub struct CredentialInfo {
+    /// name of the used credential
+    pub name: CredentialName,
+    /// human readable prefix to encode from a public key
+    pub hrp: Option<saa_common::String>,
+    /// extension data
+    pub extension: Option<saa_common::Binary>,
+}
+
+
+
+
+
+/* #[wasm_serde]
+pub struct AccountCredentials {
+    pub credentials: Vec<(CredentialId, CredentialInfo)>,
+    pub verifying_id: CredentialId,
+    pub native_caller: Option<CredentialId>,
+}
+ */
+
+
+
 
 
 // doesn'r have to be storage only but isn't used anywhere else at the moment

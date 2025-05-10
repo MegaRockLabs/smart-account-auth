@@ -1,7 +1,7 @@
-use saa_common::{messages::SignedDataMsg, CredentialId, Vec};
+use saa_common::CredentialId;
 use saa_schema::wasm_serde;
 use serde::Serialize;
-use crate::Credential;
+use crate::{messages::SignedDataMsg, Credential};
 
 
 /// CredentialData is wrapper for dealing with multiple credentials at the same time.

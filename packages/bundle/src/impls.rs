@@ -2,8 +2,8 @@ use core::ops::Deref;
 
 use strum::IntoDiscriminant;
 use saa_auth::caller::Caller;
-use saa_common::{ensure, AuthError, Binary, CredentialId, CredentialInfo, Verifiable};
-use crate::{credential::CredentialName, Credential, CredentialData};
+use saa_common::{ensure, AuthError, Binary, CredentialId, Verifiable};
+use crate::{credential::CredentialName, Credential, CredentialData, CredentialInfo};
 
 
 impl From<Caller> for Credential {
@@ -135,7 +135,7 @@ impl Credential {
 
     pub fn info(&self) -> CredentialInfo {
         CredentialInfo {
-            name: self.name().to_string(),
+            name: self.name(),
             hrp: self.hrp(),
             extension: self.extension().unwrap_or(None),
         }
@@ -270,6 +270,7 @@ impl CredentialData {
 
 
 
+
 #[cfg(test)]
 impl Default for CredentialData {
     fn default() -> Self {
@@ -277,6 +278,36 @@ impl Default for CredentialData {
             use_native: Some(true),
             credentials: vec![],
             primary_index: None,
+        }
+    }
+}
+
+
+
+impl CredentialInfo {
+    pub fn from_name(name: CredentialName) -> Self {
+        Self {
+            name,
+            hrp: None,
+            extension: None,
+        }
+    }
+}
+
+
+
+#[cfg(feature = "session")]
+impl Default for crate::messages::SessionInfo {
+    fn default() -> Self {
+        Self {
+            actions: None,
+            expiration: None,
+            grantee: (CredentialId::default(), CredentialInfo {
+                name: CredentialName::Native,
+                hrp: None,
+                extension: None
+            }),
+            granter: None,
         }
     }
 }

@@ -1,15 +1,20 @@
-
-use core::fmt::Debug;
-use saa_schema::wasm_serde;
-
-
-use crate::{Binary, CredentialId};
-
 #[cfg(feature = "replay")]
 mod replay;
+#[cfg(feature = "session")]
+mod action;
+#[cfg(feature = "session")]
+mod session;
 
 #[cfg(feature = "replay")]
 pub use replay::*;
+#[cfg(feature = "session")]
+pub use action::*;
+#[cfg(feature = "session")]
+pub use session::*;
+
+
+use saa_schema::wasm_serde;
+use saa_common::{Binary, CredentialId};
 
 
 
@@ -23,8 +28,8 @@ pub struct SignedDataMsg {
 
 
 #[wasm_serde]
-pub struct AuthPayload<E = Binary> {
+pub struct AuthPayload {
     pub hrp: Option<String>,
     pub credential_id: Option<CredentialId>,
-    pub extension: Option<E>
+    pub extension: Option<Binary>
 }

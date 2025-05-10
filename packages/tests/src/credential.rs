@@ -1,3 +1,5 @@
+mod passkey;
+
 use std::str::FromStr;
 
 use saa_common::Binary;

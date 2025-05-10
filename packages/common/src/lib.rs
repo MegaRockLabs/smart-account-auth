@@ -3,30 +3,28 @@
 mod errors;
 mod traits;
 mod macros;
-mod credential;
-
-pub use errors::*;
-pub use traits::*;
-pub use credential::*;
 
 pub mod types;
 pub mod utils;
-pub mod messages;
 pub mod hashes;
 
+pub use errors::*;
+pub use traits::*;
+pub use types::binary::*;
+pub use types::expiration::Expiration;
 
-#[cfg(feature = "storage")]
-pub mod stores;
 
-#[cfg(feature = "session")]
-pub mod sessions;
+pub type CredentialId = String;
+
 
 #[cfg(feature = "native")]
 pub mod crypto {pub use cosmwasm_crypto::*;} 
 
 
+
 #[cfg(feature = "wasm")]
 pub mod wasm;
+
 
 
 #[cfg(any(feature = "std", not(feature = "substrate")))]
@@ -47,11 +45,7 @@ pub use ink::prelude::{
 #[cfg(feature = "substrate")]
 pub mod substrate {
     pub use ink::env as ink_env;
-    pub use {
-        ink_env::Environment as InkEnvironment,
-        ink::EnvAccess as InkApi,
-    };
-
+    pub use {ink_env::Environment as InkEnvironment, ink::EnvAccess as InkApi};
     pub mod default {
         use ink::env as ink_env;
         pub use ink_env::DefaultEnvironment;
@@ -59,12 +53,3 @@ pub mod substrate {
         pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
     }
 }
-
-
-
-#[cfg(not(feature = "wasm"))]
-pub use types::binary::{Binary, to_json_binary, from_json};
-
-#[cfg(feature = "wasm")]
-pub use wasm::{Binary, to_json_binary, from_json};
-

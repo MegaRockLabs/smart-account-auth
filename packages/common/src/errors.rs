@@ -20,6 +20,35 @@ pub enum AuthError {
 
 
 
+#[cfg(all(feature = "std", feature = "session"))]
+#[wasm_serde]
+#[derive(Error)]
+pub enum SessionError {
+    #[error("The session has already expired")]
+    Expired,
+
+    #[error("The session is not valid yet")]
+    NotValidYet,
+
+    #[error("Must have both id and at name specified")]
+    InvalidGrantee,
+
+    #[error("Invalid data or indifferent from the grantee")]
+    InvalidGranter,
+
+    #[error("Passed a list with no actions. Use AllowedActions::All() if you want to allow all of them")]
+    EmptyActions,
+
+
+    #[error("Couldn't derivate a String result from given message and method")]
+    DerivationError,
+
+    #[error("Invalid actions provided")]
+    InvalidActions(String)
+}
+
+
+
 #[cfg(any(feature = "std", not(feature = "substrate")))]
 #[wasm_serde]
 #[derive(Error)]
@@ -84,7 +113,14 @@ pub enum AuthError {
     
     #[error("Semver parsing error: {0}")]
     SemVer(String),
+
+
+    #[cfg(feature = "session")]
+    #[error("Session Error: {0}")]
+    Session(#[from] SessionError),
 }
+
+
 
 
 impl AuthError {
@@ -144,3 +180,5 @@ mod implementation{
         }
     }
 }
+
+

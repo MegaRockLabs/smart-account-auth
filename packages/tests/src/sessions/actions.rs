@@ -2,23 +2,19 @@ use std::{fmt::Display, str::FromStr};
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
 use cosmwasm_std::{testing::{message_info, mock_dependencies, mock_env}, Addr};
-use serde::Serialize;
-use smart_account_auth::sessions::{
-        action::{Action, AllowedActions},
-        key::SessionKey
-    };
-
-use smart_account_auth::types::expiration::Expiration;
+use smart_account_auth::{
+    messages::{Action, AllowedActions, SessionKey},
+    types::expiration::Expiration, CredentialInfo, CredentialName,
+};
 use crate::types::{BankMsg, CosmosMsg, ExecuteMsg};
 
 
 
 #[cw_serde]
-pub struct ExecuteSession<M : Serialize + Display = ExecuteMsg> {
+pub struct ExecuteSession<M : serde::Serialize + Display = ExecuteMsg> {
     pub owner: String,
     pub msg: M
 }
-
 
 
 
@@ -45,7 +41,7 @@ fn session_actions_simple() {
         actions: AllowedActions::List(actions),
         expiration: Expiration::AtHeight(env.block.height + 100),
         granter: Some(alice.sender.to_string()),
-        grantee: bob.sender.to_string(),
+        grantee: (bob.sender.to_string(), CredentialInfo::from_name(CredentialName::Native)),
     };
 
     SESSION_KEYS.save(storage, &key).unwrap();
@@ -94,7 +90,7 @@ fn name_derived_actions() {
     )));
 
     // Ok
-    assert!(actions.is_str_allowed(&Action::with_strum_name(
+    assert!(actions.is_action_allowed(&Action::with_strum_name(
         ExecuteMsg::TransferToken { 
             id: String::from("id"),
             to: String::from("to"),
@@ -230,10 +226,11 @@ fn json_derivations() {
 
 
     // Not Ok: to_string() includes extra spaces and doesn include msg
-    assert!(!actions.is_str_allowed(&Action::with_str(mint_msg)));
+    assert!(!actions.is_action_allowed(&Action::with_str(mint_msg)));
 
-    // Ok: to_sring() is same as serde_json::to_string()
-    assert!(actions.is_str_allowed(&Action::with_str(transfer_msg)));
+    // Not Ok: the result of to_string() and serde_json::to_string() are identical
+    // but the method is nevertheless different
+    assert!(!actions.is_action_allowed(&Action::with_str(transfer_msg)));
 
 }
 

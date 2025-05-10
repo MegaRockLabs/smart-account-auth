@@ -1,14 +1,20 @@
-mod credential;
+// add utility methods to the `Credential` enum
+mod impls;
+
+#[cfg(feature = "session")]
+mod session;
 
 #[cfg(feature = "storage")]
-mod data;
+mod store;
+
 
 #[cfg(feature = "storage")]
-pub mod storage;
-
-// re-export the next for beeter DX
-#[cfg(feature = "storage")]
-pub use storage::{verify_signed, verify_caller};
+pub use store::{
+    verify_caller, verify_signed, 
+    save_credentials, has_natives,
+    storage
+};
 
 #[cfg(feature = "replay")]
-pub use storage::verify_signed_actions;
+pub use store::replay::verify_signed_actions;
+

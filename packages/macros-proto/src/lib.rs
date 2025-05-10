@@ -49,7 +49,6 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
     quote! { 
         #[derive(
             ::saa_schema::strum_macros::Display, 
-            ::saa_schema::strum_macros::EnumString, 
             ::saa_schema::strum_macros::EnumDiscriminants
         )]
         #[strum_discriminants(
@@ -70,9 +69,9 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         input,
         quote! {
             enum Right {
-                WithSession {
-
-                }
+                CreateSession(::smart_account_auth::messages::CreateSession),
+                #[cfg(feature = "wasm")]
+                CreateSessionForMsg(::smart_account_auth::messages::CreateSessionForMsg<Box<Self>>),
             }
         }
         .into(),

@@ -4,7 +4,7 @@ use std::fmt;
 use std::ops::Add;
 
 use crate::AuthError;
-use super::Timestamp;
+use super::timestamp::Timestamp;
 
 
 #[wasm_serde]
@@ -105,8 +105,3 @@ impl PartialOrd for Expiration {
         }
     }
 }
-
-pub const HOUR: Duration = Duration::Time(60 * 60);
-pub const DAY: Duration = Duration::Time(24 * 60 * 60);
-pub const WEEK: Duration = Duration::Time(7 * 24 * 60 * 60);
-

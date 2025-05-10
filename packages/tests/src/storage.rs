@@ -1,6 +1,10 @@
 use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr, Storage};
-use saa_common::{stores::{HAS_NATIVES, VERIFYING_CRED_ID}, wasm::storage::save_credential, AuthError, CredentialId, CredentialInfo, Verifiable};
-use smart_account_auth::{storage::{get_all_credentials, load_count, remove_credential, reset_credentials, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS}, update_credentials}, Caller, Credential, CredentialData, CredentialName, CredentialsWrapper, UpdateOperation};
+use saa_common::{AuthError, CredentialId, Verifiable};
+use smart_account_auth::{
+    storage::{get_all_cred_infos, load_count, remove_credential, reset_credentials, save_credential, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, update_credentials
+    }, 
+    Caller, Credential, CredentialData, CredentialInfo, CredentialName, CredentialsWrapper, UpdateOperation
+};
 use crate::vars::{cred_data_non_native, cred_data_only_native, credential_data, default_cred_count, get_cosmos_arbitrary, get_eth_personal, get_mock_env, get_passkey, ALICE_ADDR};
 
 
@@ -27,7 +31,7 @@ fn checked_remaining(
     }
 
     if check_natives {
-        let has: bool = remaining.iter().any(|(_, info)| info.name == "native");
+        let has: bool = remaining.iter().any(|(_, info)| info.name ==  CredentialName::Native);
         HAS_NATIVES.save(storage, &has)?;
     }
     Ok(())
@@ -39,7 +43,7 @@ fn remove_credential_smart(
     id: &CredentialId,
 ) -> Result<(), AuthError> {
     remove_credential(storage, id)?;
-    let remaining = get_all_credentials(storage)?;
+    let remaining = get_all_cred_infos(storage)?;
     let check_ver = VERIFYING_CRED_ID.load(storage)? == *id;
 
     checked_remaining(
@@ -171,12 +175,12 @@ fn save_cred_data_with_native_caller() {
                     .save(deps.api, storage, &env)
                     .unwrap();
     
-    let all = get_all_credentials(storage).unwrap();
+    let all = get_all_cred_infos(storage).unwrap();
     let (id, info) = all.first().unwrap();
     assert!(id == &data.primary_id() && id == ALICE_ADDR);
     assert!(HAS_NATIVES.load(storage).unwrap_or_default());
     assert_eq!(VERIFYING_CRED_ID.load(storage).unwrap(), *id);
-    assert_eq!(CredentialName::Native.to_string(), info.name);
+    assert_eq!(CredentialName::Native, info.name);
 }
 
 

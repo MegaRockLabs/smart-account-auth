@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use secret_toolkit::storage::{Item, Keymap};
 use crate::{CredentialInfo, CredentialId};
 
