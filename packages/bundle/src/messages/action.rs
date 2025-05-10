@@ -1,6 +1,6 @@
-use core::{fmt::Display, str::FromStr};
+use core::fmt::Display;
 use saa_schema::wasm_serde;
-use saa_common::{ensure, SessionError};
+use saa_common::{ensure, ToString, FromStr, SessionError};
 use strum::IntoDiscriminant;
 #[cfg(feature = "wasm")]
 use serde::Serialize;

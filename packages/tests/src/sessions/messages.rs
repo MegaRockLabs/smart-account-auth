@@ -1,8 +1,11 @@
+use std::str::FromStr;
+
 use cosmwasm_std::{testing::mock_env, Addr, Uint128};
 use saa_common::{CredentialId, Expiration, SessionError};
-use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, SessionInfo}, CredentialInfo, CredentialName};
+use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, SessionActionName, SessionInfo}, CredentialInfo, CredentialName};
+use strum::IntoDiscriminant;
 
-use crate::types::{BankMsg, Coin, CosmosMsg, ExecuteMsg};
+use crate::types::*;
 
 
 #[test]
@@ -474,4 +477,57 @@ fn nested_session_message_checks() {
 
     // normal messages should be allowed
     assert!(allowed.is_message_allowed(&mint_msg));
+}
+
+
+
+#[test]
+fn macro_strum_derivations_work() {
+
+    let session_info: SessionInfo = SessionInfo {
+        expiration: None,
+        granter: None,
+        grantee: ("alice".to_string(), CredentialInfo {
+            name: CredentialName::Native,
+            hrp: None,
+            extension: None
+        }),
+    };
+
+    let msg = ExecuteMsg::Freeze {  };
+
+
+    // Custom implementation of Display and IntoDiscriminant to reduce attack vector
+    let create_msg = CreateSession {
+        allowed_actions: AllowedActions::Include(vec![Action::with_strum_name(msg.clone())]),
+        session_info: session_info.clone(),
+    };
+
+    let expected = "create_session";
+    let name = create_msg.discriminant().to_string();
+    let str = create_msg.to_string();
+    assert!(name == str && name == expected);
+
+    // Deriving Discriminant (Enum with just names) from string representation 
+    let expected_name = SessionActionName::CreateSession;
+    let discr = create_msg.discriminant();
+    let from_str = <CreateSession as IntoDiscriminant>
+            ::Discriminant::from_str(&name).unwrap();
+
+    assert!(discr == from_str && discr == expected_name);
+
+
+    // Strum fields derived using macro
+
+    let exec_create = ExecuteMsg::CreateSession(create_msg.clone());
+    let exec_name = exec_create.discriminant().to_string();
+    let exec_str = exec_create.to_string();
+    assert!(exec_name == exec_str && exec_name == expected);
+    
+
+    let exec_discr = exec_create.discriminant();
+    let exec_from_str = <ExecuteMsg as IntoDiscriminant>
+            ::Discriminant::from_str(&exec_name).unwrap();
+    assert!(exec_discr == exec_from_str);
+    
 }

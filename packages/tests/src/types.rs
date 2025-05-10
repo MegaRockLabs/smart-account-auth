@@ -33,8 +33,6 @@ pub enum CosmosMsg {
     Staking(StakingMsg),
     Simple {}
 }
-    
-
 
 
 

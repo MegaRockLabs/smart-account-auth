@@ -22,6 +22,7 @@ use strum_macros::{Display, EnumString, EnumDiscriminants};
 use saa_common::{Binary, CredentialId};
 
 
+
 #[wasm_serde]
 #[derive(EnumDiscriminants)]
 #[strum_discriminants(

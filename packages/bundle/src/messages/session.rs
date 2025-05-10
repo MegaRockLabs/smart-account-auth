@@ -1,5 +1,5 @@
 
-use std::fmt::Display;
+use core::fmt::Display;
 use saa_schema::wasm_serde;
 use saa_common::{CredentialId, Expiration, FromStr};
 use strum::{IntoDiscriminant, IntoEnumIterator};

@@ -52,8 +52,10 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
             ::saa_schema::strum_macros::EnumDiscriminants
         )]
         #[strum_discriminants(
+            name(ExecuteMsgNames),
             derive(
                 ::saa_schema::strum_macros::Display,
+                ::saa_schema::strum_macros::EnumString,
                 ::saa_schema::strum_macros::AsRefStr
             ),
             strum(serialize_all = "snake_case", crate = "::saa_schema::strum")
@@ -65,6 +67,7 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
 
 
 
+
 #[proc_macro_attribute]
 pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream {
     session_merger(
@@ -73,7 +76,8 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         quote! {
             enum Right {
                 CreateSession(::smart_account_auth::messages::CreateSession),
-                #[cfg(feature = "wasm")]
+
+                #[strum(to_string = "create_session_from_msg")]
                 CreateSessionFromMsg(::smart_account_auth::messages::CreateSessionFromMsg<Box<Self>>),
             }
         }
