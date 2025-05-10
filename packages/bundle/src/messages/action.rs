@@ -47,7 +47,7 @@ impl FromStr for Action {
 impl Action {
 
     #[cfg(not(feature = "wasm"))]
-    pub fn new<M>(message: M, method: DerivationMethod) -> Self
+    pub fn new<M>(message: &M, method: DerivationMethod) -> Self
     where
         M:  IntoDiscriminant<Discriminant : ToString> + Display,
     {
@@ -65,9 +65,10 @@ impl Action {
     }
 
     #[cfg(feature = "wasm")]
-    pub fn new<M>(message: M, method: DerivationMethod) -> Result<Self, SessionError>
+    pub fn new<M>(message: &M, method: DerivationMethod) -> Result<Self, SessionError>
     where
-        M:  IntoDiscriminant<Discriminant : ToString> + Display + Serialize,
+        M: IntoDiscriminant + Display + Serialize + Clone,
+        <M as IntoDiscriminant>::Discriminant: ToString,
     {
         match method {
             DerivationMethod::Name => Ok(Self {
@@ -80,33 +81,33 @@ impl Action {
             }),
             DerivationMethod::Json => Ok(Self {
                 method: DerivationMethod::Json,
-                result: saa_common::wasm::to_json_string(&message)
+                result: saa_common::wasm::to_json_string(message)
                     .map_err(|_| SessionError::DerivationError)?,
             }),
         }
     }
 
     #[cfg(feature = "utils")]
-    pub fn with_str<A : Display>(action: A) -> Self {
+    pub fn with_str<A : Display>(message: A) -> Self {
         Self {
             method: DerivationMethod::String,
-            result: action.to_string()
+            result: message.to_string()
         }
     }
 
     #[cfg(feature = "utils")]
-    pub fn with_strum_name<A>(action: A) -> Self  where A: IntoDiscriminant<Discriminant : ToString>{
+    pub fn with_strum_name<A>(message: A) -> Self  where A: IntoDiscriminant<Discriminant : ToString>{
         Self {
             method: DerivationMethod::Name,
-            result: action.discriminant().to_string()
+            result: message.discriminant().to_string()
         }
     }
 
-    #[cfg(all(feature = "wasm", feature = "utils", test))]
-    pub fn with_serde_name<A : Serialize>(action: A) -> Result<Self, SessionError> {
+    #[cfg(all(feature = "wasm", feature = "utils"))]
+    pub fn with_serde_name<A : Serialize>(message: A) -> Result<Self, SessionError> {
         Ok(Self {
             method: DerivationMethod::Name,
-            result: serde_json::to_value(action)
+            result: serde_json::to_value(message)
                     .map_err(|_| SessionError::DerivationError)?
                     .as_object()
                     .map(|obj| obj.keys()
@@ -119,10 +120,10 @@ impl Action {
     }
 
     #[cfg(all(feature = "wasm", feature = "utils"))]
-    pub fn with_serde_json<A : Serialize>(action: A) -> Result<Self, SessionError> {
+    pub fn with_serde_json<A : Serialize>(message: A) -> Result<Self, SessionError> {
         Ok(Self {
             method: DerivationMethod::Json,
-            result: saa_common::wasm::to_json_string(&action)
+            result: saa_common::wasm::to_json_string(&message)
                     .map_err(|_| SessionError::DerivationError)?
         })
         
@@ -169,6 +170,46 @@ impl AllowedActions {
                 .any(|action| 
                     action.method == msg.method && 
                     action.result == msg.result
+                )
+        }
+    }
+
+
+    #[cfg(not(feature = "wasm"))]
+    pub fn is_message_allowed<M>(&self, message: &M) -> bool
+    where
+        M: core::ops::Deref,
+        M::Target: IntoDiscriminant + Display + Clone,
+        <M::Target as IntoDiscriminant>::Discriminant: ToString,
+    {
+        match self {
+            AllowedActions::All {} => true,
+            AllowedActions::List(ref actions) => actions
+                .iter()
+                .any(|allowed| Action::new(
+                        message, allowed.method.clone()
+                    ).result == allowed.result
+                )
+        }
+    }
+
+
+    #[cfg(feature = "wasm")]
+    pub fn is_message_allowed<M>(&self, message: &M) -> bool
+    where
+        M: IntoDiscriminant + Display + Serialize + Clone,
+        <M as IntoDiscriminant>::Discriminant: ToString,
+    {
+        match self {
+            AllowedActions::All {} => true,
+            AllowedActions::List(ref actions) => actions
+                .iter()
+                .any(|allowed| 
+                    if let Ok(derived) = Action::new(message, allowed.method.clone()) {
+                        allowed.result == derived.result
+                    } else {
+                        false
+                    }
                 )
         }
     }

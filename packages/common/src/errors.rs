@@ -27,9 +27,6 @@ pub enum SessionError {
     #[error("The session has already expired")]
     Expired,
 
-    #[error("The session is not valid yet")]
-    NotValidYet,
-
     #[error("Must have both id and at name specified")]
     InvalidGrantee,
 
@@ -39,12 +36,11 @@ pub enum SessionError {
     #[error("Passed a list with no actions. Use AllowedActions::All() if you want to allow all of them")]
     EmptyActions,
 
-
     #[error("Couldn't derivate a String result from given message and method")]
     DerivationError,
 
-    #[error("Invalid actions provided")]
-    InvalidActions(String)
+    #[error("Invalid actions provided. Check that there are no empty results not dublicates")]
+    InvalidActions,
 }
 
 

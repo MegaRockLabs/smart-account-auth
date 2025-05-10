@@ -22,7 +22,6 @@ pub struct SessionInfo  {
     pub grantee     :       GranteeInfo,
     pub granter     :       Option<CredentialId>,
     pub expiration  :       Option<Expiration>,
-    pub actions     :       Option<AllowedActions>,
 }
 
 
@@ -36,7 +35,7 @@ pub struct CreateSession {
 
 #[cfg(feature = "wasm")]
 #[wasm_serde]
-pub struct CreateSessionForMsg<M>
+pub struct CreateSessionFromMsg<M>
 where
     M: core::ops::Deref,
     M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,

@@ -1,9 +1,11 @@
-use cosmwasm_std::{coin, testing::mock_dependencies, CosmosMsg};
+use cosmwasm_std::testing::mock_dependencies;
 use saa_common::{to_json_binary, Binary, Verifiable};
-use serde::{Deserialize, Serialize};
+use saa_schema::wasm_serde;
 use smart_account_auth::messages::MsgDataToSign;
 use smart_account_auth::{types::ClientData, PasskeyCredential};
 use smart_account_auth::utils::passkey::base64_to_url;
+
+use crate::types::{Coin, CosmosMsg, StakingMsg};
 
 
 #[test]
@@ -78,8 +80,7 @@ fn can_check_passkeys_data_string() {
 
 
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[wasm_serde]
 pub enum Action {
     Execute { msgs: Vec<CosmosMsg> },
 }
@@ -98,9 +99,12 @@ fn can_check_passkeys_data_actions() {
         chain_id: "elgafar-1".to_string(),
         contract_address: "stars156t98r39hf3yr8n76e24asywy45y4lthwfs5349q0ucp28wqp9lsquujva".to_string(),
         messages: vec![Action::Execute { 
-            msgs: vec![CosmosMsg::Staking(cosmwasm_std::StakingMsg::Delegate { 
+            msgs: vec![CosmosMsg::Staking(StakingMsg::Delegate { 
                 validator: "starsvaloper1q48vyzzz82kh9sn2zsslna3mhujx70s7yg5jzf".to_string(), 
-                amount: coin(1000000, "ustars")
+                amount: Coin {
+                    denom: "ustars".to_string(), 
+                    amount: 1000000u128.into()
+                }
             })] 
         }],
         nonce: "1".to_string()

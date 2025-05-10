@@ -21,14 +21,21 @@ pub enum BankMsg {
     Burn { amount: Vec<Coin> },
 }
 
+#[wasm_serde]
+pub enum StakingMsg {
+    Delegate { validator: String, amount: Coin },
+}
 
 
 #[wasm_serde]
 pub enum CosmosMsg {
     Bank(BankMsg),
-    Staking {},
+    Staking(StakingMsg),
+    Simple {}
 }
     
+
+
 
 
 #[session_action]

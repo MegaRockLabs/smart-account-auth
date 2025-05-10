@@ -293,21 +293,3 @@ impl CredentialInfo {
         }
     }
 }
-
-
-
-#[cfg(feature = "session")]
-impl Default for crate::messages::SessionInfo {
-    fn default() -> Self {
-        Self {
-            actions: None,
-            expiration: None,
-            grantee: (CredentialId::default(), CredentialInfo {
-                name: CredentialName::Native,
-                hrp: None,
-                extension: None
-            }),
-            granter: None,
-        }
-    }
-}
