@@ -1,7 +1,6 @@
 
 use cosmwasm_std::Uint128;
 use saa_schema::{session_action, wasm_serde};
-use smart_account_auth::CredentialData;
 
 
 #[wasm_serde]

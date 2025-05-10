@@ -82,7 +82,7 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
 
                 WithSessionKey(::smart_account_auth::messages::WithSessionMsg<Box<Self>>),
 
-                RevokeSession(::smart_account_auth::messages::RevokeKeyMsg),
+                RevokeSession(::smart_account_auth::messages::RevokeKeyMsg)
             }
         }
         .into(),
