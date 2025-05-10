@@ -4,7 +4,7 @@ use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
 #[cfg(feature = "storage")]
 use {
     saa_common::{wasm::{Env, Storage}, Verifiable},
-    crate::wasm::store::stores::{HAS_NATIVES, VERIFYING_CRED_ID},
+    crate::wasm::storage::stores::{HAS_NATIVES, VERIFYING_CRED_ID},
 };
 
 #[cfg(feature = "replay")]
@@ -123,14 +123,14 @@ impl crate::CredentialData {
         #[cfg(feature = "replay")]
         {
             self.assert_signed_data(storage, env)?;
-            crate::wasm::store::increment_account_number(storage)?;
+            crate::wasm::storage::increment_account_number(storage)?;
         }
         let mut has_natives = false;
         for cred in self.credentials.iter() {
             let id = &cred.id();
             //println!("Saving credential: {:?} with id {:?}", cred.name(), id);
             cred.verify_cosmwasm(api)?;
-            crate::wasm::store::utils::save_credential(storage, id, &cred.info())?;
+            crate::wasm::storage::utils::save_credential(storage, id, &cred.info())?;
             if cred.name() == crate::credential::CredentialName::Native { has_natives = true }
         }
         HAS_NATIVES.save(storage, &has_natives)?;
@@ -195,7 +195,7 @@ impl MsgDataToVerify {
         ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
         ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
         ensure!(
-            self.nonce == super::store::stores::ACCOUNT_NUMBER.load(store).unwrap_or_default().to_string(), 
+            self.nonce == super::storage::stores::ACCOUNT_NUMBER.load(store).unwrap_or_default().to_string(), 
             AuthError::DifferentNonce
         );
         Ok(())

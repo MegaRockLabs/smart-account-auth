@@ -12,21 +12,6 @@ pub(crate) use replay::*;
 
 
 
-pub mod storage {
-    #[cfg(feature = "replay")]
-    pub use super::replay::*;
-    
-    #[cfg(feature = "iterator")]
-    pub use super::iterator::*;
-    
-    #[cfg(feature = "utils")]
-    pub use super::utils::*;
-    
-    #[cfg(feature = "types")]
-    pub use super::stores;
-}
-
-
 use saa_common::{AuthError, Verifiable, wasm::{Api, Env, Storage}, ensure};
 use crate::{CredentialData, messages::SignedDataMsg};
 
@@ -87,4 +72,31 @@ pub fn has_natives(
     storage: &dyn Storage
 ) -> bool {
     stores::HAS_NATIVES.load(storage).unwrap_or(false)
+}
+
+
+
+
+
+
+pub mod storage_methods {
+    #[cfg(feature = "replay")]
+    pub use super::replay::*;
+    
+    #[cfg(feature = "iterator")]
+    pub use super::iterator::*;
+    
+    #[cfg(feature = "utils")]
+    pub use super::utils::*;
+    
+    #[cfg(feature = "types")]
+    pub use super::stores;
+}
+
+
+
+pub mod top_methods {
+    pub use super::{verify_caller, verify_signed, save_credentials, has_natives};
+    #[cfg(feature = "replay")]
+    pub use super::replay::verify_signed_actions;
 }

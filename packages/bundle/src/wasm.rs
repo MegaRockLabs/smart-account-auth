@@ -5,16 +5,8 @@ mod impls;
 mod session;
 
 #[cfg(feature = "storage")]
-mod store;
+mod storage;
 
 
 #[cfg(feature = "storage")]
-pub use store::{
-    verify_caller, verify_signed, 
-    save_credentials, has_natives,
-    storage
-};
-
-#[cfg(feature = "replay")]
-pub use store::replay::verify_signed_actions;
-
+pub use storage::{top_methods, storage_methods};

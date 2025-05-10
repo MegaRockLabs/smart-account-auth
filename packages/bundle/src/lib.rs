@@ -19,13 +19,15 @@ pub use credential::{Credential, CredentialName, CredentialInfo};
 pub use data::{CredentialData, UpdateOperation, UpdateMethod};
 
 
-// the storage restriction is not needed but there aren't any exports
-#[cfg(all(feature = "wasm", feature = "storage"))]
-pub use wasm::*;
+
 #[cfg(feature = "native")]
 pub use saa_common::crypto;
 #[cfg(feature = "traits")]
 pub use {wrapper::CredentialsWrapper, saa_common::Verifiable};
+
+// the storage restriction is not needed but there aren't any exports
+#[cfg(all(feature = "wasm", feature = "storage"))]
+pub use wasm::{storage_methods as storage, top_methods::*};
 
 
 #[cfg(feature = "types")]
