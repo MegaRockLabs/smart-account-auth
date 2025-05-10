@@ -30,7 +30,7 @@ fn simple_create_session_messages() {
             }),
         },
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidGrantee);
 
 
@@ -47,7 +47,7 @@ fn simple_create_session_messages() {
             }),
         },
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidGranter);
 
     
@@ -66,7 +66,7 @@ fn simple_create_session_messages() {
             }),
         },
     };
-    assert!(create_msg.to_session_key(&env).is_ok());
+    assert!(create_msg.to_session(&env).is_ok());
 
 
     // Error: Expiration already expired
@@ -82,7 +82,7 @@ fn simple_create_session_messages() {
             }),
         },
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::Expired);
 
 
@@ -101,7 +101,7 @@ fn simple_create_session_messages() {
         allowed_actions: AllowedActions::All {},
         session_info: session_info.clone(),
     };
-    assert!(create_msg.to_session_key(&env).is_ok());
+    assert!(create_msg.to_session(&env).is_ok());
 
 
 
@@ -110,7 +110,7 @@ fn simple_create_session_messages() {
         allowed_actions: AllowedActions::Include(vec![]),
         session_info: session_info.clone(),
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::EmptyActions);
 
 
@@ -130,7 +130,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidActions);
 
 
@@ -142,7 +142,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidActions);
 
 
@@ -154,7 +154,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidActions);
 
 
@@ -168,7 +168,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    assert!(create_msg.to_session_key(&env).is_ok());
+    assert!(create_msg.to_session(&env).is_ok());
 
 
     // Error: Different messages but in the end it's the same derivations -> Duplicates
@@ -179,7 +179,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    let res = create_msg.to_session_key(&env);
+    let res = create_msg.to_session(&env);
     assert_eq!(res.unwrap_err(), SessionError::InvalidActions);
 
 
@@ -192,7 +192,7 @@ fn simple_create_session_messages() {
         ]),
         session_info: session_info.clone(),
     };
-    assert!(create_msg.to_session_key(&env).is_ok());
+    assert!(create_msg.to_session(&env).is_ok());
 
 
 
@@ -270,7 +270,7 @@ fn generating_session_from_messages() {
         derivation_method: None,
         message: Box::new(mint_msg.clone()),
         session_info: session_info.clone(),
-    }.to_session_key(&env).unwrap();
+    }.to_session(&env).unwrap();
 
 
     // ok: same message
@@ -286,7 +286,7 @@ fn generating_session_from_messages() {
         derivation_method: Some(DerivationMethod::String),
         message: Box::new(mint_msg.clone()),
         session_info: session_info.clone(),
-    }.to_session_key(&env).unwrap();
+    }.to_session(&env).unwrap();
 
 
     // ok: inner message doesn't affect to_string() output
@@ -300,7 +300,7 @@ fn generating_session_from_messages() {
         derivation_method: Some(DerivationMethod::Json),
         message: Box::new(mint_msg.clone()),
         session_info: session_info.clone(),
-    }.to_session_key(&env).unwrap();
+    }.to_session(&env).unwrap();
 
 
     // ok: same message
@@ -313,11 +313,11 @@ fn generating_session_from_messages() {
 
 
 fn create_session_error(msg: &CreateSession) -> SessionError {
-    msg.to_session_key(&mock_env()).unwrap_err()
+    msg.to_session(&mock_env()).unwrap_err()
 }
 
 fn create_from_error(msg: &CreateSessionFromMsg<Box<ExecuteMsg>>) -> SessionError {
-    msg.to_session_key(&mock_env()).unwrap_err()
+    msg.to_session(&mock_env()).unwrap_err()
 }
 
 
@@ -418,12 +418,12 @@ fn nested_session_message_checks() {
     use SessionError::InnerSessionAction;
 
     // Normal messages work as expected
-    assert!(create_session_name.to_session_key(&env).is_ok());
-    assert!(create_session_str.to_session_key(&env).is_ok());
-    assert!(create_session_json.to_session_key(&env).is_ok());
-    assert!(create_from_name.to_session_key(&env).is_ok());
-    assert!(create_from_str.to_session_key(&env).is_ok());
-    assert!(create_from_json.to_session_key(&env).is_ok());
+    assert!(create_session_name.to_session(&env).is_ok());
+    assert!(create_session_str.to_session(&env).is_ok());
+    assert!(create_session_json.to_session(&env).is_ok());
+    assert!(create_from_name.to_session(&env).is_ok());
+    assert!(create_from_str.to_session(&env).is_ok());
+    assert!(create_from_json.to_session(&env).is_ok());
 
     // All nested CresateSession messages should fail
     assert_eq!(create_session_error(&create_session_nested_self), InnerSessionAction);
@@ -436,7 +436,7 @@ fn nested_session_message_checks() {
 
 
     // Creating a session with AllowedActions::All 
-    let allowed = create_session_all.to_session_key(&env).unwrap().actions;
+    let allowed = create_session_all.to_session(&env).unwrap().actions;
 
     
     // none of the session messages should be allowed despite AllowedActions::All

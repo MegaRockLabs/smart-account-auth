@@ -43,4 +43,6 @@ pub mod timestamp {
     pub use super::ts::Timestamp;
     #[cfg(feature = "wasm")]
     pub use crate::wasm::Timestamp;
+
+    pub use super::expiration::Timepoint;
 }

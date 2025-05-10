@@ -3,7 +3,7 @@
 use cosmwasm_std::{testing::mock_env, Addr, Env};
 use saa_common::Binary;
 use smart_account_auth::{
-    types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, EthPersonalSign, PasskeyCredential
+    messages::SessionInfo, types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, CredentialInfo, CredentialName, EthPersonalSign, PasskeyCredential
 };
 
 
@@ -101,4 +101,17 @@ pub fn get_mock_env() -> Env {
     env.block.chain_id = SIGN_CHAIN_ID.to_string();
     env.contract.address = Addr::unchecked(SIGN_CONTRACT_ADDRESS);
     env
+}
+
+
+pub fn session_info() -> SessionInfo {
+    SessionInfo {
+        expiration: None,
+        granter: None,
+        grantee: ("bob".to_string(), CredentialInfo {
+            name: CredentialName::Native,
+            hrp: None,
+            extension: None
+        }),
+    }
 }

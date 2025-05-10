@@ -56,9 +56,6 @@ pub enum ExecuteMsg {
         to: String,
     },
 
-    UpdateAccountData {
-        account_data: Option<CredentialData>,
-    },
 
     #[strum(to_string = "freeeeeze")]
     Freeze {},

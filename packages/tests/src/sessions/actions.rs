@@ -2,8 +2,9 @@ use std::{fmt::Display, str::FromStr};
 use cosmwasm_schema::cw_serde;
 use cw_storage_plus::Item;
 use cosmwasm_std::{testing::{message_info, mock_dependencies, mock_env}, Addr};
+use saa_common::Timepoint;
 use smart_account_auth::{
-    messages::{Action, AllowedActions, SessionKey},
+    messages::{Action, AllowedActions, Session},
     types::expiration::Expiration, CredentialInfo, CredentialName,
 };
 use crate::types::{BankMsg, CosmosMsg, ExecuteMsg};
@@ -18,7 +19,7 @@ pub struct ExecuteSession<M : serde::Serialize + Display = ExecuteMsg> {
 
 
 
-pub static SESSION_KEYS : Item<SessionKey> = Item::new("saa_keys");
+pub static SESSION_KEYS : Item<Session> = Item::new("saa_keys");
 
 
 
@@ -37,11 +38,13 @@ fn session_actions_simple() {
         Action::from_str("transfer_token").unwrap(),
     ];
 
-    let key = SessionKey {
+    let key = Session {
         actions: AllowedActions::Include(actions),
         expiration: Expiration::AtHeight(env.block.height + 100),
         granter: Some(alice.sender.to_string()),
         grantee: (bob.sender.to_string(), CredentialInfo::from_name(CredentialName::Native)),
+        created_at: Timepoint::from(&env.block),
+        nonce: 0,
     };
 
     SESSION_KEYS.save(storage, &key).unwrap();

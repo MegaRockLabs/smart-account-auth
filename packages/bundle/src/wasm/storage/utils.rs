@@ -70,8 +70,7 @@ pub fn has_credential(
 
 
 
-
-pub(crate) fn credential_from_payload(
+pub fn credential_from_payload(
     storage:  &dyn Storage,
     data_msg: SignedDataMsg
 ) -> Result<Credential, AuthError> {

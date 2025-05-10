@@ -48,6 +48,8 @@ pub mod utils {
     pub use saa_auth::eth::utils as eth;
     #[cfg(feature = "passkeys")]
     pub use saa_auth::passkey::utils as passkey;
+
+    pub use super::credential::construct_credential;
 }
 
 

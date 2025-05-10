@@ -77,8 +77,12 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
             enum Right {
                 CreateSession(::smart_account_auth::messages::CreateSession),
 
-                #[strum(to_string = "create_session_from_msg")]
+                #[cfg(feature = "wasm")]
                 CreateSessionFromMsg(::smart_account_auth::messages::CreateSessionFromMsg<Box<Self>>),
+
+                WithSessionKey(::smart_account_auth::messages::WithSessionMsg<Box<Self>>),
+
+                RevokeSession(::smart_account_auth::messages::RevokeKeyMsg),
             }
         }
         .into(),

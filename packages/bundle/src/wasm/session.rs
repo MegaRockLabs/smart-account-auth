@@ -1,10 +1,10 @@
 use core::{fmt::Display, ops::Deref};
-use saa_common::{ensure, types::expiration::Expiration, wasm::Env, SessionError};
+use saa_common::{ensure, types::expiration::Expiration, wasm::Env, SessionError, Timepoint};
 
 use serde::Serialize;
 use strum::IntoDiscriminant;
 
-use crate::messages::{is_session_action_name, Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, GranteeInfo, SessionInfo, SessionKey};
+use crate::messages::{is_session_action_name, Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, GranteeInfo, SessionInfo, Session};
 
 
 impl SessionInfo {
@@ -63,21 +63,24 @@ impl SessionInfo {
 
 
 impl CreateSession {
-    pub fn to_session_key(
+    pub fn to_session(
         &self, 
         env: &Env
-    ) -> Result<SessionKey, SessionError> {
+    ) -> Result<Session, SessionError> {
+        
         let (
             grantee, 
             expiration, 
             actions
         ) = self.session_info.checked_params(env, Some(&self.allowed_actions))?;
 
-        Ok(SessionKey {
+        Ok(Session {
             actions,
             expiration,
             grantee,
             granter: self.session_info.granter.clone(),
+            created_at: Timepoint::from(&env.block),
+            nonce: 0,
         })
     }
 }
@@ -90,10 +93,10 @@ where
     M::Target: IntoDiscriminant + Display + Serialize + Clone,
     <M::Target as IntoDiscriminant>::Discriminant: AsRef<str> + ToString,
 {
-    pub fn to_session_key(
+    pub fn to_session(
         &self, 
         env: &Env
-    ) -> Result<SessionKey, SessionError> {
+    ) -> Result<Session, SessionError> {
         let (grantee, expiration, _) = self.session_info.checked_params(env, None)?;
         
         let msg = self.message.deref();
@@ -103,11 +106,13 @@ where
         let action = Action::new(msg, method)?;
         ensure!(!action.result.is_empty(), SessionError::InvalidActions);
 
-        Ok(SessionKey {
+        Ok(Session {
             actions: AllowedActions::Include(vec![action]),
             expiration,
             grantee,
             granter: self.session_info.granter.clone(),
+            created_at: Timepoint::from(&env.block),
+            nonce: 0,
         })
     }
 }
