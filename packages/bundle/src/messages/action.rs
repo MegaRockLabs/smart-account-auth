@@ -1,9 +1,11 @@
 use core::{fmt::Display, str::FromStr};
 use saa_schema::wasm_serde;
-use saa_common::SessionError;
+use saa_common::{ensure, SessionError};
 use strum::IntoDiscriminant;
 #[cfg(feature = "wasm")]
 use serde::Serialize;
+
+use super::is_session_action_name;
 
 #[wasm_serde]
 pub enum DerivationMethod {
@@ -47,11 +49,14 @@ impl FromStr for Action {
 impl Action {
 
     #[cfg(not(feature = "wasm"))]
-    pub fn new<M>(message: &M, method: DerivationMethod) -> Self
+    pub fn new<M>(message: &M, method: DerivationMethod) -> Result<Self, SessionError>
     where
-        M:  IntoDiscriminant<Discriminant : ToString> + Display,
+        M: IntoDiscriminant + Display,
+        <M as IntoDiscriminant>::Discriminant: ToString,
     {
-        match method {
+        let name = message.discriminant().to_string();
+        ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
+        let action = match method {
             DerivationMethod::Name => Self {
                 method: DerivationMethod::Name,
                 result: message.discriminant().to_string(),
@@ -60,31 +65,37 @@ impl Action {
                 method: DerivationMethod::String,
                 result: message.to_string(),
             },
-            // Json not supported without wasm feature
-        }
+        };
+        ensure!(!action.result.is_empty(), SessionError::InvalidActions);
+        Ok(action)
     }
 
     #[cfg(feature = "wasm")]
     pub fn new<M>(message: &M, method: DerivationMethod) -> Result<Self, SessionError>
     where
-        M: IntoDiscriminant + Display + Serialize + Clone,
-        <M as IntoDiscriminant>::Discriminant: ToString,
+        M: IntoDiscriminant + Display + Serialize,
+        <M as IntoDiscriminant>::Discriminant : ToString,
     {
-        match method {
-            DerivationMethod::Name => Ok(Self {
+        let name = message.discriminant().to_string();
+        ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
+        let action = match method {
+            DerivationMethod::Name => Self {
                 method: DerivationMethod::Name,
                 result: message.discriminant().to_string(),
-            }),
-            DerivationMethod::String => Ok(Self {
+            },
+            DerivationMethod::String => Self {
                 method: DerivationMethod::String,
                 result: message.to_string(),
-            }),
-            DerivationMethod::Json => Ok(Self {
+            },
+            DerivationMethod::Json => Self {
                 method: DerivationMethod::Json,
                 result: saa_common::wasm::to_json_string(message)
                     .map_err(|_| SessionError::DerivationError)?,
-            }),
-        }
+            },
+        };
+        ensure!(!action.result.is_empty(), SessionError::InvalidActions);
+        Ok(action)
+        
     }
 
     #[cfg(feature = "utils")]
@@ -96,7 +107,9 @@ impl Action {
     }
 
     #[cfg(feature = "utils")]
-    pub fn with_strum_name<A>(message: A) -> Self  where A: IntoDiscriminant<Discriminant : ToString>{
+    pub fn with_strum_name<A>(message: A) -> Self  
+        where A: IntoDiscriminant<Discriminant : ToString>,
+    {
         Self {
             method: DerivationMethod::Name,
             result: message.discriminant().to_string()
@@ -135,7 +148,7 @@ impl Action {
 
 #[wasm_serde]
 pub enum AllowedActions {
-    List(Vec<Action>),
+    Include(Vec<Action>),
     All {},
 }
 
@@ -147,7 +160,7 @@ impl<A : ToString> From<Vec<A>> for AllowedActions {
         if actions.is_empty() {
             return AllowedActions::All {};
         } else {
-            AllowedActions::List(actions.into_iter()
+            AllowedActions::Include(actions.into_iter()
                 .map(|action| {
                     let result = action.to_string();
                     Action {
@@ -162,15 +175,22 @@ impl<A : ToString> From<Vec<A>> for AllowedActions {
 
 
 impl AllowedActions {
-    pub fn is_action_allowed(&self, msg: &Action) -> bool {
+
+
+    pub fn is_action_allowed(&self, act: &Action) -> bool {
+        if match act.method {
+            #[cfg(feature = "wasm")]
+            DerivationMethod::Json => act.result.contains("\"session_info\""),
+            _ => is_session_action_name(act.result.as_str())
+        } {
+            return false;
+        }
+
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
-                .any(|action| 
-                    action.method == msg.method && 
-                    action.result == msg.result
-                )
+                .any(|action| action == act)
         }
     }
 
@@ -178,16 +198,18 @@ impl AllowedActions {
     #[cfg(not(feature = "wasm"))]
     pub fn is_message_allowed<M>(&self, message: &M) -> bool
     where
-        M: core::ops::Deref,
-        M::Target: IntoDiscriminant + Display + Clone,
-        <M::Target as IntoDiscriminant>::Discriminant: ToString,
+        M: IntoDiscriminant + Display + Clone,
+        <M as IntoDiscriminant>::Discriminant : ToString + AsRef<str>,
     {
+        if self.is_msg_name_ok(message) {
+            return false;
+        }
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|allowed| Action::new(
-                        message, allowed.method.clone()
+                        message, allowed.method
                     ).result == allowed.result
                 )
         }
@@ -197,12 +219,15 @@ impl AllowedActions {
     #[cfg(feature = "wasm")]
     pub fn is_message_allowed<M>(&self, message: &M) -> bool
     where
-        M: IntoDiscriminant + Display + Serialize + Clone,
-        <M as IntoDiscriminant>::Discriminant: ToString,
+        M: IntoDiscriminant + Display + Serialize,
+        <M as IntoDiscriminant>::Discriminant: ToString + AsRef<str>,
     {
+        if is_session_action_name(message.discriminant().as_ref()) {
+            return false;
+        }
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|allowed| 
                     if let Ok(derived) = Action::new(message, allowed.method.clone()) {
@@ -220,16 +245,19 @@ impl AllowedActions {
 impl AllowedActions {
 
 
-    pub fn is_name_allowed<M: ToString>(&self, msg: &M) -> bool 
-        where M: strum::IntoDiscriminant<Discriminant : ToString>
+    pub fn is_name_allowed<M: AsRef<str>>(&self, msg: &M) -> bool 
+        where M: strum::IntoDiscriminant<Discriminant : AsRef<str>>
     {
+        if is_session_action_name(msg.discriminant().as_ref()) {
+            return false;
+        }
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|action| 
                     action.method == DerivationMethod::Name && 
-                    action.result == msg.discriminant().to_string()
+                    action.result.as_str() == msg.discriminant().as_ref()
                 )
         }
     }
@@ -238,7 +266,7 @@ impl AllowedActions {
     pub fn is_str_allowed<S: ToString>(&self, msg: &S) -> bool {
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|action| 
                     action.method == DerivationMethod::String && 
@@ -251,7 +279,7 @@ impl AllowedActions {
     pub fn is_json_allowed<M : Serialize>(&self, msg: &M) -> bool {
         match self {
             AllowedActions::All {} => true,
-            AllowedActions::List(ref actions) => actions
+            AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|action| {
                     if action.method != DerivationMethod::Json {

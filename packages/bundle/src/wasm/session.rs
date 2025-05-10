@@ -4,7 +4,7 @@ use saa_common::{ensure, types::expiration::Expiration, wasm::Env, SessionError}
 use serde::Serialize;
 use strum::IntoDiscriminant;
 
-use crate::messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, GranteeInfo, SessionInfo, SessionKey};
+use crate::messages::{is_session_action_name, Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, GranteeInfo, SessionInfo, SessionKey};
 
 
 impl SessionInfo {
@@ -22,25 +22,35 @@ impl SessionInfo {
         }
         let actions = match actions {
             Some(actions) => {
-                if let AllowedActions::List(ref actions) = actions {
+                if let AllowedActions::Include(ref actions) = actions {
                     ensure!(actions.len() > 0, SessionError::EmptyActions);
 
-                    let no_empties = actions.iter()
-                        .all(|action| !action.result.is_empty());
+                    let validity_ok = actions
+                        .iter()
+                        .enumerate()
+                        .all(|(i, action)| {
+                            let ok = !action.result.is_empty() 
+                                &&  actions
+                                    .into_iter()
+                                    .skip(i + 1)
+                                    .filter(|action2| action == *action2)
+                                    .count() == 0;
+                            ok
+                        });
+                    ensure!(validity_ok, SessionError::InvalidActions);
 
-                    let no_dublicaes = actions
+                    let no_inner_sessions = actions
                         .iter()
                         .all(|action| {
-                            let mut count = 0;
-                            for action2 in actions.iter() {
-                                if action.method == action2.method && action.result == action2.result {
-                                    count += 1;
-                                }
+                            match action.method {
+                                // it's okay to generate identical session messages
+                                DerivationMethod::Json => !action.result.contains("\"session_info\""),
+                                // works well for names and better than nothing for strum strings
+                                _ => !is_session_action_name(action.result.as_str())
+                                
                             }
-                            count <= 1
                         });
-
-                    ensure!(no_empties && no_dublicaes, SessionError::InvalidActions);
+                    ensure!(no_inner_sessions, SessionError::InnerSessionAction);
                 }
                 actions.clone()
             },
@@ -78,19 +88,23 @@ impl<M> CreateSessionFromMsg<M>
 where
     M: Deref,
     M::Target: IntoDiscriminant + Display + Serialize + Clone,
-    <M::Target as IntoDiscriminant>::Discriminant: ToString,
+    <M::Target as IntoDiscriminant>::Discriminant: AsRef<str> + ToString,
 {
     pub fn to_session_key(
         &self, 
         env: &Env
     ) -> Result<SessionKey, SessionError> {
         let (grantee, expiration, _) = self.session_info.checked_params(env, None)?;
-        let action = Action::new(
-            self.message.deref(), 
-            self.derivation_method.clone().unwrap_or_default()
-        )?;
+        
+        let msg = self.message.deref();
+       
+        
+        let method = self.derivation_method.clone().unwrap_or_default();
+        let action = Action::new(msg, method)?;
+        ensure!(!action.result.is_empty(), SessionError::InvalidActions);
+
         Ok(SessionKey {
-            actions: AllowedActions::List(vec![action]),
+            actions: AllowedActions::Include(vec![action]),
             expiration,
             grantee,
             granter: self.session_info.granter.clone(),

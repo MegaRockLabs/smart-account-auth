@@ -26,17 +26,15 @@ pub mod crypto {pub use cosmwasm_crypto::*;}
 pub mod wasm;
 
 
-
 #[cfg(any(feature = "std", not(feature = "substrate")))]
-pub use std::{
-    string::{ToString, String},
-    vec, vec::Vec, 
-    format
+pub use {
+    std::{string::{ToString, String}, vec, vec::Vec, format},
+    core::str::FromStr
 };
 
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
 pub use ink::prelude::{
-    string::{ToString, String},
+    string::{ToString, String, FromStr},
     vec, vec::Vec, 
     format, 
 };

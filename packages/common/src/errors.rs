@@ -41,6 +41,9 @@ pub enum SessionError {
 
     #[error("Invalid actions provided. Check that there are no empty results not dublicates")]
     InvalidActions,
+
+    #[error("Session creation messages aren't allowed to be in allowed message list")]
+    InnerSessionAction,
 }
 
 

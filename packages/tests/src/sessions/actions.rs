@@ -38,7 +38,7 @@ fn session_actions_simple() {
     ];
 
     let key = SessionKey {
-        actions: AllowedActions::List(actions),
+        actions: AllowedActions::Include(actions),
         expiration: Expiration::AtHeight(env.block.height + 100),
         granter: Some(alice.sender.to_string()),
         grantee: (bob.sender.to_string(), CredentialInfo::from_name(CredentialName::Native)),
@@ -73,7 +73,7 @@ fn session_actions_simple() {
 #[test]
 fn name_derived_actions() {
 
-    let actions = AllowedActions::List(vec![
+    let actions = AllowedActions::Include(vec![
         Action::with_strum_name(ExecuteMsg::MintToken { 
             minter: "alice".into(), 
             msg: None 
@@ -114,7 +114,7 @@ fn name_derived_actions() {
 #[test]
 fn string_derivations() {
 
-    let actions = AllowedActions::List(vec![
+    let actions = AllowedActions::Include(vec![
         Action::with_str(ExecuteMsg::MintToken { 
             minter: "minter_contract".into(), 
             msg: None 
@@ -182,7 +182,7 @@ fn json_derivations() {
     let transfer_action = Action::with_serde_json(transfer_msg.clone()).unwrap();
 
 
-    let actions = AllowedActions::List(vec![mint_action, transfer_action]);
+    let actions = AllowedActions::Include(vec![mint_action, transfer_action]);
 
 
     // Not Ok: Different id
