@@ -7,23 +7,6 @@ use crate::AuthError;
 use super::timestamp::Timestamp;
 
 
-#[wasm_serde]
-pub struct Timepoint {
-    pub block_height  :   u64,
-    /// in seconds
-    pub timestamp     :   u64,
-}
-
-#[cfg(feature = "wasm")]
-impl From<&crate::wasm::BlockInfo> for Timepoint {
-    fn from(block: &crate::wasm::BlockInfo) -> Self {
-        Timepoint {
-            block_height: block.height.clone(),
-            timestamp: block.time.seconds(),
-        }
-    }
-}
-
 
 
 #[wasm_serde]

@@ -24,7 +24,7 @@ pub enum AuthError {
 #[wasm_serde]
 #[derive(Error)]
 pub enum SessionError {
-    #[error("The session has already expired")]
+    #[error("The session key has already expired")]
     Expired,
 
     #[error("Must have both id and at name specified")]
@@ -34,7 +34,10 @@ pub enum SessionError {
     InvalidGranter,
 
     #[error("Passed a list with no actions. Use AllowedActions::All() if you want to allow all of them")]
-    EmptyActions,
+    EmptyCreateActions,
+
+    #[error("No actions passed to execute")]
+    EmptyPassedActions,
 
     #[error("Couldn't derivate a String result from given message and method")]
     DerivationError,
@@ -44,6 +47,9 @@ pub enum SessionError {
 
     #[error("Session creation messages aren't allowed to be in allowed message list")]
     InnerSessionAction,
+
+    #[error("Current item cant't be used with the given session key")]
+    NotAllowedAction,
 }
 
 

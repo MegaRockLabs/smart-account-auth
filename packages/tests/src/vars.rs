@@ -3,8 +3,10 @@
 use cosmwasm_std::{testing::mock_env, Addr, Env};
 use saa_common::Binary;
 use smart_account_auth::{
-    messages::SessionInfo, types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, CredentialInfo, CredentialName, EthPersonalSign, PasskeyCredential
+    messages::{ActionMsg, SessionActionMsg, SessionInfo, WithSessionMsg}, types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, CredentialInfo, CredentialName, EthPersonalSign, PasskeyCredential
 };
+
+use crate::types::ExecuteMsg;
 
 
 pub const SIGN_CHAIN_ID : &str = "elgafar-1";
@@ -114,4 +116,11 @@ pub fn session_info() -> SessionInfo {
             extension: None
         }),
     }
+}
+
+pub fn with_key_msg(msg: ExecuteMsg, key: &String) -> ExecuteMsg {
+    ExecuteMsg::SessionActions(Box::new(SessionActionMsg::WithSessionKey(WithSessionMsg {
+        message: ActionMsg::Native(msg),
+        session_key: key.to_string(),
+    })))
 }

@@ -13,11 +13,15 @@ mod wasm;
 
 
 pub mod messages;
-pub use saa_schema::wasm_serde;
 pub use saa_common::{AuthError, CredentialId};
 pub use credential::{Credential, CredentialName, CredentialInfo};
 pub use data::{CredentialData, UpdateOperation, UpdateMethod};
 
+pub use saa_schema::wasm_serde;
+#[cfg(feature = "session")]
+pub use {saa_schema::session_action, saa_common::Expiration};
+#[cfg(feature = "derive")]
+pub use saa_schema::*;
 
 
 #[cfg(feature = "native")]
@@ -48,7 +52,8 @@ pub mod utils {
     pub use saa_auth::eth::utils as eth;
     #[cfg(feature = "passkeys")]
     pub use saa_auth::passkey::utils as passkey;
-
+    
+    
     pub use super::credential::construct_credential;
 }
 

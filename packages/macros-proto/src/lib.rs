@@ -1,5 +1,5 @@
-use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
+use proc_macro::TokenStream;
 use syn::{parse_macro_input, parse_quote, AttributeArgs, DataEnum, DeriveInput};
 
 
@@ -41,10 +41,7 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
     variants.extend(to_add.into_iter());
 
     //quote! { #left }.into()
-
-
-    // also derived Clone and Debug
-
+    let enum_name = &left.ident;
 
     quote! { 
         #[derive(
@@ -62,6 +59,55 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
         )]
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
         #left 
+
+        /* impl<M> ::smart_account_auth::messages::SessionActionsMatch<M> for #enum_name 
+        where
+            M: core::ops::Deref,
+            M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
+            <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
+        {
+            fn match_actions(&self) -> Option<SessionActionMsg<M>> {
+                match self {
+                    Self::SessionActions(msg) => Some(msg.clone()),
+                    _ => None,
+                }
+            }
+        } */
+
+        impl ::strum::IntoDiscriminant for Box<#enum_name> {
+            type Discriminant = <#enum_name as ::strum::IntoDiscriminant>::Discriminant;
+            fn discriminant(&self) -> Self::Discriminant {
+                (*self).discriminant()
+            }
+        }
+
+        impl ::smart_account_auth::messages::SessionActionsMatch for #enum_name
+        {
+            fn match_actions(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<Self>> {
+                match self {
+                    Self::SessionActions(msg) => Some((**msg).clone()),
+                    _ => None,
+                }
+            }
+        }
+
+        /* impl ::smart_account_auth::messages::SessionActionsMatch for Box<#enum_name> 
+        {
+            fn match_actions<#enum_name>(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<#enum_name>> {
+                (*self).match_actions()
+            }
+        } */
+
+        /* impl ::smart_account_auth::messages::SessionActionsMatch<Box<#enum_name>> for #enum_name 
+        {
+            fn match_actions(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<Box<#enum_name>>> {
+                match self {
+                    Self::SessionActions(msg) => Some(msg.clone()),
+                    _ => None,
+                }
+            }
+        } */
+
     }.into()
 }
 
@@ -75,14 +121,7 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         input,
         quote! {
             enum Right {
-                CreateSession(::smart_account_auth::messages::CreateSession),
-
-                #[cfg(feature = "wasm")]
-                CreateSessionFromMsg(::smart_account_auth::messages::CreateSessionFromMsg<Box<Self>>),
-
-                WithSessionKey(::smart_account_auth::messages::WithSessionMsg<Box<Self>>),
-
-                RevokeSession(::smart_account_auth::messages::RevokeKeyMsg)
+                SessionActions(Box<::smart_account_auth::messages::SessionActionMsg<Self>>),
             }
         }
         .into(),

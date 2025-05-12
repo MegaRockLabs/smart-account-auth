@@ -1,10 +1,8 @@
-use core::{fmt::Display, ops::Deref};
-use saa_common::{ensure, types::expiration::Expiration, wasm::Env, SessionError, Timepoint};
+use saa_common::wasm::{StdError, Storage};
+use saa_common::{ensure, types::expiration::Expiration, wasm::Env, CredentialId, SessionError};
+use crate::messages::{is_session_action_name, Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivableMsg, DerivationMethod, GranteeInfo, Session, SessionInfo};
 
-use serde::Serialize;
-use strum::IntoDiscriminant;
-
-use crate::messages::{is_session_action_name, Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, GranteeInfo, SessionInfo, Session};
+use super::stores::SESSIONS;
 
 
 impl SessionInfo {
@@ -12,7 +10,9 @@ impl SessionInfo {
         &self, 
         env: &Env,
         actions: Option<&AllowedActions>
-    ) -> Result<(GranteeInfo, Expiration, AllowedActions), SessionError> {
+    ) -> Result<(CredentialId, GranteeInfo, Expiration, AllowedActions), SessionError> {
+        let granter = self.granter.clone().unwrap_or_default();
+        //ensure!(!granter.is_empty(), SessionError::InvalidGranter);
         let (id, info) = self.grantee.clone();
         ensure!(!id.is_empty(), SessionError::InvalidGrantee);
         let expiration = self.expiration.unwrap_or_default();
@@ -23,7 +23,7 @@ impl SessionInfo {
         let actions = match actions {
             Some(actions) => {
                 if let AllowedActions::Include(ref actions) = actions {
-                    ensure!(actions.len() > 0, SessionError::EmptyActions);
+                    ensure!(actions.len() > 0, SessionError::EmptyCreateActions);
 
                     let validity_ok = actions
                         .iter()
@@ -44,7 +44,8 @@ impl SessionInfo {
                         .all(|action| {
                             match action.method {
                                 // it's okay to generate identical session messages
-                                DerivationMethod::Json => !action.result.contains("\"session_info\""),
+                                DerivationMethod::Json => !action.result.contains("\"session_actions\"") &&
+                                                            !action.result.contains("\"session_info\""),
                                 // works well for names and better than nothing for strum strings
                                 _ => !is_session_action_name(action.result.as_str())
                                 
@@ -56,7 +57,7 @@ impl SessionInfo {
             },
             None => AllowedActions::All {},
         };
-        Ok(((id, info), expiration, actions))
+        Ok((granter, (id, info), expiration, actions))
     }
 }
 
@@ -69,17 +70,18 @@ impl CreateSession {
     ) -> Result<Session, SessionError> {
         
         let (
+            granter,
             grantee, 
             expiration, 
             actions
         ) = self.session_info.checked_params(env, Some(&self.allowed_actions))?;
 
+
         Ok(Session {
             actions,
             expiration,
             grantee,
-            granter: self.session_info.granter.clone(),
-            created_at: Timepoint::from(&env.block),
+            granter,
             nonce: 0,
         })
     }
@@ -87,32 +89,62 @@ impl CreateSession {
 
 
 
-impl<M> CreateSessionFromMsg<M> 
-where
-    M: Deref,
-    M::Target: IntoDiscriminant + Display + Serialize + Clone,
-    <M::Target as IntoDiscriminant>::Discriminant: AsRef<str> + ToString,
-{
+impl<M: DerivableMsg> CreateSessionFromMsg<M> {
+
     pub fn to_session(
         &self, 
         env: &Env
     ) -> Result<Session, SessionError> {
-        let (grantee, expiration, _) = self.session_info.checked_params(env, None)?;
-        
-        let msg = self.message.deref();
-       
+        let (
+            granter, 
+            grantee, 
+            expiration, 
+            _
+        ) = self.session_info.checked_params(env, None)?;
         
         let method = self.derivation_method.clone().unwrap_or_default();
-        let action = Action::new(msg, method)?;
-        ensure!(!action.result.is_empty(), SessionError::InvalidActions);
+        let action = Action::new(&self.message, method)?;
 
         Ok(Session {
             actions: AllowedActions::Include(vec![action]),
             expiration,
             grantee,
-            granter: self.session_info.granter.clone(),
-            created_at: Timepoint::from(&env.block),
+            granter,
             nonce: 0,
         })
     }
+}
+
+
+
+
+
+
+pub fn save_session(
+    storage: &mut dyn Storage,
+    key: String,
+    mut session: Session,
+) -> Result<(), StdError> {
+    if let Ok(loaded) = load_session(storage, key.clone()) {
+        session.nonce = loaded.nonce;
+    }
+    SESSIONS.save(storage, key, &session)?;
+    Ok(())
+}
+
+
+
+pub fn load_session(
+    storage: &dyn Storage,
+    key: String
+) -> Result<Session, StdError> {
+    SESSIONS.load(storage, key)
+}
+
+
+pub fn revoke_session(
+    storage: &mut dyn Storage,
+    key: String
+) -> () {
+    SESSIONS.remove(storage, key);
 }

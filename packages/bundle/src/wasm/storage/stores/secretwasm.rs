@@ -16,3 +16,8 @@ pub const CREDENTIAL_INFOS: Keymap<CredentialId, CredentialInfo> = Keymap::new(b
 /// Storage of used nonces  to prevent replay attacks. &str to boolean
 #[cfg(feature = "replay")]
 pub const ACCOUNT_NUMBER : Item<u128> = Item::new(b"saa_acc_num");
+
+
+/// Storage of session keys
+#[cfg(feature = "session")]
+pub const SESSIONS: Keymap<String, crate::messages::Session> = Keymap::new(b"saa_sessions");

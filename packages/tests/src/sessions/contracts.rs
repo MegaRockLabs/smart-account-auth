@@ -1,97 +1,72 @@
-#[allow(unused_imports, unused_variables, dead_code)]
 
-use std::{env, ops::{Add, Deref}};
+use cosmwasm_std::{ensure, testing::{message_info, mock_dependencies, mock_env}, Addr, Response, StdError, Uint128};
+use saa_common::{from_json, AuthError, SessionError};
+use serde::de::DeserializeOwned;
+use smart_account_auth::{
+    messages::{
+        Action, ActionMsg, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, MsgDataToSign, RevokeKeyMsg, Session, SessionActionMsg, SessionActionsMatch, SessionInfo
+    }, 
+    storage::session::{load_session, revoke_session, save_session}, 
+    utils::construct_credential, CredentialInfo, CredentialName
+};
 
-use cosmwasm_std::{ensure, testing::{message_info, mock_dependencies, mock_env}, Addr, Response, StdError, SubMsg, Uint128};
-use cw_storage_plus::Map;
-use saa_common::from_json;
-use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, MessageOption, MsgDataToSign, RevokeKeyMsg, Session, SessionInfo, WithSessionMsg}, utils::construct_credential, CredentialInfo, CredentialName};
+use crate::{types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, vars::{session_info, with_key_msg}};
 
-use crate::{types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, vars::session_info};
-
-pub static SESSION_KEYS: Map<String, Session> = Map::new("saa_keys");
 
 const ADMIN : &str = "alice";
 
 
-pub fn save_session(
-    storage: &mut dyn cosmwasm_std::Storage,
-    key: String,
-    mut session: Session,
-) -> Result<(), StdError> {
-    if let Ok(loaded) = load_session_key(storage, key.clone()) {
-        session.nonce = loaded.nonce;
-    }
-    SESSION_KEYS.save(storage, key, &session)?;
-    Ok(())
-}
 
-
-pub fn load_session_key(
-    storage: &dyn cosmwasm_std::Storage,
-    key: String
-) -> Result<Session, cosmwasm_std::StdError> {
-    SESSION_KEYS.load(storage, key)
-}
-
-
-pub fn execute(
+pub fn handle_session<M>(
     api : &dyn cosmwasm_std::Api,
     storage: &mut dyn cosmwasm_std::Storage,
-    env: cosmwasm_std::Env,
-    mut info: cosmwasm_std::MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<cosmwasm_std::Response, cosmwasm_std::StdError> {
-    
-    match msg {
-        ExecuteMsg::CreateSession(
+    env: &cosmwasm_std::Env,
+    info: &cosmwasm_std::MessageInfo,
+    msg: M,
+) -> Result<(Option<Session>, Vec<M>), AuthError> 
+    where M : DeserializeOwned + SessionActionsMatch,
+{
+    let session_msg = match msg.match_actions() {
+        Some(msg) => msg,
+        None => return Ok((None, vec![msg.clone()])),
+    };
+       
+    match session_msg {
+        SessionActionMsg::CreateSession(
             mut create
         ) => {
             // set sender as granter
             create.session_info.granter = Some(info.sender.to_string());
             let session = create.to_session(&env).unwrap();
             let key = session.key();
-            save_session(storage,  key.clone(), session)?;
-            Ok(Response::default().add_attribute("key", key))
+            save_session(storage,  key.clone(), session.clone())?;
+            Ok((Some(session), vec![]))
         },
 
-        ExecuteMsg::CreateSessionFromMsg(
+        SessionActionMsg::CreateSessionFromMsg(
             mut create
         ) => {
-             // set sender as granter
+            // set sender as granter
             create.session_info.granter = Some(info.sender.to_string());
             let session = create.to_session(&env).unwrap();
             let key = session.key();
-            save_session(storage,  key.clone(), session)?;
-            let res = execute_logic(api, storage, env, info, create.message.deref().to_owned())?;
-            Ok(res.add_attribute("key", key))
+            save_session(storage,  key.clone(), session.clone())?;
+            Ok((Some(session), vec![create.message.clone()]))
         },
 
-        ExecuteMsg::WithSessionKey(with_msg) => {
+        SessionActionMsg::WithSessionKey(with_msg) => {
 
             let key = &with_msg.session_key;
-            let mut session = load_session_key(storage, key.clone())?;
+            let mut session = load_session(storage, key.clone())?;
             let (id, cred_info) = session.grantee.clone();
 
-            let mut res = Response::new();
-
             if session.expiration.is_expired(&env.block) {
-                SESSION_KEYS.remove(storage, key.clone());
-                res = Response::new()
-                    .add_attribute("status", "session expired")
-                    .add_attribute("key", key.as_str());
-                return Ok(res);
+                revoke_session(storage, key.clone());
+                return Err(SessionError::Expired.into())
             }
 
-
-            let msgs = match with_msg.message {
-                MessageOption::Native(execute) => {
-                    ensure!(cred_info.name == CredentialName::Native, StdError::generic_err("This key wasn't for a native address"));
-                    ensure!(id == info.sender.to_string(), StdError::generic_err("This key wasn't for this address"));
-                    vec![execute.deref().clone()]
-
-                },
-                MessageOption::Signed(msg) => {
+            let msgs : Vec<M>  = match with_msg.message {
+                ActionMsg::Signed(msg) => {
                     
                     let hrp = msg.payload
                         .as_ref().map(|p| p.hrp.clone())
@@ -116,78 +91,107 @@ pub fn execute(
                     cred.verify_cosmwasm(api)
                         .map_err(|_| StdError::generic_err("Invalid signature"))?;
 
-                    let to_sign : MsgDataToSign<ExecuteMsg> = from_json(msg.data)?;
+                    let to_sign : MsgDataToSign<M> = from_json(msg.data)?;
                     ensure!(env.block.chain_id == to_sign.chain_id, StdError::generic_err("Chain ID mismatch"));
                     ensure!(env.contract.address.to_string() == to_sign.contract_address, StdError::generic_err("Contract address mismatch"));
                     ensure!(session.nonce.to_string() == to_sign.nonce, StdError::generic_err("Nonce mismatch"));
 
                     if cred.is_cosmos_derivable() {
-                        let addr = cred.cosmos_address(api)
+                        let _addr = cred.cosmos_address(api)
                             .map_err(|_| StdError::generic_err("Invalid address"))?;
-                        info.sender = addr;
+                        //info.sender = addr;
                     }
-
                     session.nonce += 1;
                     save_session(storage, key.clone(), session.clone())?;
-
                     to_sign.messages
                 }
+                ActionMsg::Native(execute) => {
+                    ensure!(cred_info.name == CredentialName::Native, StdError::generic_err("This key wasn't for a native address"));
+                    ensure!(id == info.sender.to_string(), StdError::generic_err("This key wasn't for this address"));
+                    vec![execute.clone()]
+                },
             };
-
-
-            let mut sub_msgs: Vec<SubMsg> = Vec::with_capacity(msgs.len() + 2);
-
-            for msg in msgs {
-
-                if !session.actions.is_message_allowed(&msg) {
-                    return Err(StdError::generic_err("Message not allowed"));
-                } 
-
-                let msg_res = execute_logic(api, storage, env.clone(), info.clone(), msg)?;
-                sub_msgs.extend(msg_res.messages.clone());
-
-
-                res = res.add_events(msg_res.events)
-                        .add_attributes(msg_res.attributes);
-
-                if res.data.is_none() && msg_res.data.is_some() {
-                    res = res.set_data(msg_res.data.unwrap());
-                }
-            }
-            res = res
-                .add_submessages(sub_msgs)
-                .add_attribute("nonce", session.nonce.to_string());
-            Ok(res)
+            ensure!(!msgs.is_empty(), SessionError::EmptyPassedActions);
+            ensure!(msgs.iter().all(|m| session.actions.is_message_allowed(m)), SessionError::NotAllowedAction);
+            Ok((Some(session), msgs))
         },
 
-        ExecuteMsg::RevokeSession(msg) => {
+        SessionActionMsg::RevokeSession(msg) => {
             let key = &msg.session_key;
-            if let Ok(loaded) = load_session_key(storage, key.clone()) {
+            if let Ok(loaded) = load_session(storage, key.clone()) {
                 ensure!(
-                    loaded.granter.unwrap_or(ADMIN.to_string()) == info.sender.to_string(), 
+                    loaded.granter == info.sender.to_string(), 
                     StdError::generic_err("Only owner can revoke the session key")
                 );
-                SESSION_KEYS.remove(storage, key.clone());
-                Ok(Response::default()
-                    .add_attribute("status", "session revoked")
-                    .add_attribute("key", key.as_str())
-                )
+                revoke_session(storage, key.clone());
+                Ok((None, vec![]))
             } else {
-                Ok(Response::default()
-                    .add_attribute("status", "nothing to revoke")
-                )
+                return Err(SessionError::Expired.into())
             }            
         },
-        
-        _ => {
-            if info.sender.as_str() == ADMIN {
-                return execute_logic(api, storage, env, info, msg);
-            }
-            Err(StdError::generic_err("Unauthorized to call directly"))
-        }
-        
     }
+    
+}
 
+
+
+
+pub fn execute(
+    api : &dyn cosmwasm_std::Api,
+    storage: &mut dyn cosmwasm_std::Storage,
+    env: &cosmwasm_std::Env,
+    info: &cosmwasm_std::MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<cosmwasm_std::Response, AuthError> {
+
+    let (session, inner_msgs) = handle_session(
+        api, 
+        storage, 
+        env, 
+        info, 
+        msg
+    )?;
+
+
+    match (inner_msgs.len(), session) {
+
+        (0, None) => return Ok(Response::new()
+            .add_attribute("action", "session_revoked")
+        ),
+
+        (0, Some(session)) => return Ok(Response::new()
+            .add_attribute("action", "session_created")
+            .add_attribute("session_key", session.key().as_str())
+            .add_attribute("nonce", session.nonce.to_string().as_str())
+        ),
+
+        (_, Some(session)) => {
+            let mut res = Response::new();
+            let mut sub_msgs = vec![];
+
+            for msg in inner_msgs.into_iter() {
+                
+                let msg_res = execute_logic(api, storage, env, info, msg)?;
+                sub_msgs.extend(msg_res.messages.clone());
+                res = res.add_events(msg_res.events)
+                        .add_attributes(msg_res.attributes);
+                if let Some(data) = msg_res.data {
+                    res = res.set_data(data);
+                }
+            }
+            return Ok(res
+                .add_submessages(sub_msgs)
+                .add_attribute("session_key", session.key().as_str())
+                .add_attribute("nonce", session.nonce.to_string().as_str())
+            );
+        },
+
+        (1, None) => {
+            ensure!(info.sender.as_str() == ADMIN, StdError::generic_err("Unauthorized to call directly"));
+            execute_logic(api, storage, env, info, inner_msgs[0].clone())
+        },
+        (_, _) => unreachable!()
+    }
 
 }
 
@@ -195,10 +199,10 @@ pub fn execute(
 pub fn execute_logic(
     _api : &dyn cosmwasm_std::Api,
     _storage: &mut dyn cosmwasm_std::Storage,
-    _env: cosmwasm_std::Env,
-    _info: cosmwasm_std::MessageInfo,
+    _env: &cosmwasm_std::Env,
+    _info: &cosmwasm_std::MessageInfo,
     msg: ExecuteMsg,
-) -> Result<cosmwasm_std::Response, cosmwasm_std::StdError> {
+) -> Result<cosmwasm_std::Response, AuthError> {
     
     match msg {
 
@@ -260,22 +264,27 @@ fn simple_contract_flow() {
     let deps = mocks.as_mut();
     let mut env = mock_env();
 
-    let alice = Addr::unchecked("alice");
-    let alice_info = message_info(&alice, &vec![]);
+    let alice_addr = Addr::unchecked("alice");
+    let alice = message_info(&alice_addr, &vec![]);
 
-    let bob = Addr::unchecked("bob");
-    let bob_info = message_info(&bob, &vec![]);
+    let bob_addr = Addr::unchecked("bob");
+    let bob = message_info(&bob_addr, &vec![]);
 
-    let eve = Addr::unchecked("eve");
-    let eve_info = message_info(&eve, &vec![]);
+    let eve_addr = Addr::unchecked("eve");
+    let eve = message_info(&eve_addr, &vec![]);
+
+    let env = &mut env;
+    let alice = &alice;
+    let bob = &bob;
+    let eve = &eve;
 
 
     // Alice can call messages directly
-    assert!(execute(deps.api, deps.storage, env.clone(), alice_info.clone(), ExecuteMsg::Purge {}).is_ok());
+    assert!(execute(deps.api, deps.storage, env, alice, ExecuteMsg::Purge {}).is_ok());
 
     // Other addresses can't
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::Purge {}).is_err());
-    assert!(execute(deps.api, deps.storage, env.clone(), eve_info.clone(), ExecuteMsg::Purge {}).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, ExecuteMsg::Purge {}).is_err());
+    assert!(execute(deps.api, deps.storage, env, eve, ExecuteMsg::Purge {}).is_err());
 
 
     // Alice can create session key for bob
@@ -296,14 +305,14 @@ fn simple_contract_flow() {
     session.session_info.expiration = Some(saa_common::Expiration::AtHeight(env.block.height + 100));
 
 
-    let msg = ExecuteMsg::CreateSession(session.clone());
+    let msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSession(session.clone())));
 
     // Calling smart contract here finally
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), msg).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, msg).unwrap();
 
     let found_key = res.attributes
         .into_iter()
-        .find(|attr| attr.key.contains("key"))
+        .find(|attr| attr.key.contains("session_key"))
         .unwrap()
         .value;
 
@@ -312,21 +321,22 @@ fn simple_contract_flow() {
     assert!(found_key != no_alice);
 
     // if we set it we can predict what the key value is going to be to send multiple messages in a batch
-    session.session_info.granter = Some(alice_info.sender.to_string());
+    session.session_info.granter = Some(alice_addr.to_string());
     let expected = session.to_session(&env).unwrap().key();
     assert_eq!(found_key, expected);
 
+    let found_key = &found_key;
+
 
     // Now Bob should be able to use the session key
-    let exec_msg = ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::MintToken { 
+    let exec_msg = with_key_msg(ExecuteMsg::MintToken { 
             minter: "minter_contract".into(), 
             msg: None 
-        })),
-        session_key: found_key.clone(),
-    });
+        }, 
+        &found_key.clone()
+    );
 
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), exec_msg.clone()).unwrap();
+    let res = execute(deps.api, deps.storage, env, bob, exec_msg.clone()).unwrap();
 
     // All good
     let minted = res.attributes
@@ -337,53 +347,41 @@ fn simple_contract_flow() {
 
 
     // Eve can't do it even with the same message
-    let eve_res = execute(deps.api, deps.storage, env.clone(), eve_info.clone(), exec_msg.clone());
+    let eve_res = execute(deps.api, deps.storage, env, eve, exec_msg.clone());
     assert_eq!(eve_res.unwrap_err().to_string(), "Generic error: This key wasn't for this address".to_string());
 
 
 
     // This is allowed message but Bob can't call it directly
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::Purge {}).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, ExecuteMsg::Purge {}).is_err());
 
     // He needs to always wrap it using WithSessionKey wrapper  and then it works
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::Purge {  } )),
-        session_key: found_key.clone(),
-    })).is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(ExecuteMsg::Purge {}, found_key)).is_ok());
 
 
     // Bob can't do it with minter address change even a tiny bit
-    let exec_msg = ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::MintToken { 
+    let exec_msg = with_key_msg(ExecuteMsg::MintToken { 
             minter: "minter_contractt".into(), 
             msg: None 
-        })),
-        session_key: found_key.clone(),
-    });
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), exec_msg.clone());
-    assert_eq!(res.unwrap_err().to_string(), "Generic error: Message not allowed".to_string());
+        }, found_key
+    );
+    let res = execute(deps.api, deps.storage, env, bob, exec_msg.clone());
+    assert_eq!(res.unwrap_err(), SessionError::NotAllowedAction.into());
 
 
 
     // Bob can do ExecuteMsg::Execute  that is not identical to one in the allowed list
     // cause it was specified to use name for derivation
-    let exec_msg = ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::Execute { msgs: vec![] })),
-        session_key: found_key.clone(),
-    });
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), exec_msg.clone());
+    let exec_msg = with_key_msg(ExecuteMsg::Execute { msgs: vec![] }, found_key);
+    let res = execute(deps.api, deps.storage, env, bob, exec_msg.clone());
     assert!(res.is_ok());
 
 
 
     // Bob can't do other messages
-    let exec_msg = ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::Freeze {  } )),
-        session_key: found_key.clone(),
-    });
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), exec_msg.clone());
+    let exec_msg = with_key_msg(ExecuteMsg::Freeze {}, found_key); 
+    let res = execute(deps.api, deps.storage, env, bob, exec_msg.clone());
     assert!(res.is_err());
-
 
 
     // later when time passed out seesion key get expired and deleted
@@ -391,31 +389,15 @@ fn simple_contract_flow() {
 
 
     // Bob can't use the old valid message anymore
-    let exec_msg = ExecuteMsg::WithSessionKey(WithSessionMsg {
-        message: MessageOption::Native(Box::new(ExecuteMsg::MintToken { 
+    let exec_msg = with_key_msg(ExecuteMsg::MintToken {
             minter: "minter_contract".into(), 
-            msg: None 
-        })),
-        session_key: found_key.clone(),
-    });
+            msg: None
+        }, 
+        found_key
+    );
 
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), exec_msg.clone()).unwrap();
-
-    let status = res.attributes
-        .iter()
-        .find(|attr| attr.key.contains("status"))
-        .unwrap().clone()
-        .value;
-
-
-    assert_eq!(status, "session expired");
-
-    let minter_event_exist = res.attributes
-        .into_iter()
-        .any(|attr| attr.key.contains("minter"));
-
-
-    assert!(!minter_event_exist);
+    assert!(execute(deps.api, deps.storage, env, bob, exec_msg.clone()).is_err());
+   
 }
    
 
@@ -427,31 +409,34 @@ fn from_message_and_revoking() {
     let deps = mocks.as_mut();
     let env = mock_env();
 
-    let alice = Addr::unchecked("alice");
-    let alice_info = message_info(&alice, &vec![]);
-
-    let bob = Addr::unchecked("bob");
-    let bob_info = message_info(&bob, &vec![]);
-
-    let eve = Addr::unchecked("eve");
-    let eve_info = message_info(&eve, &vec![]);
+    let alice_addr = Addr::unchecked("alice");
+    let alice = message_info(&alice_addr, &vec![]);
+    let bob_addr = Addr::unchecked("bob");
+    let bob = message_info(&bob_addr, &vec![]);
+    let eve_addr = Addr::unchecked("eve");
+    let eve = message_info(&eve_addr, &vec![]);
 
 
     let msg = ExecuteMsg::Execute { msgs: vec![CosmosMsg::Simple {}] };
-    
-    let from_msg = ExecuteMsg::CreateSessionFromMsg(CreateSessionFromMsg {
-        message: Box::new(msg.clone()),
+
+    let alice = &alice;
+    let env = &env;
+
+    let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
+        message: msg.clone(),
         derivation_method: Some(DerivationMethod::Json),
         session_info: session_info(),
-    });
+    })));
 
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), from_msg.clone()).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, from_msg.clone()).unwrap();
     let key = res.attributes
         .iter()
         .find(|attr| attr.key.contains("key"))
         .unwrap()
         .clone()
         .value;
+
+
 
     let executed_too = res.attributes
         .iter()
@@ -483,38 +468,27 @@ fn from_message_and_revoking() {
         CosmosMsg::Simple { }, 
     ]};
 
-    
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg2.clone())),  
-        session_key: key.clone(), 
-    })).is_err());
+    let bob = &bob;
+    let eve = &eve;
+    let key = &key;
 
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg3.clone())),  
-        session_key: key.clone(), 
-    })).is_err());
-
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg4.clone())), 
-        session_key: key.clone(), 
-    })).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg2.clone(), key)).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg3.clone(), key)).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg4.clone(), key)).is_err());
 
 
     // the identical message goes through
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: key.clone(), 
-    })).is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), key)).is_ok());
 
     
     // Alice can try creating another session key for Bob without changing anything
-    let from_msg = ExecuteMsg::CreateSessionFromMsg(CreateSessionFromMsg {
-        message: Box::new(msg.clone()),
+    let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
+        message: msg.clone(),
         derivation_method: Some(DerivationMethod::Json),
         session_info: session_info(),
-    });
+    })));
 
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), from_msg.clone()).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, from_msg.clone()).unwrap();
     let new_key = res.attributes
         .iter()
         .find(|attr| attr.key.contains("key"))
@@ -523,18 +497,18 @@ fn from_message_and_revoking() {
         .value;
 
     // If params didn't change the key will be identical. However you can use this to override the expiration or creation date
-    assert_eq!(key, new_key);
+    assert_eq!(*key, new_key);
 
 
     // Not let's create another key where actions are detived usoing the message name
-    let from_msg = ExecuteMsg::CreateSessionFromMsg(CreateSessionFromMsg {
-        message: Box::new(msg.clone()),
+    let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
+        message: msg.clone(),
         derivation_method: None,
         session_info: session_info(),
-    });
+    })));
 
     
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), from_msg.clone()).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, from_msg.clone()).unwrap();
     let exec_name_key = res.attributes
         .iter()
         .find(|attr| attr.key.contains("key"))
@@ -543,36 +517,27 @@ fn from_message_and_revoking() {
         .value;
 
     // Action list is different so the key should be different
-    assert!(key != exec_name_key);
+    assert!(*key != exec_name_key);
 
 
 
     // Bob can still use the old key
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: key.clone(), 
-    })).is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), key)).is_ok());
 
 
-
+    let exec_name_key = &exec_name_key;
     // But now with the second he can do any execute message he could do before
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg2.clone())), 
-        session_key: exec_name_key.clone(), 
-    })).is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg2.clone(), exec_name_key)).is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg3.clone(), exec_name_key)).is_ok());
 
 
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg3.clone())), 
-        session_key: exec_name_key.clone(), 
-    })).is_ok());
 
 
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg4.clone())), 
-        session_key: exec_name_key.clone(), 
-    })).unwrap();
+    let res = execute(deps.api, deps.storage, env, bob, 
+        with_key_msg(msg4.clone(), exec_name_key)
+    ).unwrap();
     
+
     let msg_len = res.attributes
         .iter()
         .find(|attr| attr.key.contains("msg_len"))
@@ -585,56 +550,51 @@ fn from_message_and_revoking() {
 
 
     // Let's revoke the first key now
-    let revoke_msg = ExecuteMsg::RevokeSession(RevokeKeyMsg {
-        session_key: key.clone(),
-    });
+    let revoke_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::RevokeSession(RevokeKeyMsg {
+        session_key: key.to_string(),
+    })));
 
     
     // Bob can't revoke it
-    assert!(execute(deps.api, deps.storage, env.clone(), bob_info.clone(), revoke_msg.clone()).is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, revoke_msg.clone()).is_err());
 
     // Alice can 
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), ExecuteMsg::RevokeSession(RevokeKeyMsg {
-        session_key: key.clone(),
-    })).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, revoke_msg.clone()).unwrap();
 
 
-    let status_ok = res.attributes.iter().any(|attr| attr.key.contains("status") && attr.value.contains("revoked"));
+    let status_ok = res.attributes.iter().any(|attr| 
+        attr.key.contains("action") && attr.value.contains("revoked")
+    );
     assert!(status_ok);
 
 
     // Bob can't use the old key anymore
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: key.clone(), 
-    }));
-    assert!(res.is_err());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), key)).is_err());
 
 
     // Can still use the latest 
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: exec_name_key.clone(), 
-    }));
-
-
-    assert!(res.is_ok());
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), exec_name_key)).is_ok());
 
 
 
     // Let's create a key for Eve with identical allowed actions
-    let from_msg = ExecuteMsg::CreateSessionFromMsg(CreateSessionFromMsg {
-        message: Box::new(msg.clone()),
-        derivation_method: None,
-        session_info: SessionInfo { 
-            grantee: (eve.to_string(), CredentialInfo { name: CredentialName::Native, hrp: None, extension: None}), 
-            granter: None, 
-            expiration: None
-        },
-    });
+    let from_msg = ExecuteMsg::SessionActions(Box::new(
+        SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
+            message: msg.clone(),
+            derivation_method: None,
+            session_info: SessionInfo { 
+                grantee: (eve_addr.to_string(), CredentialInfo { 
+                    name: CredentialName::Native, 
+                    hrp: None, 
+                    extension: None
+                }), 
+                granter: None, 
+                expiration: None
+            },
+    })));
 
     
-    let res = execute(deps.api, deps.storage, env.clone(), alice_info.clone(), from_msg.clone()).unwrap();
+    let res = execute(deps.api, deps.storage, env, alice, from_msg.clone()).unwrap();
     let eve_key = res.attributes
         .iter()
         .find(|attr| attr.key.contains("key"))
@@ -643,65 +603,39 @@ fn from_message_and_revoking() {
         .value;
 
 
+    let eve_key = &eve_key;
 
     // Eve's key is different from Bob and they can't use each other keys
     assert!(eve_key != exec_name_key);
 
-    // Bob can't use Eve's key
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: eve_key.clone(), 
-    }));
-    assert!(res.is_err());
 
+    // Bob can't use Eve's key
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), eve_key)).is_err());
 
     // Eve can't use Bob's key
-    let res = execute(deps.api, deps.storage, env.clone(), eve_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: exec_name_key.clone(), 
-    }));
-    assert!(res.is_err());
+    assert!(execute(deps.api, deps.storage, env, eve, with_key_msg(msg.clone(), exec_name_key)).is_err());
+
 
 
     // Bob can use his own key
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: exec_name_key.clone(), 
-    }));
-    assert!(res.is_ok());
-
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), exec_name_key)).is_ok());
 
     // Eve can use her own key
-    let res = execute(deps.api, deps.storage, env.clone(), eve_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: eve_key.clone(), 
-    }));
-    assert!(res.is_ok());
+    assert!(execute(deps.api, deps.storage, env, eve, with_key_msg(msg.clone(), eve_key)).is_ok());
 
 
 
     // Let's revoke Bob's key again
-    let revoke_msg = ExecuteMsg::RevokeSession(RevokeKeyMsg {
-        session_key: exec_name_key.clone(),
-    });
-    execute(deps.api, deps.storage, env.clone(), alice_info.clone(), revoke_msg).unwrap();
+    execute(deps.api, deps.storage, env, alice, ExecuteMsg::SessionActions(
+        Box::new(SessionActionMsg::RevokeSession(RevokeKeyMsg { session_key: exec_name_key.to_string() }))
+    )).unwrap();
 
 
     // Bob can't use any of his keys anymore
-    let res = execute(deps.api, deps.storage, env.clone(), bob_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: exec_name_key.clone(), 
-    }));
-    assert!(res.is_err());
-
-
+    assert!(execute(deps.api, deps.storage, env, bob, with_key_msg(msg.clone(), exec_name_key)).is_err());
 
     // Eve still can use hers
-    let res = execute(deps.api, deps.storage, env.clone(), eve_info.clone(), ExecuteMsg::WithSessionKey(WithSessionMsg { 
-        message: MessageOption::Native(Box::new(msg.clone())), 
-        session_key: eve_key.clone(), 
-    }));
-    assert!(res.is_ok());
+    assert!(execute(deps.api, deps.storage, env, eve, with_key_msg(msg.clone(), eve_key)).is_ok());
 
 
 }

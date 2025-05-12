@@ -1,23 +1,22 @@
 
-use core::fmt::Display;
 use saa_schema::wasm_serde;
-use saa_common::{to_json_binary, Binary, CredentialId, Expiration, FromStr, Timepoint};
+use saa_common::{to_json_binary, Binary, CredentialId, Expiration, FromStr};
 use strum::{IntoDiscriminant, IntoEnumIterator};
 use strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 
-use crate::{utils, CredentialInfo};
-use super::{AllowedActions, DerivationMethod, SignedDataMsg};
+use crate::CredentialInfo;
+use super::{ActionMsg, AllowedActions, DerivableMsg, DerivationMethod};
+
 
 pub type GranteeInfo = (CredentialId, CredentialInfo);
 
 
 #[wasm_serde]
 pub struct Session {
-    pub granter     : Option<CredentialId>,
+    pub granter     : CredentialId,
     pub grantee     : GranteeInfo,
     pub actions     : AllowedActions, 
     pub expiration  : Expiration,
-    pub created_at  : Timepoint,
     pub nonce       : u64,
 }
 
@@ -25,19 +24,17 @@ pub struct Session {
 
 impl Session {
     pub fn key(&self) -> CredentialId {
-        // hash together the granter, grantee, and actions
         let (id, info) = &self.grantee;
-        let granter = self.granter.clone().unwrap_or_default();
         let actions = to_json_binary(&self.actions).unwrap_or_default();
 
         let msg = [
-            granter.as_bytes(),
+            self.granter.as_bytes(),
             id.as_bytes(),
             info.name.to_string().as_bytes(),
             actions.as_slice(),
         ].concat();
 
-        Binary::new(utils::hashes::sha256(&msg)).to_base64()
+        Binary::from(saa_common::hashes::sha256(&msg)).to_base64()
     }
     
 }
@@ -60,16 +57,18 @@ pub struct CreateSession {
 
 
 #[wasm_serde]
-pub enum MessageOption<M> {
-    Native(M),
-    Signed(SignedDataMsg)
+pub struct CreateSessionFromMsg<M : DerivableMsg> {
+    pub message             :      M,
+    pub derivation_method   :      Option<DerivationMethod>,
+    pub session_info        :      SessionInfo,
 }
+
 
 
 
 #[wasm_serde]
 pub struct WithSessionMsg<M> {
-    pub message             :      MessageOption<M>,
+    pub message             :      ActionMsg<M>,
     pub session_key         :      String,
 }
 
@@ -81,33 +80,45 @@ pub struct RevokeKeyMsg {
 
 
 
-#[cfg(feature = "wasm")]
+
 #[wasm_serde]
-pub struct CreateSessionFromMsg<M>
-where
-    M: core::ops::Deref,
-    M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
-    <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
-{
-    pub message             :      M,
-    pub derivation_method   :      Option<DerivationMethod>,
-    pub session_info        :      SessionInfo,
+pub enum SessionActionMsg<M : DerivableMsg> {
+    CreateSession(CreateSession),
+    CreateSessionFromMsg(CreateSessionFromMsg<M>),
+    WithSessionKey(WithSessionMsg<M>),
+    RevokeSession(RevokeKeyMsg),
 }
+
 
 
 
 #[derive(AsRefStr, EnumString, EnumIter, PartialEq, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum SessionActionName {
+    SessionActions,
     CreateSession,
-    #[cfg(feature = "wasm")]
     CreateSessionFromMsg,
+    WithSessionKey,
+    RevokeSession,
+}
+
+
+impl<M : DerivableMsg> IntoDiscriminant for SessionActionMsg<M> {
+    type Discriminant = SessionActionName;
+    fn discriminant(&self) -> Self::Discriminant {
+        match self {
+            SessionActionMsg::CreateSession(_) => SessionActionName::CreateSession,
+            SessionActionMsg::CreateSessionFromMsg(_) => SessionActionName::CreateSessionFromMsg,
+            SessionActionMsg::WithSessionKey(_) => SessionActionName::WithSessionKey,
+            SessionActionMsg::RevokeSession(_) => SessionActionName::RevokeSession,
+        }
+    }
+    
 }
 
 
 
-
-impl Display for CreateSession {
+impl core::fmt::Display for CreateSession {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "create_session")
     }
@@ -120,38 +131,13 @@ impl AsRef<str> for CreateSession {
 }   
 
 
-
-impl IntoDiscriminant for CreateSession {
-    type Discriminant = SessionActionName;
-
-    fn discriminant(&self) -> Self::Discriminant {
-        SessionActionName::CreateSession
-    }
-}
-
-
-
-
-#[cfg(feature = "wasm")]
-impl<M> Display for CreateSessionFromMsg<M>
-where
-    M: core::ops::Deref,
-    M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
-    <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
-{
+impl<M : DerivableMsg> core::fmt::Display for CreateSessionFromMsg<M> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "create_session_from_msg")
     }
     
 }
-
-#[cfg(feature = "wasm")]
-impl<M> AsRef<str> for CreateSessionFromMsg<M>
-where
-    M: core::ops::Deref,
-    M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
-    <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
-{
+impl<M : DerivableMsg> AsRef<str> for CreateSessionFromMsg<M> {
     fn as_ref(&self) -> &str {
         "create_session_from_msg"
     }
@@ -159,20 +145,18 @@ where
 
 
 
-#[cfg(feature = "wasm")]
-impl<M> IntoDiscriminant for CreateSessionFromMsg<M>
-where
-    M: core::ops::Deref,
-    M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
-    <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
-{
+impl IntoDiscriminant for CreateSession {
     type Discriminant = SessionActionName;
-
+    fn discriminant(&self) -> Self::Discriminant {
+        SessionActionName::CreateSession
+    }
+}
+impl<M : DerivableMsg> IntoDiscriminant for CreateSessionFromMsg<M> {
+    type Discriminant = SessionActionName;
     fn discriminant(&self) -> Self::Discriminant {
         SessionActionName::CreateSessionFromMsg
     }
 }
-
 
 
 pub(crate) fn is_session_action_name(name: &str) -> bool {
@@ -186,4 +170,11 @@ pub(crate) fn is_session_action_name(name: &str) -> bool {
             }
             false
         })
+}
+
+
+
+
+pub trait SessionActionsMatch : DerivableMsg  {
+    fn match_actions(&self) -> Option<SessionActionMsg<Self>>;
 }

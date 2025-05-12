@@ -137,7 +137,7 @@ impl Credential {
         CredentialInfo {
             name: self.name(),
             hrp: self.hrp(),
-            extension: self.extension().unwrap_or(None),
+            extension: self.extension().ok().flatten()
         }
     }
 

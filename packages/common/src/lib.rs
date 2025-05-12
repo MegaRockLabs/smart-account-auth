@@ -11,7 +11,7 @@ pub mod hashes;
 pub use errors::*;
 pub use traits::*;
 pub use types::binary::*;
-pub use types::expiration::{Expiration, Timepoint};
+pub use types::expiration::Expiration;
 
 
 pub type CredentialId = String;

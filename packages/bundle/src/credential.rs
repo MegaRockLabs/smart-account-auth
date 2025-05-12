@@ -18,7 +18,6 @@ use saa_auth::cosmos::CosmosArbitrary;
 use strum_macros::{Display, EnumString, EnumDiscriminants};
 
 
-#[cfg(feature = "storage")]
 use saa_common::{Binary, CredentialId};
 
 
@@ -90,8 +89,7 @@ pub struct AccountCredentials {
 
 
 // doesn'r have to be storage only but isn't used anywhere else at the moment
-#[allow(unused_variables)]
-#[cfg(feature = "storage")]
+#[allow(unused_variables, dead_code)]
 pub fn construct_credential(
     id: CredentialId,
     name: CredentialName,

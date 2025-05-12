@@ -4,6 +4,8 @@ pub mod utils;
 pub mod iterator;
 #[cfg(feature = "replay")]
 pub mod replay;
+#[cfg(all(feature = "session", feature="cwasm"))]
+pub mod session;
 
 
 pub(crate) use utils::*;
@@ -32,8 +34,9 @@ pub fn verify_signed(
     env: &Env,
     msg: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = credential_from_payload(storage, msg.clone())?;
-    let msgs : crate::messages::MsgDataToVerify = saa_common::from_json(msg.data)?;
+    let data = msg.data.to_vec();
+    let credential = credential_from_payload(storage, msg)?;
+    let msgs : crate::messages::MsgDataToVerify = saa_common::from_json(data)?;
     msgs.validate(storage, env)?;
     credential.verify_cosmwasm(api)?;
     Ok(())
@@ -41,15 +44,14 @@ pub fn verify_signed(
 
 
 #[cfg(not(feature = "replay"))]
-pub fn verify_signed<T : serde::de::DeserializeOwned>(
+pub fn verify_signed(
     api: &dyn Api,
     storage: &dyn Storage,
     msg: SignedDataMsg
-) -> Result<T, AuthError> {
-    let credential = credential_from_payload(storage, msg.clone())?;
+) -> Result<(), AuthError> {
+    let credential = credential_from_payload(storage, msg)?;
     credential.verify_cosmwasm(api)?;
-    let msg = saa_common::from_json(msg.data)?;
-    Ok(msg)
+    Ok(())
 }
 
 
@@ -88,9 +90,12 @@ pub mod storage_methods {
     
     #[cfg(feature = "utils")]
     pub use super::utils::*;
-    
+
     #[cfg(feature = "types")]
     pub use super::stores;
+
+    #[cfg(all(feature = "session", feature="cwasm"))]
+    pub use super::session;
 }
 
 

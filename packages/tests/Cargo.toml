@@ -9,7 +9,7 @@ repository  = { workspace = true }
 
 
 [dependencies]
-smart-account-auth  = { workspace = true, features = ["cosmwasm", "replay", "iterator", "curves", "utils", "traits"] }
+smart-account-auth  = { workspace = true, features = ["cosmwasm", "replay", "iterator", "curves", "utils", "traits", "session"] }
 saa-common          = { workspace = true, features = ["cosmwasm", "replay"] }
 saa-schema          = { workspace = true, features = ["cosmwasm"] }
 

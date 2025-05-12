@@ -1,11 +1,11 @@
 use core::fmt::Display;
 use saa_schema::wasm_serde;
-use saa_common::{ensure, ToString, FromStr, SessionError};
+use saa_common::{ensure, AuthError, FromStr, SessionError, ToString};
 use strum::IntoDiscriminant;
 #[cfg(feature = "wasm")]
 use serde::Serialize;
 
-use super::is_session_action_name;
+use super::{is_session_action_name, SignedDataMsg};
 
 #[wasm_serde]
 pub enum DerivationMethod {
@@ -49,11 +49,7 @@ impl FromStr for Action {
 impl Action {
 
     #[cfg(not(feature = "wasm"))]
-    pub fn new<M>(message: &M, method: DerivationMethod) -> Result<Self, SessionError>
-    where
-        M: IntoDiscriminant + Display,
-        <M as IntoDiscriminant>::Discriminant: ToString,
-    {
+    pub fn new<M : DerivableMsg>(message: &M, method: DerivationMethod) -> Result<Self, SessionError> {
         let name = message.discriminant().to_string();
         ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
         let action = match method {
@@ -71,11 +67,7 @@ impl Action {
     }
 
     #[cfg(feature = "wasm")]
-    pub fn new<M>(message: &M, method: DerivationMethod) -> Result<Self, SessionError>
-    where
-        M: IntoDiscriminant + Display + Serialize,
-        <M as IntoDiscriminant>::Discriminant : ToString,
-    {
+    pub fn new<M : DerivableMsg>(message: &M, method: DerivationMethod) -> Result<Self, SessionError> {
         let name = message.discriminant().to_string();
         ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
         let action = match method {
@@ -144,6 +136,13 @@ impl Action {
 }
 
 
+#[wasm_serde]
+pub enum ActionMsg<M> {
+    Native(M),
+    Signed(SignedDataMsg)
+}
+
+
 
 
 #[wasm_serde]
@@ -180,7 +179,8 @@ impl AllowedActions {
     pub fn is_action_allowed(&self, act: &Action) -> bool {
         if match act.method {
             #[cfg(feature = "wasm")]
-            DerivationMethod::Json => act.result.contains("\"session_info\""),
+            DerivationMethod::Json => act.result.contains("\"session_actions\"") || 
+                                        act.result.contains("\"session_info\""),
             _ => is_session_action_name(act.result.as_str())
         } {
             return false;
@@ -196,11 +196,7 @@ impl AllowedActions {
 
 
     #[cfg(not(feature = "wasm"))]
-    pub fn is_message_allowed<M>(&self, message: &M) -> bool
-    where
-        M: IntoDiscriminant + Display + Clone,
-        <M as IntoDiscriminant>::Discriminant : ToString + AsRef<str>,
-    {
+    pub fn is_message_allowed<M : DerivableMsg>(&self, message: &M) -> bool {
         if self.is_msg_name_ok(message) {
             return false;
         }
@@ -217,11 +213,7 @@ impl AllowedActions {
 
 
     #[cfg(feature = "wasm")]
-    pub fn is_message_allowed<M>(&self, message: &M) -> bool
-    where
-        M: IntoDiscriminant + Display + Serialize,
-        <M as IntoDiscriminant>::Discriminant: ToString + AsRef<str>,
-    {
+    pub fn is_message_allowed<M : DerivableMsg>(&self, message: &M) -> bool {
         if is_session_action_name(message.discriminant().as_ref()) {
             return false;
         }
@@ -294,4 +286,70 @@ impl AllowedActions {
       
     }
 
+}
+
+
+
+
+#[cfg(feature = "wasm")]
+pub trait DerivableMsg 
+    : Display + IntoDiscriminant  +  Clone  +  Serialize
+    + IntoDiscriminant<Discriminant : ToString + AsRef<str>>
+{
+    fn name(&self) -> String;
+    fn to_json_string(&self) -> Result<String, AuthError>;
+}
+
+
+
+#[cfg(not(feature = "wasm"))]
+pub trait DerivableMsg 
+    : Display + IntoDiscriminant + Clone
+    + IntoDiscriminant<Discriminant : ToString + AsRef<str>>
+{
+    fn name(&self) -> String;
+}
+
+
+
+#[cfg(feature = "wasm")]
+impl<M> DerivableMsg for M
+where
+    M : IntoDiscriminant + Display + Serialize + Clone,
+    <M as IntoDiscriminant>::Discriminant : ToString + AsRef<str>,
+{
+    fn name(&self) -> String {
+        self.discriminant().to_string()
+    }
+
+    // fn to_string() -> String
+    
+    fn to_json_string(&self) -> Result<String, AuthError> {
+        saa_common::wasm::to_json_string(self)
+            .map_err(|_| AuthError::generic("Failed to convert to JSON string"))
+    }
+}
+
+
+/* impl<M : DerivableMsg> DerivableMsg for Box<M> {
+    fn name(&self) -> String {
+        (**self).name()
+    }
+
+    #[cfg(feature = "wasm")]
+    fn to_json_string(&self) -> Result<String, AuthError> {
+        (**self).to_json_string()
+    }
+}
+ */
+
+
+#[cfg(not(feature = "wasm"))]
+impl<M> DerivableMsg for M
+where
+    M : IntoDiscriminant<Discriminant : ToString + AsRef<str>> + Display + Clone
+{
+    fn name(&self) -> String {
+        self.discriminant().to_string()
+    }
 }

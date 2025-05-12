@@ -24,3 +24,7 @@ pub const CREDENTIAL_INFOS: Map<CredentialId, CredentialInfo> = Map::new("saa_cr
 pub const ACCOUNT_NUMBER : Item<u128> = Item::new("saa_acc_num");
 
 
+
+/// Storage of session keys
+#[cfg(feature = "session")]
+pub const SESSIONS: Map<String, crate::messages::Session> = Map::new("saa_sessions");

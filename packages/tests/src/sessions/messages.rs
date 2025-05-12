@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use cosmwasm_std::{testing::mock_env, Addr, Uint128};
 use saa_common::{CredentialId, Expiration, SessionError};
-use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, SessionActionName, SessionInfo}, CredentialInfo, CredentialName};
+use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, SessionActionMsg, SessionInfo}, CredentialInfo, CredentialName};
 use strum::IntoDiscriminant;
 
 use crate::types::*;
@@ -111,7 +111,7 @@ fn simple_create_session_messages() {
         session_info: session_info.clone(),
     };
     let res = create_msg.to_session(&env);
-    assert_eq!(res.unwrap_err(), SessionError::EmptyActions);
+    assert_eq!(res.unwrap_err(), SessionError::EmptyCreateActions);
 
 
 
@@ -264,11 +264,12 @@ fn generating_session_from_messages() {
         }),
     };
 
+    println!("Before session");
 
     // Default to DerivationMethod::Name
     let session_key = CreateSessionFromMsg {
         derivation_method: None,
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
@@ -284,7 +285,7 @@ fn generating_session_from_messages() {
     // Strum  ToString
     let session_key = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::String),
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
@@ -298,7 +299,7 @@ fn generating_session_from_messages() {
     // Serde Json
     let session_key = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::Json),
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
@@ -316,7 +317,7 @@ fn create_session_error(msg: &CreateSession) -> SessionError {
     msg.to_session(&mock_env()).unwrap_err()
 }
 
-fn create_from_error(msg: &CreateSessionFromMsg<Box<ExecuteMsg>>) -> SessionError {
+fn create_from_error(msg: &CreateSessionFromMsg<ExecuteMsg>) -> SessionError {
     msg.to_session(&mock_env()).unwrap_err()
 }
 
@@ -365,33 +366,37 @@ fn nested_session_message_checks() {
 
     let create_from_name = CreateSessionFromMsg {
         derivation_method: None,
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
 
     let create_from_str = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::String),
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
 
     let create_from_json = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::Json),
-        message: Box::new(mint_msg.clone()),
+        message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
 
 
     let create_session_nested_self = CreateSession {
         allowed_actions: AllowedActions::Include(vec![
-            Action::with_strum_name(ExecuteMsg::CreateSession(create_session_str.clone())),
+            Action::with_strum_name(ExecuteMsg::SessionActions(Box::new(
+                SessionActionMsg::CreateSession(create_session_str.clone())
+            )))
         ]),
         session_info: session_info.clone(),
     };
 
     let create_session_nested_from = CreateSession {
         allowed_actions: AllowedActions::Include(vec![
-            Action::with_strum_name(ExecuteMsg::CreateSessionFromMsg(create_from_str.clone())),
+            Action::with_strum_name(ExecuteMsg::SessionActions(Box::new(
+                SessionActionMsg::CreateSessionFromMsg(create_from_str.clone())
+            ))),
         ]),
         session_info: session_info.clone(),
     };
@@ -404,13 +409,17 @@ fn nested_session_message_checks() {
 
     let create_from_nested_create = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::Name),
-        message: Box::new(ExecuteMsg::CreateSession(create_session_str.clone())),
+        message: ExecuteMsg::SessionActions(Box::new(
+            SessionActionMsg::CreateSession(create_session_str.clone())
+        )),
         session_info: session_info.clone(),
     };
 
     let create_from_nested_from = CreateSessionFromMsg {
         derivation_method: Some(DerivationMethod::Name),
-        message: Box::new(ExecuteMsg::CreateSessionFromMsg(create_from_str.clone())),
+        message: ExecuteMsg::SessionActions(Box::new(
+            SessionActionMsg::CreateSessionFromMsg(create_from_str.clone())
+        )),
         session_info: session_info.clone(),
     };
 
@@ -470,8 +479,12 @@ fn nested_session_message_checks() {
 
 
     // wrap in execute message
-    let create_session_nested_exec = ExecuteMsg::CreateSession(create_session_nested_self.clone());
-    let create_from_nested_exec = ExecuteMsg::CreateSessionFromMsg(create_from_nested_create.clone());
+    let create_session_nested_exec = ExecuteMsg::SessionActions(Box::new(
+        SessionActionMsg::CreateSession(create_session_nested_self.clone())
+    ));
+    let create_from_nested_exec = ExecuteMsg::SessionActions(Box::new(
+        SessionActionMsg::CreateSessionFromMsg(create_from_nested_create.clone())
+    ));
     assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_session_nested_exec.clone()).unwrap()));
     assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_from_nested_exec.clone()).unwrap()));
 
@@ -499,27 +512,16 @@ fn macro_strum_derivations_work() {
 
     // Custom implementation of Display and IntoDiscriminant to reduce attack vector
     let create_msg = CreateSession {
-        allowed_actions: AllowedActions::Include(vec![Action::with_strum_name(msg.clone())]),
+        allowed_actions: AllowedActions::Include(vec![
+            Action::with_strum_name(msg.clone())
+        ]),
         session_info: session_info.clone(),
     };
 
-    let expected = "create_session";
-    let name = create_msg.discriminant().to_string();
-    let str = create_msg.to_string();
-    assert!(name == str && name == expected);
-
-    // Deriving Discriminant (Enum with just names) from string representation 
-    let expected_name = SessionActionName::CreateSession;
-    let discr = create_msg.discriminant();
-    let from_str = <CreateSession as IntoDiscriminant>
-            ::Discriminant::from_str(&name).unwrap();
-
-    assert!(discr == from_str && discr == expected_name);
-
-
-    // Strum fields derived using macro
-
-    let exec_create = ExecuteMsg::CreateSession(create_msg.clone());
+    let expected = "session_actions";
+    let exec_create = ExecuteMsg::SessionActions(Box::new(
+        SessionActionMsg::CreateSession(create_msg.clone())
+    ));
     let exec_name = exec_create.discriminant().to_string();
     let exec_str = exec_create.to_string();
     assert!(exec_name == exec_str && exec_name == expected);
