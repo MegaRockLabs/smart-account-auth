@@ -17,6 +17,7 @@ pub use saa_common::{AuthError, CredentialId};
 pub use credential::{Credential, CredentialName, CredentialInfo};
 pub use data::{CredentialData, UpdateOperation, UpdateMethod};
 
+
 pub use saa_schema::wasm_serde;
 #[cfg(feature = "session")]
 pub use {saa_schema::session_action, saa_common::Expiration};
@@ -26,8 +27,6 @@ pub use saa_schema::*;
 
 #[cfg(feature = "native")]
 pub use saa_common::crypto;
-#[cfg(feature = "traits")]
-pub use {wrapper::CredentialsWrapper, saa_common::Verifiable};
 
 // the storage restriction is not needed but there aren't any exports
 #[cfg(all(feature = "wasm", feature = "storage"))]
@@ -52,11 +51,17 @@ pub mod utils {
     pub use saa_auth::eth::utils as eth;
     #[cfg(feature = "passkeys")]
     pub use saa_auth::passkey::utils as passkey;
-    
-    
     pub use super::credential::construct_credential;
 }
 
+#[cfg(feature = "traits")]
+pub mod traits {
+    pub use super::{
+        wrapper::CredentialsWrapper, 
+        messages::{DerivableMsg, SessionActionsMatch}
+    };
+    pub use saa_common::Verifiable;
+}
 
 
 

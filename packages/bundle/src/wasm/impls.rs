@@ -1,4 +1,4 @@
-use crate::{credential::{CredentialInfo, CredentialName}, Credential};
+use crate::{credential::{CredentialInfo, CredentialName}, storage::account_number, Credential};
 use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
 
 #[cfg(feature = "storage")]
@@ -105,7 +105,7 @@ impl CredentialInfo {
 
 
 #[cfg(all(feature = "traits", feature = "storage"))]
-use crate::CredentialsWrapper;
+use crate::traits::CredentialsWrapper;
 
 
 
@@ -190,14 +190,15 @@ impl crate::CredentialData {
 
 #[cfg(feature = "replay")]
 impl MsgDataToVerify {
-    pub fn validate(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
+    pub fn check_fields(&self, env: &Env) -> Result<(), AuthError> {
         ensure!(self.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
         ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
         ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        ensure!(
-            self.nonce == super::storage::stores::ACCOUNT_NUMBER.load(store).unwrap_or_default().to_string(), 
-            AuthError::DifferentNonce
-        );
+        Ok(())
+    }
+    pub fn validate(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
+        self.check_fields(env)?;
+        ensure!(self.nonce == account_number(store).to_string(), AuthError::DifferentNonce);
         Ok(())
     }
 }
@@ -205,6 +206,9 @@ impl MsgDataToVerify {
 
 #[cfg(feature = "replay")]
 impl<M> MsgDataToSign<M> {
+    pub fn check_fields(&self, env: &Env) -> Result<(), AuthError> {
+        Into::<MsgDataToVerify>::into(self).check_fields(env)
+    }
     pub fn validate(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
         Into::<MsgDataToVerify>::into(self).validate(store, env)
     }

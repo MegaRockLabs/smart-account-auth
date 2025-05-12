@@ -60,20 +60,6 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
         #left 
 
-        /* impl<M> ::smart_account_auth::messages::SessionActionsMatch<M> for #enum_name 
-        where
-            M: core::ops::Deref,
-            M::Target: strum::IntoDiscriminant + core::fmt::Display + serde::Serialize + Clone,
-            <M::Target as strum::IntoDiscriminant>::Discriminant: AsRef<str>,
-        {
-            fn match_actions(&self) -> Option<SessionActionMsg<M>> {
-                match self {
-                    Self::SessionActions(msg) => Some(msg.clone()),
-                    _ => None,
-                }
-            }
-        } */
-
         impl ::strum::IntoDiscriminant for Box<#enum_name> {
             type Discriminant = <#enum_name as ::strum::IntoDiscriminant>::Discriminant;
             fn discriminant(&self) -> Self::Discriminant {
@@ -90,23 +76,6 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
                 }
             }
         }
-
-        /* impl ::smart_account_auth::messages::SessionActionsMatch for Box<#enum_name> 
-        {
-            fn match_actions<#enum_name>(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<#enum_name>> {
-                (*self).match_actions()
-            }
-        } */
-
-        /* impl ::smart_account_auth::messages::SessionActionsMatch<Box<#enum_name>> for #enum_name 
-        {
-            fn match_actions(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<Box<#enum_name>>> {
-                match self {
-                    Self::SessionActions(msg) => Some(msg.clone()),
-                    _ => None,
-                }
-            }
-        } */
 
     }.into()
 }

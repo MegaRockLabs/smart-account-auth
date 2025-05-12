@@ -1,9 +1,8 @@
 use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr, Storage};
 use saa_common::{AuthError, CredentialId, Verifiable};
 use smart_account_auth::{
-    storage::{get_all_cred_infos, load_count, remove_credential, reset_credentials, save_credential, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, update_credentials
-    }, 
-    Caller, Credential, CredentialData, CredentialInfo, CredentialName, CredentialsWrapper, UpdateOperation
+    storage::{get_all_cred_infos, load_count, remove_credential, reset_credentials, save_credential, stores::{ACCOUNT_NUMBER, CREDENTIAL_INFOS, HAS_NATIVES, VERIFYING_CRED_ID}, update_credentials}, 
+    Caller, Credential, CredentialData, CredentialInfo, CredentialName, traits::CredentialsWrapper, UpdateOperation
 };
 use crate::vars::{cred_data_non_native, cred_data_only_native, credential_data, default_cred_count, get_cosmos_arbitrary, get_eth_personal, get_mock_env, get_passkey, ALICE_ADDR};
 

@@ -1,137 +1,28 @@
 
-use cosmwasm_std::{ensure, testing::{message_info, mock_dependencies, mock_env}, Addr, Response, StdError, Uint128};
-use saa_common::{from_json, AuthError, SessionError};
-use serde::de::DeserializeOwned;
+
+use saa_common::{AuthError, SessionError};
 use smart_account_auth::{
     messages::{
-        Action, ActionMsg, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, MsgDataToSign, RevokeKeyMsg, Session, SessionActionMsg, SessionActionsMatch, SessionInfo
+        Action, AllowedActions, CreateSession, CreateSessionFromMsg, 
+        DerivationMethod, RevokeKeyMsg, SessionActionMsg, SessionInfo
     }, 
-    storage::session::{load_session, revoke_session, save_session}, 
-    utils::construct_credential, CredentialInfo, CredentialName
+    storage::session::{self}, 
+    CredentialInfo, CredentialName
+};
+use cosmwasm_std::{
+    ensure, Addr, Response, StdError, Uint128,
+    testing::{message_info, mock_dependencies, mock_env}
 };
 
-use crate::{types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, vars::{session_info, with_key_msg}};
+use crate::{
+    types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, 
+    vars::{session_info, with_key_msg}
+};
 
 
 const ADMIN : &str = "alice";
 
 
-
-pub fn handle_session<M>(
-    api : &dyn cosmwasm_std::Api,
-    storage: &mut dyn cosmwasm_std::Storage,
-    env: &cosmwasm_std::Env,
-    info: &cosmwasm_std::MessageInfo,
-    msg: M,
-) -> Result<(Option<Session>, Vec<M>), AuthError> 
-    where M : DeserializeOwned + SessionActionsMatch,
-{
-    let session_msg = match msg.match_actions() {
-        Some(msg) => msg,
-        None => return Ok((None, vec![msg.clone()])),
-    };
-       
-    match session_msg {
-        SessionActionMsg::CreateSession(
-            mut create
-        ) => {
-            // set sender as granter
-            create.session_info.granter = Some(info.sender.to_string());
-            let session = create.to_session(&env).unwrap();
-            let key = session.key();
-            save_session(storage,  key.clone(), session.clone())?;
-            Ok((Some(session), vec![]))
-        },
-
-        SessionActionMsg::CreateSessionFromMsg(
-            mut create
-        ) => {
-            // set sender as granter
-            create.session_info.granter = Some(info.sender.to_string());
-            let session = create.to_session(&env).unwrap();
-            let key = session.key();
-            save_session(storage,  key.clone(), session.clone())?;
-            Ok((Some(session), vec![create.message.clone()]))
-        },
-
-        SessionActionMsg::WithSessionKey(with_msg) => {
-
-            let key = &with_msg.session_key;
-            let mut session = load_session(storage, key.clone())?;
-            let (id, cred_info) = session.grantee.clone();
-
-            if session.expiration.is_expired(&env.block) {
-                revoke_session(storage, key.clone());
-                return Err(SessionError::Expired.into())
-            }
-
-            let msgs : Vec<M>  = match with_msg.message {
-                ActionMsg::Signed(msg) => {
-                    
-                    let hrp = msg.payload
-                        .as_ref().map(|p| p.hrp.clone())
-                        .flatten();
-
-                    let stored_ext = cred_info.extension.clone();
-
-                    let passed_ext = msg.payload
-                        .as_ref().map(|p| p.extension.clone())
-                        .flatten();
-
-                    let cred = construct_credential(
-                        id, 
-                        cred_info.name, 
-                        msg.data.clone(), 
-                        msg.signature, 
-                        hrp, 
-                        stored_ext, 
-                        passed_ext
-                    ).map_err(|_| StdError::generic_err("Invalid credential"))?;
-
-                    cred.verify_cosmwasm(api)
-                        .map_err(|_| StdError::generic_err("Invalid signature"))?;
-
-                    let to_sign : MsgDataToSign<M> = from_json(msg.data)?;
-                    ensure!(env.block.chain_id == to_sign.chain_id, StdError::generic_err("Chain ID mismatch"));
-                    ensure!(env.contract.address.to_string() == to_sign.contract_address, StdError::generic_err("Contract address mismatch"));
-                    ensure!(session.nonce.to_string() == to_sign.nonce, StdError::generic_err("Nonce mismatch"));
-
-                    if cred.is_cosmos_derivable() {
-                        let _addr = cred.cosmos_address(api)
-                            .map_err(|_| StdError::generic_err("Invalid address"))?;
-                        //info.sender = addr;
-                    }
-                    session.nonce += 1;
-                    save_session(storage, key.clone(), session.clone())?;
-                    to_sign.messages
-                }
-                ActionMsg::Native(execute) => {
-                    ensure!(cred_info.name == CredentialName::Native, StdError::generic_err("This key wasn't for a native address"));
-                    ensure!(id == info.sender.to_string(), StdError::generic_err("This key wasn't for this address"));
-                    vec![execute.clone()]
-                },
-            };
-            ensure!(!msgs.is_empty(), SessionError::EmptyPassedActions);
-            ensure!(msgs.iter().all(|m| session.actions.is_message_allowed(m)), SessionError::NotAllowedAction);
-            Ok((Some(session), msgs))
-        },
-
-        SessionActionMsg::RevokeSession(msg) => {
-            let key = &msg.session_key;
-            if let Ok(loaded) = load_session(storage, key.clone()) {
-                ensure!(
-                    loaded.granter == info.sender.to_string(), 
-                    StdError::generic_err("Only owner can revoke the session key")
-                );
-                revoke_session(storage, key.clone());
-                Ok((None, vec![]))
-            } else {
-                return Err(SessionError::Expired.into())
-            }            
-        },
-    }
-    
-}
 
 
 
@@ -144,7 +35,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<cosmwasm_std::Response, AuthError> {
 
-    let (session, inner_msgs) = handle_session(
+    let (session, inner_msgs) = session::handle_actions(
         api, 
         storage, 
         env, 
@@ -348,7 +239,7 @@ fn simple_contract_flow() {
 
     // Eve can't do it even with the same message
     let eve_res = execute(deps.api, deps.storage, env, eve, exec_msg.clone());
-    assert_eq!(eve_res.unwrap_err().to_string(), "Generic error: This key wasn't for this address".to_string());
+    assert_eq!(eve_res.unwrap_err().to_string(), "Unauthorized: This key wasn't for this address".to_string());
 
 
 
@@ -453,7 +344,9 @@ fn from_message_and_revoking() {
     
     // with JSON derication only identical message goes through
     let msg2 = ExecuteMsg::Execute { msgs: vec![] };
-    let msg3 = ExecuteMsg::Execute { msgs: vec![CosmosMsg::Bank(BankMsg::Send {to_address: "eve".to_string(), amount: vec![]})]};
+    let msg3 = ExecuteMsg::Execute { msgs: vec![CosmosMsg::Bank(
+        BankMsg::Send {to_address: "eve".to_string(), amount: vec![]}
+    )]};
     let msg4 = ExecuteMsg::Execute { msgs: vec![
         CosmosMsg::Simple { }, 
         CosmosMsg::Simple { }, 
@@ -550,9 +443,11 @@ fn from_message_and_revoking() {
 
 
     // Let's revoke the first key now
-    let revoke_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::RevokeSession(RevokeKeyMsg {
-        session_key: key.to_string(),
-    })));
+    let revoke_msg = ExecuteMsg::SessionActions(
+        Box::new(SessionActionMsg::RevokeSession(RevokeKeyMsg {
+            session_key: key.to_string(),
+        })
+    ));
 
     
     // Bob can't revoke it

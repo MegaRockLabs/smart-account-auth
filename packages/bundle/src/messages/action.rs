@@ -322,26 +322,12 @@ where
         self.discriminant().to_string()
     }
 
-    // fn to_string() -> String
-    
     fn to_json_string(&self) -> Result<String, AuthError> {
         saa_common::wasm::to_json_string(self)
             .map_err(|_| AuthError::generic("Failed to convert to JSON string"))
     }
 }
 
-
-/* impl<M : DerivableMsg> DerivableMsg for Box<M> {
-    fn name(&self) -> String {
-        (**self).name()
-    }
-
-    #[cfg(feature = "wasm")]
-    fn to_json_string(&self) -> Result<String, AuthError> {
-        (**self).to_json_string()
-    }
-}
- */
 
 
 #[cfg(not(feature = "wasm"))]

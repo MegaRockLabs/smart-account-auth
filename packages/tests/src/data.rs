@@ -1,5 +1,5 @@
 use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr};
-use smart_account_auth::{Caller, Credential, CredentialData, CredentialsWrapper, Verifiable};
+use smart_account_auth::{Caller, Credential, CredentialData, traits::{CredentialsWrapper, Verifiable}};
 use crate::vars::{default_cred_count, cred_data_non_native};
 
 

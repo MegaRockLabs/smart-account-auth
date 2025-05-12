@@ -82,12 +82,22 @@ pub struct RevokeKeyMsg {
 
 
 #[wasm_serde]
+
 pub enum SessionActionMsg<M : DerivableMsg> {
     CreateSession(CreateSession),
     CreateSessionFromMsg(CreateSessionFromMsg<M>),
     WithSessionKey(WithSessionMsg<M>),
     RevokeSession(RevokeKeyMsg),
 }
+
+
+
+#[wasm_serde]
+
+pub enum SessionQueryMsg<M : DerivableMsg> {
+    AllActions {}
+}
+
 
 
 
@@ -177,4 +187,8 @@ pub(crate) fn is_session_action_name(name: &str) -> bool {
 
 pub trait SessionActionsMatch : DerivableMsg  {
     fn match_actions(&self) -> Option<SessionActionMsg<Self>>;
+}
+
+pub trait SessionQueriesMatch : DerivableMsg  {
+    fn match_queries(&self) -> Option<SessionActionMsg<Self>>;
 }

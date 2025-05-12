@@ -148,10 +148,10 @@ impl Credential {
 
 
 #[cfg(feature = "traits")]
-use crate::wrapper::CredentialsWrapper;
+use crate::traits::CredentialsWrapper;
 
 #[cfg(feature = "traits")]
-impl crate::wrapper::CredentialsWrapper for CredentialData {
+impl crate::traits::CredentialsWrapper for CredentialData {
     type Credential = Credential;
 
     fn credentials(&self) -> &Vec<Self::Credential> {
