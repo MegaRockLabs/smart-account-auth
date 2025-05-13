@@ -2,6 +2,8 @@ mod impls;
 use saa_schema::wasm_serde;
 use saa_common::{CredentialId, Expiration};
 use crate::{credential::CredentialRecord, msgs::AllowedActions};
+
+pub mod queries;
 pub mod actions;
 
 

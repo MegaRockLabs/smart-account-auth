@@ -8,7 +8,7 @@ pub use saa_macros_proto::{wasm_serde, wasm_string_struct};
 #[cfg(feature = "session")]
 pub use {
     strum, strum_macros,
-    saa_macros_proto::session_action
+    saa_macros_proto::{session_action, session_query}
 };
 
 

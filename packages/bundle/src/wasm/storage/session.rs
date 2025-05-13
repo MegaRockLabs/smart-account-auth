@@ -1,17 +1,12 @@
-use core::fmt::Debug;
-
 use crate::{
-    credential::{CredentialName, Credential}, 
-    messages::{
+    credential::{Credential, CredentialName}, messages::{
         actions::{ActionMsg, DerivableMsg}, 
         SignedDataMsg,
-    },
-    sessions::{actions::SessionActionMsg, Session}, 
+    }, msgs::SessionQueryMsg, sessions::{actions::SessionActionMsg, Session} 
 };
 use saa_auth::caller::Caller;
 use saa_common::{
-    ensure, wasm::{Api, Env, MessageInfo, Storage}, 
-    AuthError, SessionError, Verifiable
+    ensure, to_json_binary, wasm::{Api, Env, MessageInfo, StdError, Storage}, AuthError, SessionError, Verifiable
 };
 use super::{
     stores::{map_get, map_remove, SESSIONS}, 
@@ -155,7 +150,7 @@ pub fn handle_actions<M>(
     msg: M,
     admin: Option<String>,
 ) -> Result<(Option<Session>, ReturnMsg<M>), AuthError> 
-    where M : serde::de::DeserializeOwned + crate::msgs::SessionActionsMatch + Debug,
+    where M : serde::de::DeserializeOwned + crate::msgs::SessionActionsMatch,
 {
 
     let session_msg = match msg.match_actions() {
@@ -224,6 +219,34 @@ pub fn handle_actions<M>(
     
 }
 
+
+
+use strum::{IntoDiscriminant, VariantArray, VariantNames};
+
+pub fn handle_queries<M>(
+    api : &dyn Api,
+    storage: &dyn Storage,
+    env: &Env,
+    msg: &M,
+) -> Result<Option<saa_common::Binary>, StdError> 
+    
+where M 
+        :  crate::msgs::SessionQueriesMatch 
+            + VariantNames + IntoDiscriminant<Discriminant : VariantArray> 
+{
+    let session_query = match msg.match_queries() {
+        Some(msg) => msg,
+        None => return Ok(None),
+    };
+
+    return Ok(match session_query {
+        SessionQueryMsg::AllQueries {} => Some(to_json_binary(&M::VARIANTS)?),
+
+        _ => {
+            return Ok(None);
+        }
+    });
+}
 
 
 /* pub fn handle_queries<M>(

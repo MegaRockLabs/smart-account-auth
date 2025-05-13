@@ -1,7 +1,7 @@
 use std::{fmt::Debug, str::FromStr};
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, EnumMessage, IntoDiscriminant, IntoEnumIterator, 
-    VariantMetadata, VariantNames, VariantArray
+    VariantMetadata, VariantNames, VariantArray, 
 };
 use strum_macros::{EnumString, Display, FromRepr, EnumDiscriminants, EnumIter};
 use crate::types::CosmosMsg;

@@ -1,17 +1,18 @@
 
 
-use saa_common::{AuthError, SessionError};
+use saa_common::{from_json, AuthError, Binary, SessionError};
 use smart_account_auth::{
     msgs::{
         Action, AllowedActions, CreateSession, CreateSessionFromMsg, 
-        DerivationMethod, RevokeKeyMsg, SessionActionMsg
-    }, session::{self}, CredentialInfo, CredentialName, SessionInfo
+        DerivationMethod, RevokeKeyMsg, SessionActionMsg, SessionQueryMsg
+    }, session::{self, handle_queries}, CredentialInfo, CredentialName, SessionInfo
 };
 use cosmwasm_std::{
-    ensure, testing::{message_info, mock_dependencies, mock_env, MockApi}, Response, StdError, Uint128
+    ensure, testing::{message_info, mock_dependencies, mock_env, MockApi}, Api, Env, Response, StdError, StdResult, Storage, Uint128
 };
+use strum::VariantNames;
 use crate::{
-    types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, 
+    types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, QueryMsg, StakingMsg}, 
     vars::{session_info, with_key_msg, ALICE_ADDR, EVE_ADDR}
 };
 
@@ -141,6 +142,34 @@ pub fn execute_logic(
 }
 
 
+
+
+pub fn query(
+    api : &dyn Api,
+    storage: &dyn Storage,
+    env: &Env, 
+    msg: QueryMsg
+) -> StdResult<Binary> {
+
+    if let Some(res) = handle_queries(api, storage, env, &msg)? {
+        return Ok(res);
+    }
+
+    match msg {
+
+        QueryMsg::GetBalance {  } => {
+            // Handle get balance logic
+            Ok(Binary::default())
+        },
+
+        _ => {
+            println!("Unrecognized message: {:?}", msg);
+            unreachable!("CreateSession should be handled in execute")
+        },
+        
+    }
+
+}
 
 
 
@@ -535,3 +564,32 @@ fn from_message_and_revoking() {
 }
     
 
+
+#[test]
+fn test_query() {
+    let mut mocks = mock_dependencies();
+    let deps = mocks.as_mut();
+    let env = mock_env();
+    let api = MockApi::default();
+
+    let alice_addr = api.addr_make("alice");
+    let alice = message_info(&alice_addr, &vec![]);
+
+    
+    let msg = QueryMsg::SessionQueries(Box::new(SessionQueryMsg::AllQueries { }));
+
+    let res = query(deps.api, deps.storage, &env, msg.clone());
+    assert!(res.is_ok());
+
+    println!("res: {:?}", res);
+
+    let des : Vec<String> = from_json(&res.unwrap()).unwrap();
+
+    println!("des: {:?}", des);
+
+    //assert_eq!(des, SessionQueryMsg::VARIANTS);
+
+    
+    assert!(false);
+
+}

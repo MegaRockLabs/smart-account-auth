@@ -1,6 +1,6 @@
 
 use cosmwasm_std::Uint128;
-use saa_schema::{session_action, wasm_serde};
+use saa_schema::{session_action, session_query, wasm_serde};
 
 
 #[wasm_serde]
@@ -60,4 +60,14 @@ pub enum ExecuteMsg {
     Freeze {},
 
     Purge {},
+}
+
+
+
+#[session_query]
+#[wasm_serde]
+pub enum QueryMsg {
+
+    GetBalance {},
+   
 }

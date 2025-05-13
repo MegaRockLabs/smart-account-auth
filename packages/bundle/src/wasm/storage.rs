@@ -130,7 +130,7 @@ pub mod storage_methods {
 
 #[cfg(feature = "session")]
 pub mod session_methods {
-    pub use super::session::handle_actions;
+    pub use super::session::{handle_actions, handle_queries};
 
     #[cfg(feature = "utils")]
     pub use super::utils::{session_cred_from_signed, update_session};
