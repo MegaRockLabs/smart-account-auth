@@ -34,7 +34,7 @@ pub mod msgs {
     pub use msgs::replay::{MsgDataToSign, MsgDataToVerify};
     #[cfg(feature = "session")]
     pub use {
-        super::sessions::queries::{SessionQueryMsg, SessionQueriesMatch},
+        super::sessions::queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions},
         super::sessions::actions::{
             CreateSession, CreateSessionFromMsg, RevokeKeyMsg, WithSessionMsg,
             SessionActionMsg, SessionActionName, SessionActionsMatch,

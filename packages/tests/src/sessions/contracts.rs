@@ -581,7 +581,6 @@ fn test_query() {
     let res = query(deps.api, deps.storage, &env, msg.clone());
     assert!(res.is_ok());
 
-    println!("res: {:?}", res);
 
     let des : Vec<String> = from_json(&res.unwrap()).unwrap();
 
@@ -589,7 +588,31 @@ fn test_query() {
 
     //assert_eq!(des, SessionQueryMsg::VARIANTS);
 
-    
+
+
+    let msg = QueryMsg::SessionQueries(Box::new(SessionQueryMsg::AllActions { }));
+
+    let res = query(deps.api, deps.storage, &env, msg.clone());
+    assert!(res.is_ok());
+
+    let des : Vec<String> = from_json(&res.unwrap()).unwrap();
+
+    println!("des: {:?}", des);
+
+
+
+    let msg = QueryMsg::SessionQueries(Box::new(SessionQueryMsg::Derive { 
+        message: ExecuteMsg::Purge { },
+        method: Some(DerivationMethod::Json),
+    }));
+
+    let res = query(deps.api, deps.storage, &env, msg.clone());
+    assert!(res.is_ok());
+
+    let des : Action = from_json(&res.unwrap()).unwrap();
+
+    println!("act: {:?}", des);
+
     assert!(false);
 
 }

@@ -64,7 +64,7 @@ pub enum ExecuteMsg {
 
 
 
-#[session_query]
+#[session_query(ExecuteMsg)]
 #[wasm_serde]
 pub enum QueryMsg {
 

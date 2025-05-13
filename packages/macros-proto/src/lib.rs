@@ -127,8 +127,45 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
 
 #[proc_macro_attribute]
 pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(metadata as AttributeArgs);
+
+    // Ensure exactly one argument
+    if args.len() != 1 {
+        return syn::Error::new_spanned(
+            quote! { #[session_query(..)] },
+            "expected #[session_query(ExecuteMsg)] with exactly one argument",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    // Extract identifier (e.g., ExecuteMsg)
+    let base_msg_ident = match &args[0] {
+        syn::NestedMeta::Meta(syn::Meta::Path(path)) => match path.get_ident() {
+            Some(ident) => ident.clone(),
+            None => {
+                return syn::Error::new_spanned(
+                    path,
+                    "expected identifier like `ExecuteMsg`"
+                )
+                .to_compile_error()
+                .into();
+            }
+        },
+        other => {
+            return syn::Error::new_spanned(
+                other,
+                "expected identifier like `ExecuteMsg`"
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+
+
+    // Proceed as before
     generate_session_macro(
-        metadata,
+        TokenStream::new(), // no extra args needed downstream
         input,
         quote! {
             enum Right {
@@ -136,7 +173,7 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
             }
         }
         .into(),
-        |enum_name| {
+        move |enum_name| {
             quote! {
                 impl ::smart_account_auth::msgs::SessionQueriesMatch for #enum_name {
                     fn match_queries(&self) -> Option<::smart_account_auth::msgs::SessionQueryMsg<Self>> {
@@ -146,127 +183,17 @@ pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
                         }
                     }
                 }
+
+                impl ::smart_account_auth::msgs::QueryUsesActions for #enum_name {
+                    type ActionMsg = #base_msg_ident;
+                }
             }
         },
     )
 }
 
-/* fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) -> TokenStream {
-    use syn::Data::Enum;
-
-    // parse metadata
-    let args = parse_macro_input!(metadata as AttributeArgs);
-    if let Some(first_arg) = args.first() {
-        return syn::Error::new_spanned(first_arg, "macro takes no arguments")
-            .to_compile_error()
-            .into();
-    }
-
-    // parse the left enum
-    let mut left: DeriveInput = parse_macro_input!(left);
-
-    let Enum(DataEnum {
-        variants,
-        ..
-    }) = &mut left.data else {
-        return syn::Error::new(left.ident.span(), "only enums can accept variants")
-            .to_compile_error()
-            .into();
-    };
-
-    // parse the right enum
-    let right: DeriveInput = parse_macro_input!(right);
-    let Enum(DataEnum {
-        variants: to_add,
-        ..
-    }) = right.data else {
-        return syn::Error::new(left.ident.span(), "only enums can provide variants")
-            .to_compile_error()
-            .into();
-    };
-
-    // insert variants from the right to the left
-    variants.extend(to_add.into_iter());
-
-    //quote! { #left }.into()
-    let enum_name = &left.ident;
-
-    quote! { 
-        #[derive(
-            ::saa_schema::strum_macros::Display, 
-            ::saa_schema::strum_macros::EnumDiscriminants
-        )]
-        #[strum_discriminants(
-            name(ExecuteMsgNames),
-            derive(
-                ::saa_schema::strum_macros::Display,
-                ::saa_schema::strum_macros::EnumString,
-                ::saa_schema::strum_macros::AsRefStr
-            ),
-            strum(serialize_all = "snake_case", crate = "::saa_schema::strum")
-        )]
-        #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
-        #left 
-
-        impl ::saa_schema::strum::IntoDiscriminant for Box<#enum_name> {
-            type Discriminant = <#enum_name as ::saa_schema::strum::IntoDiscriminant>::Discriminant;
-            fn discriminant(&self) -> Self::Discriminant {
-                (*self).discriminant()
-            }
-        }
-
-        impl ::smart_account_auth::msgs::SessionActionsMatch for #enum_name
-        {
-            fn match_actions(&self) -> Option<::smart_account_auth::msgs::SessionActionMsg<Self>> {
-                match self {
-                    Self::SessionActions(msg) => Some((**msg).clone()),
-                    _ => None,
-                }
-            }
-        }
-
-    }.into()
-}
 
 
-
-
-#[proc_macro_attribute]
-pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    session_merger(
-        metadata,
-        input,
-        quote! {
-            enum Right {
-                SessionActions(Box<::smart_account_auth::msgs::SessionActionMsg<Self>>),
-            }
-        }
-        .into(),
-    )
-} 
-
-
-
-
-#[proc_macro_attribute]
-pub fn session_query(metadata: TokenStream, input: TokenStream) -> TokenStream {
-    session_merger(
-        metadata,
-        input,
-        quote! {
-            enum Right {
-                SessionQueries(Box<::smart_account_auth::msgs::SessionQueryMsg<Self>>),
-            }
-        }
-        .into(),
-    )
-}
-
-*/
-
-
-/* 
-SessionQueriesMatch */
 
 
 #[proc_macro_attribute]

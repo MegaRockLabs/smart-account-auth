@@ -2,7 +2,7 @@ use crate::{
     credential::{Credential, CredentialName}, messages::{
         actions::{ActionMsg, DerivableMsg}, 
         SignedDataMsg,
-    }, msgs::SessionQueryMsg, sessions::{actions::SessionActionMsg, Session} 
+    }, msgs::{Action, QueryUsesActions, SessionQueriesMatch, SessionQueryMsg}, sessions::{actions::SessionActionMsg, Session} 
 };
 use saa_auth::caller::Caller;
 use saa_common::{
@@ -12,7 +12,7 @@ use super::{
     stores::{map_get, map_remove, SESSIONS}, 
     update_session, session_cred_from_signed
 };
-
+use strum::{IntoDiscriminant, VariantArray, VariantNames};
 
 
 
@@ -221,58 +221,48 @@ pub fn handle_actions<M>(
 
 
 
-use strum::{IntoDiscriminant, VariantArray, VariantNames};
 
 pub fn handle_queries<M>(
-    api : &dyn Api,
-    storage: &dyn Storage,
-    env: &Env,
+    _api : &dyn Api,
+    _storage: &dyn Storage,
+    _env: &Env,
     msg: &M,
 ) -> Result<Option<saa_common::Binary>, StdError> 
-    
-where M 
-        :  crate::msgs::SessionQueriesMatch 
-            + VariantNames + IntoDiscriminant<Discriminant : VariantArray> 
+where
+    M: SessionQueriesMatch,
+    <M::ActionMsg as IntoDiscriminant>::Discriminant: VariantArray + 'static,
 {
+    
     let session_query = match msg.match_queries() {
         Some(msg) => msg,
         None => return Ok(None),
     };
 
-    return Ok(match session_query {
-        SessionQueryMsg::AllQueries {} => Some(to_json_binary(&M::VARIANTS)?),
+    return Ok(Some(match session_query {
+        SessionQueryMsg::AllQueries {} => to_json_binary(&M::VARIANTS)?,
 
-        _ => {
-            return Ok(None);
+        SessionQueryMsg::AllActions {} => {
+            let vec = <<M as QueryUsesActions>
+                    ::ActionMsg as IntoDiscriminant>
+                    ::Discriminant::VARIANTS
+                        .iter()
+                        .map(|v| v.to_string())
+                        .collect::<Vec<String>>();
+                    
+            to_json_binary(&vec)?
         }
-    });
+
+        SessionQueryMsg::Derive { 
+            message, 
+            method 
+        } => {
+            let act = Action::new(&message, method.unwrap_or_default())
+                .map_err(|e| 
+                    StdError::generic_err(format!("Failed to derive message: {}", e)
+                ))?;
+
+            to_json_binary(&act)?
+        }
+    }));
 }
 
-
-/* pub fn handle_queries<M>(
-    storage: &dyn Storage,
-    env: &Env,
-    info: &MessageInfo,
-    msg: M,
-) -> Result<Vec<M>, AuthError> 
-where M : SessionActionsMatch + DeserializeOwned,
-{
-    let session_msg = match msg.match_actions() {
-        Some(msg) => msg,
-        None => return Ok(vec![msg]),
-    };
-       
-    match session_msg {
-        SessionActionMsg::QuerySessionKey(msg) => {
-            let key = &msg.session_key;
-            let session = load_session(storage, key.clone())?;
-            ensure!(
-                session.granter == info.sender.to_string(), 
-                AuthError::Unauthorized("Only owner can revoke the session key".into())
-            );
-            Ok(vec![session_msg.into()])
-        },
-        _ => Ok(vec![msg])
-    }
-}
- */
