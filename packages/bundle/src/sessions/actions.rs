@@ -1,52 +1,11 @@
 
 use saa_schema::wasm_serde;
-use saa_common::{to_json_binary, Binary, CredentialId, Expiration, FromStr};
-use strum::{IntoDiscriminant, IntoEnumIterator};
+use strum::IntoDiscriminant;
 use strum_macros::{AsRefStr, Display, EnumIter, EnumString};
 
-use crate::CredentialInfo;
-use super::{ActionMsg, AllowedActions, DerivableMsg, DerivationMethod};
+use crate::{SessionInfo, messages::actions::DerivableMsg};
+use crate::msgs::{ActionMsg, AllowedActions, DerivationMethod};
 
-
-pub type GranteeInfo = (CredentialId, CredentialInfo);
-
-
-#[wasm_serde]
-pub struct Session {
-    pub granter     : CredentialId,
-    pub grantee     : GranteeInfo,
-    pub actions     : AllowedActions, 
-    pub expiration  : Expiration,
-    pub nonce       : u64,
-}
-
-
-
-impl Session {
-    pub fn key(&self) -> CredentialId {
-        let (id, info) = &self.grantee;
-        let actions = to_json_binary(&self.actions).unwrap_or_default();
-
-        let msg = [
-            self.granter.as_bytes(),
-            id.as_bytes(),
-            info.name.to_string().as_bytes(),
-            actions.as_slice(),
-        ].concat();
-
-        Binary::from(saa_common::hashes::sha256(&msg)).to_base64()
-    }
-    
-}
-
-
-
-#[wasm_serde]
-pub struct SessionInfo  {
-    pub grantee     :       GranteeInfo,
-    pub granter     :       Option<CredentialId>,
-    pub expiration  :       Option<Expiration>,
-}
 
 
 #[wasm_serde]
@@ -59,7 +18,7 @@ pub struct CreateSession {
 #[wasm_serde]
 pub struct CreateSessionFromMsg<M : DerivableMsg> {
     pub message             :      M,
-    pub derivation_method   :      Option<DerivationMethod>,
+    pub derivation          :      Option<DerivationMethod>,
     pub session_info        :      SessionInfo,
 }
 
@@ -82,22 +41,12 @@ pub struct RevokeKeyMsg {
 
 
 #[wasm_serde]
-
 pub enum SessionActionMsg<M : DerivableMsg> {
     CreateSession(CreateSession),
     CreateSessionFromMsg(CreateSessionFromMsg<M>),
     WithSessionKey(WithSessionMsg<M>),
     RevokeSession(RevokeKeyMsg),
 }
-
-
-
-#[wasm_serde]
-
-pub enum SessionQueryMsg<M : DerivableMsg> {
-    AllActions {}
-}
-
 
 
 
@@ -111,6 +60,18 @@ pub enum SessionActionName {
     WithSessionKey,
     RevokeSession,
 }
+
+
+
+
+pub trait SessionActionsMatch : DerivableMsg  {
+    fn match_actions(&self) -> Option<SessionActionMsg<Self>>;
+}
+
+
+
+
+
 
 
 impl<M : DerivableMsg> IntoDiscriminant for SessionActionMsg<M> {
@@ -154,7 +115,6 @@ impl<M : DerivableMsg> AsRef<str> for CreateSessionFromMsg<M> {
 }
 
 
-
 impl IntoDiscriminant for CreateSession {
     type Discriminant = SessionActionName;
     fn discriminant(&self) -> Self::Discriminant {
@@ -168,27 +128,3 @@ impl<M : DerivableMsg> IntoDiscriminant for CreateSessionFromMsg<M> {
     }
 }
 
-
-pub(crate) fn is_session_action_name(name: &str) -> bool {
-    SessionActionName::iter()
-        .any(|action| {
-            if action.as_ref() == name {
-                return true;
-            }
-            if let Ok(act) = SessionActionName::from_str(name) {
-                return action == act;
-            }
-            false
-        })
-}
-
-
-
-
-pub trait SessionActionsMatch : DerivableMsg  {
-    fn match_actions(&self) -> Option<SessionActionMsg<Self>>;
-}
-
-pub trait SessionQueriesMatch : DerivableMsg  {
-    fn match_queries(&self) -> Option<SessionActionMsg<Self>>;
-}

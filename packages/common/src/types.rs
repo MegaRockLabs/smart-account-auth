@@ -21,13 +21,7 @@ pub mod binary {
     pub use super::bin::{Binary, to_json_binary, from_json};
     #[cfg(feature = "wasm")]
     pub use crate::wasm::{Binary, to_json_binary, from_json};
-
-
-    #[cfg(feature = "cwasm")]
     pub use crate::wasm::to_json_string;
-
-    #[cfg(not(feature = "cwasm"))]
-    pub use serde_json_wasm::to_string as to_json_string;
 
 }
 

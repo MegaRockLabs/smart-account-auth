@@ -1,20 +1,33 @@
-use crate::{credential::{CredentialInfo, CredentialName}, storage::account_number, Credential};
-use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
+use crate::{msgs::SignedDataMsg,
+    credential::{Credential, CredentialInfo, CredentialName}
+};
+use saa_common::{wasm::{Addr, Api, CustomMsg}, AuthError, CredentialId};
 
 #[cfg(feature = "storage")]
 use {
     saa_common::{wasm::{Env, Storage}, Verifiable},
-    crate::wasm::storage::stores::{HAS_NATIVES, VERIFYING_CRED_ID},
+    crate::wasm::storage::stores::{HAS_NATIVES, VERIFYING_ID},
 };
 
 #[cfg(feature = "replay")]
 use {
-    saa_common::ensure,
-    crate::messages::{MsgDataToSign, MsgDataToVerify}
+    saa_common::{ensure, ReplayError},
+    super::storage::{stores::ACCOUNT_NUMBER, replay::account_number},
+    crate::msgs::{MsgDataToSign, MsgDataToVerify},
+    crate::messages::utils::convert_validate,
+};
+#[cfg(feature = "session")]
+use crate::{
+    messages::utils::is_session_action_name,
+    messages::actions::{DerivationMethod, DerivableMsg, AllowedActions, Action},
+    sessions::actions::{CreateSession, CreateSessionFromMsg},
+    sessions::{Session, SessionInfo},
+    SessionError, Expiration, CredentialRecord,
 };
 
+
 // Allow usage of `CosmosMsg<SignedDataMsg>` in CosmWasm contracts
-impl saa_common::wasm::CustomMsg for crate::messages::SignedDataMsg {}
+impl CustomMsg for SignedDataMsg {}
 
 
 impl Credential {
@@ -112,35 +125,38 @@ use crate::traits::CredentialsWrapper;
 #[allow(unused_variables)]
 #[cfg(feature = "storage")]
 impl crate::CredentialData {
-
     pub fn save(
         &self, 
         api: &dyn Api, 
-        storage: &mut dyn Storage,
+        store: &mut dyn Storage,
         env: &Env, 
     ) -> Result<Self, AuthError> {
+        use crate::wasm::storage::stores::{
+            CREDENTIAL_INFOS as INFOS,
+            map_save, 
+        };
         self.validate()?;
         #[cfg(feature = "replay")]
         {
-            self.assert_signed_data(storage, env)?;
-            crate::wasm::storage::increment_account_number(storage)?;
+            self.validate_replay_all(store, env)?;
+            ACCOUNT_NUMBER.save(store, &1u64)?;
         }
         let mut has_natives = false;
         for cred in self.credentials.iter() {
-            let id = &cred.id();
-            //println!("Saving credential: {:?} with id {:?}", cred.name(), id);
             cred.verify_cosmwasm(api)?;
-            crate::wasm::storage::utils::save_credential(storage, id, &cred.info())?;
-            if cred.name() == crate::credential::CredentialName::Native { has_natives = true }
-        }
-        HAS_NATIVES.save(storage, &has_natives)?;
 
+            let info = cred.info();
+            if info.name == CredentialName::Native { 
+                has_natives = true 
+            }
+            map_save(store, &INFOS, &cred.id(),&info, "new credential")?;
+        }
+        HAS_NATIVES.save(store, &has_natives)?;
         #[cfg(feature = "traits")]
         let id: String = self.primary_id();
         #[cfg(not(feature = "traits"))]
         let id = self.credentials.first().unwrap().id();
-
-        VERIFYING_CRED_ID.save(storage, &id)?;
+        VERIFYING_ID.save(store, &id)?;
         Ok(self.clone())
     }
 
@@ -153,12 +169,12 @@ impl crate::CredentialData {
 
 #[cfg(feature = "replay")]
 impl crate::CredentialData {
-    pub fn assert_signed_data(
+    pub fn validate_replay_all(
         &self, 
         storage: &dyn Storage, 
         env: &Env,
     ) -> Result<(), AuthError> {
-        use saa_common::{from_json, ensure};
+        
         let credentials : Vec<&crate::credential::Credential> = self.credentials
             .iter().filter(|c| 
                 c.name() != crate::credential::CredentialName::Native 
@@ -167,21 +183,13 @@ impl crate::CredentialData {
             .collect();
 
         if credentials.is_empty() { return Ok(()) }
-        let first = credentials.first().unwrap();
-
-        let first_data : MsgDataToVerify   = from_json(&first.message())
-                .map_err(|_| AuthError::InvalidSignedData)?;
-
-        first_data.validate(storage, env)?;
-        let nonce = first_data.nonce.clone();
+     
+        let nonce = account_number(storage);
         
-        credentials.into_iter().skip(1).try_for_each(|c| {
-            let data : MsgDataToVerify = from_json(&c.message()).map_err(|_| AuthError::InvalidSignedData)?;
-            ensure!(data.chain_id == first_data.chain_id, AuthError::ChainIdMismatch);
-            ensure!(data.contract_address == first_data.contract_address, AuthError::ContractMismatch);
-            ensure!(data.nonce == nonce, AuthError::DifferentNonce);
-            Ok::<(), AuthError>(())
-        })?;
+        credentials
+            .into_iter()
+            .try_for_each(|c| convert_validate(c.message(), env, nonce))?;
+                
         Ok(())
     }
 }
@@ -190,26 +198,139 @@ impl crate::CredentialData {
 
 #[cfg(feature = "replay")]
 impl MsgDataToVerify {
-    pub fn check_fields(&self, env: &Env) -> Result<(), AuthError> {
-        ensure!(self.chain_id == env.block.chain_id, AuthError::ChainIdMismatch);
-        ensure!(self.contract_address == env.contract.address.to_string(), AuthError::ContractMismatch);
-        ensure!(self.nonce.len() > 0, AuthError::MissingData("Nonce".to_string()));
-        Ok(())
-    }
-    pub fn validate(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
-        self.check_fields(env)?;
-        ensure!(self.nonce == account_number(store).to_string(), AuthError::DifferentNonce);
+    pub fn validate(&self, env: &Env, expected: u64 ) -> Result<(), ReplayError> {
+        ensure!(self.chain_id == env.block.chain_id, ReplayError::ChainIdMismatch);
+        ensure!(self.contract_address == env.contract.address.to_string(), ReplayError::ContractMismatch);
+        let signed = self.nonce.u64();
+        ensure!(signed == expected, ReplayError::DifferentNonce(signed, expected));
         Ok(())
     }
 }
 
 
 #[cfg(feature = "replay")]
-impl<M> MsgDataToSign<M> {
-    pub fn check_fields(&self, env: &Env) -> Result<(), AuthError> {
-        Into::<MsgDataToVerify>::into(self).check_fields(env)
-    }
-    pub fn validate(&self, store: &dyn Storage, env: &Env) -> Result<(), AuthError> {
-        Into::<MsgDataToVerify>::into(self).validate(store, env)
+impl<M : serde::de::DeserializeOwned> MsgDataToSign<M> {
+    pub fn validate(&self, env: &Env, nonce: u64) -> Result<(), ReplayError> {
+        Into::<MsgDataToVerify>::into(self).validate(env, nonce)
     }
 }
+
+
+
+
+
+#[cfg(feature = "session")]
+impl SessionInfo {
+    pub(crate) fn checked_params(
+        &self, 
+        env: &Env,
+        actions: Option<&AllowedActions>
+    ) -> Result<(CredentialId, CredentialRecord, Expiration, AllowedActions), SessionError> {
+        use saa_common::ensure;
+        let granter = self.granter.clone().unwrap_or_default();
+        let (id, info) = self.grantee.clone();
+        ensure!(!id.is_empty(), SessionError::InvalidGrantee);
+        let expiration = self.expiration.unwrap_or_default();
+        ensure!(!expiration.is_expired(&env.block), SessionError::Expired);
+        if let Some(granter) = &self.granter {
+            ensure!(!granter.is_empty() && *granter != id, SessionError::InvalidGranter);
+        }
+        let actions = match actions {
+            Some(actions) => {
+                if let AllowedActions::Include(ref actions) = actions {
+                    ensure!(actions.len() > 0, SessionError::EmptyCreateActions);
+
+                    let validity_ok = actions
+                        .iter()
+                        .enumerate()
+                        .all(|(i, action)| {
+                            let ok = !action.result.is_empty() 
+                                &&  actions
+                                    .into_iter()
+                                    .skip(i + 1)
+                                    .filter(|action2| action == *action2)
+                                    .count() == 0;
+                            ok
+                        });
+                    ensure!(validity_ok, SessionError::InvalidActions);
+
+                    let no_inner_sessions = actions
+                        .iter()
+                        .all(|action| {
+                            match action.method {
+                                #[cfg(feature = "wasm")]
+                                DerivationMethod::Json => !action.result.contains("\"session_actions\"") &&
+                                                            !action.result.contains("\"session_info\""),
+                                                            
+                                // works well for names and better than nothing for strum strings
+                                _ => !is_session_action_name(action.result.as_str())
+                                
+                            }
+                        });
+
+                    ensure!(no_inner_sessions, SessionError::InnerSessionAction);
+                }
+                actions.clone()
+            },
+            None => AllowedActions::All {},
+        };
+        Ok((granter, (id, info), expiration, actions))
+    }
+}
+
+
+
+#[cfg(feature = "session")]
+impl CreateSession {
+    pub fn to_session(
+        &self, 
+        env: &Env
+    ) -> Result<Session, SessionError> {
+        
+        let (
+            granter,
+            grantee, 
+            expiration, 
+            actions
+        ) = self.session_info.checked_params(env, Some(&self.allowed_actions))?;
+
+        Ok(Session {
+            actions,
+            expiration,
+            grantee,
+            granter,
+            #[cfg(feature = "replay")]
+            nonce: 0,
+        })
+    }
+}
+
+
+#[cfg(feature = "session")]
+impl<M: DerivableMsg> CreateSessionFromMsg<M> {
+
+    pub fn to_session(
+        &self, 
+        env: &Env
+    ) -> Result<Session, SessionError> {
+        let (
+            granter, 
+            grantee, 
+            expiration, 
+            _
+        ) = self.session_info.checked_params(env, None)?;
+        
+        let method = self.derivation.clone().unwrap_or_default();
+        let action = Action::new(&self.message, method)?;
+
+        Ok(Session {
+            actions: AllowedActions::Include(vec![action]),
+            expiration,
+            grantee,
+            granter,
+            #[cfg(feature = "replay")]
+            nonce: 0,
+        })
+    }
+}
+

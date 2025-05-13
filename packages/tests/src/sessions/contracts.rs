@@ -2,25 +2,21 @@
 
 use saa_common::{AuthError, SessionError};
 use smart_account_auth::{
-    messages::{
+    msgs::{
         Action, AllowedActions, CreateSession, CreateSessionFromMsg, 
-        DerivationMethod, RevokeKeyMsg, SessionActionMsg, SessionInfo
-    }, 
-    storage::session::{self}, 
-    CredentialInfo, CredentialName
+        DerivationMethod, RevokeKeyMsg, SessionActionMsg
+    }, session::{self}, CredentialInfo, CredentialName, SessionInfo
 };
 use cosmwasm_std::{
-    ensure, Addr, Response, StdError, Uint128,
-    testing::{message_info, mock_dependencies, mock_env}
+    ensure, testing::{message_info, mock_dependencies, mock_env, MockApi}, Response, StdError, Uint128
 };
-
 use crate::{
     types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, 
-    vars::{session_info, with_key_msg}
+    vars::{session_info, with_key_msg, ALICE_ADDR, EVE_ADDR}
 };
 
 
-const ADMIN : &str = "alice";
+const ADMIN : &str = ALICE_ADDR;
 
 
 
@@ -34,15 +30,14 @@ pub fn execute(
     info: &cosmwasm_std::MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<cosmwasm_std::Response, AuthError> {
-
     let (session, inner_msgs) = session::handle_actions(
         api, 
         storage, 
         env, 
         info, 
-        msg
+        msg,
+        None
     )?;
-
 
     match (inner_msgs.len(), session) {
 
@@ -56,9 +51,15 @@ pub fn execute(
             .add_attribute("nonce", session.nonce.to_string().as_str())
         ),
 
+        (1, None) => {
+            ensure!(info.sender.as_str() == ADMIN, StdError::generic_err("Unauthorized to call directly"));
+            execute_logic(api, storage, env, info, inner_msgs[0].clone())
+        },
+
         (_, Some(session)) => {
             let mut res = Response::new();
             let mut sub_msgs = vec![];
+
 
             for msg in inner_msgs.into_iter() {
                 
@@ -77,10 +78,6 @@ pub fn execute(
             );
         },
 
-        (1, None) => {
-            ensure!(info.sender.as_str() == ADMIN, StdError::generic_err("Unauthorized to call directly"));
-            execute_logic(api, storage, env, info, inner_msgs[0].clone())
-        },
         (_, _) => unreachable!()
     }
 
@@ -154,14 +151,15 @@ fn simple_contract_flow() {
     let mut mocks = mock_dependencies();
     let deps = mocks.as_mut();
     let mut env = mock_env();
+    let api = MockApi::default();
 
-    let alice_addr = Addr::unchecked("alice");
+    let alice_addr = api.addr_make("alice");
     let alice = message_info(&alice_addr, &vec![]);
 
-    let bob_addr = Addr::unchecked("bob");
+    let bob_addr = api.addr_make("bob");
     let bob = message_info(&bob_addr, &vec![]);
 
-    let eve_addr = Addr::unchecked("eve");
+    let eve_addr = api.addr_make("eve");
     let eve = message_info(&eve_addr, &vec![]);
 
     let env = &mut env;
@@ -169,9 +167,9 @@ fn simple_contract_flow() {
     let bob = &bob;
     let eve = &eve;
 
-
     // Alice can call messages directly
     assert!(execute(deps.api, deps.storage, env, alice, ExecuteMsg::Purge {}).is_ok());
+
 
     // Other addresses can't
     assert!(execute(deps.api, deps.storage, env, bob, ExecuteMsg::Purge {}).is_err());
@@ -239,7 +237,7 @@ fn simple_contract_flow() {
 
     // Eve can't do it even with the same message
     let eve_res = execute(deps.api, deps.storage, env, eve, exec_msg.clone());
-    assert_eq!(eve_res.unwrap_err().to_string(), "Unauthorized: This key wasn't for this address".to_string());
+    assert_eq!(eve_res.unwrap_err(), SessionError::NotGrantee.into());
 
 
 
@@ -298,13 +296,14 @@ fn simple_contract_flow() {
 fn from_message_and_revoking() {
     let mut mocks = mock_dependencies();
     let deps = mocks.as_mut();
+    let api = MockApi::default();
     let env = mock_env();
 
-    let alice_addr = Addr::unchecked("alice");
+    let alice_addr = api.addr_make("alice");
     let alice = message_info(&alice_addr, &vec![]);
-    let bob_addr = Addr::unchecked("bob");
+    let bob_addr = api.addr_make("bob");
     let bob = message_info(&bob_addr, &vec![]);
-    let eve_addr = Addr::unchecked("eve");
+    let eve_addr = api.addr_make("eve");
     let eve = message_info(&eve_addr, &vec![]);
 
 
@@ -315,7 +314,7 @@ fn from_message_and_revoking() {
 
     let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
         message: msg.clone(),
-        derivation_method: Some(DerivationMethod::Json),
+        derivation: Some(DerivationMethod::Json),
         session_info: session_info(),
     })));
 
@@ -345,7 +344,7 @@ fn from_message_and_revoking() {
     // with JSON derication only identical message goes through
     let msg2 = ExecuteMsg::Execute { msgs: vec![] };
     let msg3 = ExecuteMsg::Execute { msgs: vec![CosmosMsg::Bank(
-        BankMsg::Send {to_address: "eve".to_string(), amount: vec![]}
+        BankMsg::Send {to_address: EVE_ADDR.to_string(), amount: vec![]}
     )]};
     let msg4 = ExecuteMsg::Execute { msgs: vec![
         CosmosMsg::Simple { }, 
@@ -355,7 +354,7 @@ fn from_message_and_revoking() {
             amount: Coin { denom: "atom".to_string(), amount: Uint128::from(1_000_000_000u128) } 
         }),
         CosmosMsg::Bank(BankMsg::Send {
-            to_address: "eve".to_string(), 
+            to_address: EVE_ADDR.to_string(), 
             amount: vec![Coin { denom: "btc".to_string(), amount: Uint128::from(1_000_000_000u128) } ]
         }),
         CosmosMsg::Simple { }, 
@@ -377,7 +376,7 @@ fn from_message_and_revoking() {
     // Alice can try creating another session key for Bob without changing anything
     let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
         message: msg.clone(),
-        derivation_method: Some(DerivationMethod::Json),
+        derivation: Some(DerivationMethod::Json),
         session_info: session_info(),
     })));
 
@@ -396,7 +395,7 @@ fn from_message_and_revoking() {
     // Not let's create another key where actions are detived usoing the message name
     let from_msg = ExecuteMsg::SessionActions(Box::new(SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
         message: msg.clone(),
-        derivation_method: None,
+        derivation: None,
         session_info: session_info(),
     })));
 
@@ -476,7 +475,7 @@ fn from_message_and_revoking() {
     let from_msg = ExecuteMsg::SessionActions(Box::new(
         SessionActionMsg::CreateSessionFromMsg(CreateSessionFromMsg {
             message: msg.clone(),
-            derivation_method: None,
+            derivation: None,
             session_info: SessionInfo { 
                 grantee: (eve_addr.to_string(), CredentialInfo { 
                     name: CredentialName::Native, 

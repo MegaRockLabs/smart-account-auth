@@ -1,10 +1,14 @@
 use std::str::FromStr;
-
 use cosmwasm_std::{testing::mock_env, Addr, Uint128};
-use saa_common::{CredentialId, Expiration, SessionError};
-use smart_account_auth::{messages::{Action, AllowedActions, CreateSession, CreateSessionFromMsg, DerivationMethod, SessionActionMsg, SessionInfo}, CredentialInfo, CredentialName};
+use smart_account_auth::{
+    msgs::{
+        Action, AllowedActions, DerivationMethod, 
+        CreateSession, CreateSessionFromMsg, SessionActionMsg
+    }, 
+    SessionError, SessionInfo, Expiration,
+    CredentialInfo, CredentialName, CredentialId,
+};
 use strum::IntoDiscriminant;
-
 use crate::types::*;
 
 
@@ -268,46 +272,46 @@ fn generating_session_from_messages() {
 
     // Default to DerivationMethod::Name
     let session_key = CreateSessionFromMsg {
-        derivation_method: None,
+        derivation: None,
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
 
     // ok: same message
-    assert!(session_key.actions.is_message_allowed(&mint_msg));
+    assert!(session_key.actions.can_do_msg(&mint_msg));
     // ok: same message name
-    assert!(session_key.actions.is_message_allowed(&changed_mint_msg));
+    assert!(session_key.actions.can_do_msg(&changed_mint_msg));
     // err: different name
-    assert!(!session_key.actions.is_message_allowed(&diff_msg));
+    assert!(!session_key.actions.can_do_msg(&diff_msg));
 
 
     // Strum  ToString
     let session_key = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::String),
+        derivation: Some(DerivationMethod::String),
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
 
     // ok: inner message doesn't affect to_string() output
-    assert!(session_key.actions.is_message_allowed(&not_bob_mint_msg));
+    assert!(session_key.actions.can_do_msg(&not_bob_mint_msg));
     // err: minter address is different which affects the result of to_string()
-    assert!(!session_key.actions.is_message_allowed(&changed_mint_msg));
+    assert!(!session_key.actions.can_do_msg(&changed_mint_msg));
 
 
     // Serde Json
     let session_key = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::Json),
+        derivation: Some(DerivationMethod::Json),
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     }.to_session(&env).unwrap();
 
 
     // ok: same message
-    assert!(session_key.actions.is_message_allowed(&mint_msg));
+    assert!(session_key.actions.can_do_msg(&mint_msg));
     // err: even one small innner field changed
-    assert!(!session_key.actions.is_message_allowed(&tiny_change_mint_msg));
+    assert!(!session_key.actions.can_do_msg(&tiny_change_mint_msg));
 
 
 }
@@ -365,19 +369,19 @@ fn nested_session_message_checks() {
 
 
     let create_from_name = CreateSessionFromMsg {
-        derivation_method: None,
+        derivation: None,
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
 
     let create_from_str = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::String),
+        derivation: Some(DerivationMethod::String),
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
 
     let create_from_json = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::Json),
+        derivation: Some(DerivationMethod::Json),
         message: mint_msg.clone(),
         session_info: session_info.clone(),
     };
@@ -408,7 +412,7 @@ fn nested_session_message_checks() {
 
 
     let create_from_nested_create = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::Name),
+        derivation: Some(DerivationMethod::Name),
         message: ExecuteMsg::SessionActions(Box::new(
             SessionActionMsg::CreateSession(create_session_str.clone())
         )),
@@ -416,7 +420,7 @@ fn nested_session_message_checks() {
     };
 
     let create_from_nested_from = CreateSessionFromMsg {
-        derivation_method: Some(DerivationMethod::Name),
+        derivation: Some(DerivationMethod::Name),
         message: ExecuteMsg::SessionActions(Box::new(
             SessionActionMsg::CreateSessionFromMsg(create_from_str.clone())
         )),
@@ -449,33 +453,33 @@ fn nested_session_message_checks() {
 
     
     // none of the session messages should be allowed despite AllowedActions::All
-    assert!(!allowed.is_message_allowed(&create_session_name));
-    assert!(!allowed.is_message_allowed(&create_session_str));
-    assert!(!allowed.is_message_allowed(&create_session_json));
-    assert!(!allowed.is_message_allowed(&create_from_name));
-    assert!(!allowed.is_message_allowed(&create_from_str));
-    assert!(!allowed.is_message_allowed(&create_from_json));
+    assert!(!allowed.can_do_msg(&create_session_name));
+    assert!(!allowed.can_do_msg(&create_session_str));
+    assert!(!allowed.can_do_msg(&create_session_json));
+    assert!(!allowed.can_do_msg(&create_from_name));
+    assert!(!allowed.can_do_msg(&create_from_str));
+    assert!(!allowed.can_do_msg(&create_from_json));
 
 
     // strum name should work identical to is_message_allowed
-    assert!(!allowed.is_action_allowed(&Action::with_strum_name(create_session_nested_self.clone())));
-    assert!(!allowed.is_action_allowed(&Action::with_strum_name(create_from_nested_create.clone())));
+    assert!(!allowed.can_do_action(&Action::with_strum_name(create_session_nested_self.clone())));
+    assert!(!allowed.can_do_action(&Action::with_strum_name(create_from_nested_create.clone())));
 
 
     // both are struct with custom Display implemntation that returns only the name
     // practically the same as strum name
-    assert!(!allowed.is_action_allowed(&Action::with_str(create_session_nested_self.clone())));
-    assert!(!allowed.is_action_allowed(&Action::with_str(create_from_nested_create.clone())));
+    assert!(!allowed.can_do_action(&Action::with_str(create_session_nested_self.clone())));
+    assert!(!allowed.can_do_action(&Action::with_str(create_from_nested_create.clone())));
 
 
     // json is very tricky: as messages work fine
-    assert!(!allowed.is_message_allowed(&create_session_nested_self.clone()));
-    assert!(!allowed.is_message_allowed(&create_session_nested_from.clone()));
+    assert!(!allowed.can_do_msg(&create_session_nested_self.clone()));
+    assert!(!allowed.can_do_msg(&create_session_nested_from.clone()));
 
 
     // checking json for containing `session_info` in the result
-    assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_session_nested_self.clone()).unwrap())); 
-    assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_from_nested_create.clone()).unwrap()));
+    assert!(!allowed.can_do_action(&Action::with_serde_json(create_session_nested_self.clone()).unwrap())); 
+    assert!(!allowed.can_do_action(&Action::with_serde_json(create_from_nested_create.clone()).unwrap()));
 
 
     // wrap in execute message
@@ -485,11 +489,11 @@ fn nested_session_message_checks() {
     let create_from_nested_exec = ExecuteMsg::SessionActions(Box::new(
         SessionActionMsg::CreateSessionFromMsg(create_from_nested_create.clone())
     ));
-    assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_session_nested_exec.clone()).unwrap()));
-    assert!(!allowed.is_action_allowed(&Action::with_serde_json(create_from_nested_exec.clone()).unwrap()));
+    assert!(!allowed.can_do_action(&Action::with_serde_json(create_session_nested_exec.clone()).unwrap()));
+    assert!(!allowed.can_do_action(&Action::with_serde_json(create_from_nested_exec.clone()).unwrap()));
 
     // normal messages should be allowed
-    assert!(allowed.is_message_allowed(&mint_msg));
+    assert!(allowed.can_do_msg(&mint_msg));
 }
 
 

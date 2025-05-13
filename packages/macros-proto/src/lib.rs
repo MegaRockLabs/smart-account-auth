@@ -60,16 +60,16 @@ fn session_merger(metadata: TokenStream, left: TokenStream, right: TokenStream) 
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
         #left 
 
-        impl ::strum::IntoDiscriminant for Box<#enum_name> {
-            type Discriminant = <#enum_name as ::strum::IntoDiscriminant>::Discriminant;
+        impl ::saa_schema::strum::IntoDiscriminant for Box<#enum_name> {
+            type Discriminant = <#enum_name as ::saa_schema::strum::IntoDiscriminant>::Discriminant;
             fn discriminant(&self) -> Self::Discriminant {
                 (*self).discriminant()
             }
         }
 
-        impl ::smart_account_auth::messages::SessionActionsMatch for #enum_name
+        impl ::smart_account_auth::msgs::SessionActionsMatch for #enum_name
         {
-            fn match_actions(&self) -> Option<::smart_account_auth::messages::SessionActionMsg<Self>> {
+            fn match_actions(&self) -> Option<::smart_account_auth::msgs::SessionActionMsg<Self>> {
                 match self {
                     Self::SessionActions(msg) => Some((**msg).clone()),
                     _ => None,
@@ -90,7 +90,7 @@ pub fn session_action(metadata: TokenStream, input: TokenStream) -> TokenStream 
         input,
         quote! {
             enum Right {
-                SessionActions(Box<::smart_account_auth::messages::SessionActionMsg<Self>>),
+                SessionActions(Box<::smart_account_auth::msgs::SessionActionMsg<Self>>),
             }
         }
         .into(),
@@ -200,7 +200,7 @@ pub fn wasm_string_struct(
                 ::saa_schema::borsh::BorshDeserialize
             ))]
             #[cfg_attr(all(feature = "std", feature="substrate"), derive(
-                saa_schema::scale_info::TypeInfo)
+                ::saa_schema::scale_info::TypeInfo)
             )]
             #[allow(clippy::derive_partial_eq_without_eq)]
             #input 

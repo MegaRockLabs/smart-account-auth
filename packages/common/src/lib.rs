@@ -11,33 +11,20 @@ pub mod hashes;
 pub use errors::*;
 pub use traits::*;
 pub use types::binary::*;
+pub use types::uints::Uint64;
 pub use types::expiration::Expiration;
-
-
 pub type CredentialId = String;
 
 
 #[cfg(feature = "native")]
 pub mod crypto {pub use cosmwasm_crypto::*;} 
-
-
-
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-
 #[cfg(any(feature = "std", not(feature = "substrate")))]
-pub use {
-    std::{string::{ToString, String}, vec, vec::Vec, format},
-    core::str::FromStr
-};
-
+pub use {core::str::FromStr, std::{string::{ToString, String}, vec, vec::Vec, format}};
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
-pub use ink::prelude::{
-    string::{ToString, String, FromStr},
-    vec, vec::Vec, 
-    format, 
-};
+pub use ink::prelude::{string::{String, ToString, FromStr}, vec, vec::Vec, format};
 
 
 #[cfg(feature = "substrate")]

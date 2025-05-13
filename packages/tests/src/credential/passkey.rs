@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_dependencies;
 use saa_common::{to_json_binary, Binary, Verifiable};
 use saa_schema::wasm_serde;
-use smart_account_auth::messages::MsgDataToSign;
+use smart_account_auth::msgs::MsgDataToSign;
 use smart_account_auth::{types::ClientData, PasskeyCredential};
 use smart_account_auth::utils::passkey::base64_to_url;
 
@@ -53,7 +53,7 @@ fn can_check_passkeys_data_string() {
         chain_id: "pion-1".to_string(),
         contract_address: "neutron1uf26dql0t895fzltzp3q7t5g7q77e6e8d790jf7lp78kdwcyahlqe38qg5".to_string(),
         messages: vec![String::from("Create Proxy Account")],
-        nonce: "0".to_string()
+        nonce: 0u64.into()
     };
 
     let binary =  to_json_binary(&sign_data).unwrap();
@@ -107,7 +107,7 @@ fn can_check_passkeys_data_actions() {
                 }
             })] 
         }],
-        nonce: "1".to_string()
+        nonce: 1u64.into()
     };
     
     let binary =  to_json_binary(&sign_data).unwrap();
@@ -151,7 +151,7 @@ fn pass_verification_with_other_keys() {
         chain_id: "elgafar-1".to_string(),
         contract_address: "stars1fjhqywml8vx26n58s05yy4evtg9h9xjkvya0rtlqkecvkpdysemq2hqy8m".to_string(),
         messages: vec![String::from("Create TBA account")],
-        nonce: "0".to_string()
+        nonce: 0u64.into()
     };
     
     let binary =  to_json_binary(&sign_data).unwrap();

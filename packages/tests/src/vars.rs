@@ -2,8 +2,12 @@
 #![allow(dead_code)]
 use cosmwasm_std::{testing::mock_env, Addr, Env};
 use saa_common::Binary;
-use smart_account_auth::{
-    messages::{ActionMsg, SessionActionMsg, SessionInfo, WithSessionMsg}, types::ClientData, utils::passkey::base64_to_url, CosmosArbitrary, Credential, CredentialData, CredentialInfo, CredentialName, EthPersonalSign, PasskeyCredential
+use smart_account_auth::{ 
+    Credential, CredentialData, CredentialInfo, CredentialName, SessionInfo, 
+    CosmosArbitrary, EthPersonalSign, PasskeyCredential,
+    msgs::{ActionMsg, SessionActionMsg, WithSessionMsg}, 
+    utils::passkey::base64_to_url, 
+    types::ClientData, 
 };
 
 use crate::types::ExecuteMsg;
@@ -18,8 +22,9 @@ pub const SIGN_MESSAGE_PLAIN : &str = r#"{"chain_id":"elgafar-1","contract_addre
 pub const SIGN_MESSAGE_BASE64 : &str = "eyJjaGFpbl9pZCI6ImVsZ2FmYXItMSIsImNvbnRyYWN0X2FkZHJlc3MiOiJzdGFyczF3Z2VzejVqcngzdXZ0MjlhOWF3a2FmeTRwMDZydXR4djJ4ZG5xcGVyZGU0dG16eDRuMnlxOTVtdW1uIiwibWVzc2FnZXMiOlsiVGVzdGluZyBzbWFydC1hY2NvdW50LWF1dGggbGlicmFyeSJdLCJub25jZSI6IjAifQ==";
 
 
-pub const ALICE_ADDR : &str = "cosmwasm1jpev2csrppg792t22rn8z8uew8h3sjcpglcd0qv9g8gj8ky922tscp8avs";
-
+pub const ALICE_ADDR : &str = "cosmwasm190vqdjtlpcq27xslcveglfmr4ynfwg7gmw86cnun4acakxrdd6gqvdcx9h";
+pub const BOB_ADDR : &str = "cosmwasm1sxmr0k8u6trd5c6eu6trzyapzux7090ykujmsng7pdx0m8k93n5sjrh9we";
+pub const EVE_ADDR : &str = "cosmwasm1s5nz4hm52x9mkux8ew2v6c2emytxnedgrm03al4a2sl2m0dflg4sdr8wf8";
 
 pub fn get_eth_personal() -> EthPersonalSign {
     EthPersonalSign {
@@ -110,7 +115,7 @@ pub fn session_info() -> SessionInfo {
     SessionInfo {
         expiration: None,
         granter: None,
-        grantee: ("bob".to_string(), CredentialInfo {
+        grantee: (BOB_ADDR.to_string(), CredentialInfo {
             name: CredentialName::Native,
             hrp: None,
             extension: None

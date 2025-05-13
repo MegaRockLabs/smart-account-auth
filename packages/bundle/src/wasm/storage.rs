@@ -10,19 +10,22 @@ pub mod session;
 
 pub(crate) use utils::*;
 #[cfg(feature = "replay")]
-pub(crate) use replay::*;
+pub(crate) use {
+    crate::convert_validate,
+    replay::*,
+};
 
 
 
-use saa_common::{AuthError, Verifiable, wasm::{Api, Env, Storage}, ensure};
-use crate::{CredentialData, messages::SignedDataMsg};
+use saa_common::{ensure, wasm::{Api, Env, Storage}, AuthError, StorageError};
+use crate::{credential::StoredCredentials, msgs::SignedDataMsg, CredentialData};
 
 
 pub fn verify_caller(
     storage: &dyn Storage,
     address: &String
 ) -> Result<(), AuthError> {
-    ensure!(utils::has_credential(storage, address), AuthError::Unauthorized(String::from("Unauthorized caller")));
+    ensure!(stores::map_has(storage, &stores::CREDENTIAL_INFOS, address), StorageError::NotFound);
     Ok(())
 }
 
@@ -34,11 +37,8 @@ pub fn verify_signed(
     env: &Env,
     msg: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let data = msg.data.to_vec();
-    let credential = credential_from_payload(storage, msg)?;
-    let msgs : crate::messages::MsgDataToVerify = saa_common::from_json(data)?;
-    msgs.validate(storage, env)?;
-    credential.verify_cosmwasm(api)?;
+    convert_validate(msg.data.as_slice(), env, account_number(storage))?;
+    cred_from_signed(api, storage, msg)?;
     Ok(())
 } 
 
@@ -49,10 +49,32 @@ pub fn verify_signed(
     storage: &dyn Storage,
     msg: SignedDataMsg
 ) -> Result<(), AuthError> {
-    let credential = credential_from_payload(storage, msg)?;
-    credential.verify_cosmwasm(api)?;
+    cred_from_signed(api, storage, msg)?;
     Ok(())
 }
+
+
+
+
+
+pub fn get_stored_credentials(
+    storage: &dyn Storage
+) -> Result<StoredCredentials, AuthError> {
+
+    Ok(StoredCredentials { 
+        has_natives: has_natives(storage),
+        verifying_id: stores::VERIFYING_ID.load(storage)?,
+        #[cfg(feature = "iterator")]
+        records: iterator::get_credential_records(storage)?,
+        #[cfg(feature = "replay")]
+        account_number: account_number(storage), 
+        #[cfg(feature = "session")]
+        sessions    :   None,
+    })
+}
+
+
+
 
 
 pub fn save_credentials(
@@ -82,26 +104,49 @@ pub fn has_natives(
 
 
 pub mod storage_methods {
-    #[cfg(feature = "replay")]
-    pub use super::replay::*;
-    
-    #[cfg(feature = "iterator")]
-    pub use super::iterator::*;
-    
-    #[cfg(feature = "utils")]
-    pub use super::utils::*;
+
+    pub use super::{save_credentials, has_natives};
 
     #[cfg(feature = "types")]
     pub use super::stores;
+    
+    #[cfg(feature = "utils")]
+    pub use super::utils::{cred_from_signed, has_credential};
 
-    #[cfg(all(feature = "session", feature="cwasm"))]
-    pub use super::session;
+    #[cfg(feature = "iterator")]
+    pub use super::iterator::{update_credentials, reset_credentials};
+
+    #[cfg(all(feature = "iterator", feature="replay"))]
+    pub use super::iterator::update_credentials_signed;
+
+
+    #[cfg(all(feature = "iterator", feature="utils"))]
+    pub use super::iterator::{credential_count, get_credential_records};
+
+     #[cfg(all(feature = "replay", feature="utils"))]
+    pub use super::replay::increment_account_number;
+}
+
+
+#[cfg(feature = "session")]
+pub mod session_methods {
+    pub use super::session::handle_actions;
+
+    #[cfg(feature = "utils")]
+    pub use super::utils::{session_cred_from_signed, update_session};
+
+    #[cfg(all(feature = "iterator", feature="utils"))]
+    pub use super::session::get_session_records;
+
 }
 
 
 
 pub mod top_methods {
-    pub use super::{verify_caller, verify_signed, save_credentials, has_natives};
+    pub use super::{verify_caller, verify_signed, get_stored_credentials};
     #[cfg(feature = "replay")]
-    pub use super::replay::verify_signed_actions;
+    pub use super::replay::{verify_signed_actions, account_number};
+    #[cfg(feature = "session")]
+    pub use super::session::{verify_session_signed, verify_session_native};
+
 }

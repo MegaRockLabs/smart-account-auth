@@ -252,20 +252,6 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     }
 }
 
-#[cfg(feature = "wasm")]
-impl From<Binary> for crate::wasm::Binary {
-    fn from(binary: Binary) -> Self {
-        binary.to_vec().into()
-    }
-}
-
-#[cfg(feature = "wasm")]
-impl Into<Binary> for crate::wasm::Binary {
-    fn into(self) -> Binary {
-        self.to_vec().into()
-    }
-}
-
 
 
 pub fn to_json_binary<T>(data: &T) -> Result<Binary, AuthError>
@@ -274,6 +260,7 @@ where
 {   
     serde_json_wasm::to_vec(data).map_err(|e| AuthError::generic(e.to_string())).map(Binary)
 }
+
 
 
 pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> Result<T, AuthError> {

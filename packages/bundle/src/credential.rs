@@ -18,7 +18,9 @@ use saa_auth::cosmos::CosmosArbitrary;
 use strum_macros::{Display, EnumString, EnumDiscriminants};
 
 
-use saa_common::{Binary, CredentialId};
+use saa_common::{AuthError, Binary, CredentialId};
+
+use crate::msgs::SignedDataMsg;
 
 
 
@@ -74,31 +76,45 @@ pub struct CredentialInfo {
 
 
 
+pub type CredentialRecord = (CredentialId, CredentialInfo);
 
 
-/* #[wasm_serde]
-pub struct AccountCredentials {
-    pub credentials: Vec<(CredentialId, CredentialInfo)>,
-    pub verifying_id: CredentialId,
-    pub native_caller: Option<CredentialId>,
+
+#[cfg(feature = "storage")]
+#[wasm_serde]
+pub struct StoredCredentials {
+    /// whether there are stored native credentials that don't require a signature
+    pub has_natives     :   bool,
+
+    /// Default ID used for verification
+    pub verifying_id    :   CredentialId,
+
+     /// ID and info about every stored credential
+    #[cfg(feature = "iterator")]
+    pub records         :   Vec<CredentialRecord>,
+
+    // Nonce or account number used for replay attack protection
+    #[cfg(feature = "replay")]
+    pub account_number  :   u64,
+
+    // Session keys that can be used used for specific actions
+    #[cfg(feature = "session")]
+    pub sessions        :   Option<CredentialId>,
 }
- */
 
 
 
 
-
-// doesn'r have to be storage only but isn't used anywhere else at the moment
-#[allow(unused_variables, dead_code)]
+#[allow(dead_code, unused_variables)]
 pub fn construct_credential(
-    id: CredentialId,
-    name: CredentialName,
-    message: Binary,
-    signature: Binary,
-    hrp: Option<String>,
-    stored_extension: Option<Binary>,
-    passed_extension: Option<Binary>,
-) -> Result<Credential, saa_common::AuthError> {
+    record      : CredentialRecord,
+    msg         : SignedDataMsg,
+    extension   : Option<Binary>,
+) -> Result<Credential, AuthError> {
+    let (id, info) = record;
+    let message = msg.data;
+    let signature = msg.signature;
+    let name = info.name;
     
     let credential = match name {
 
@@ -117,44 +133,43 @@ pub fn construct_credential(
             pubkey: Binary::from_base64(&id)?,
             message,
             signature,
-            hrp,
+            hrp: info.hrp,
         }),
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
-            use saa_common::{AuthError, from_json, ensure};
+            use saa_common::from_json;
             use saa_auth::passkey::*;
-            ensure!(
-                passed_extension.is_some(),
-                AuthError::generic("Payload must be provided for 'passkey'")
-            );
-            ensure!(
-                stored_extension.is_some(),
-                AuthError::generic("Extension must be stored for 'passkey'")
-            );
-            let extensiom = passed_extension.unwrap();
-            let payload_ext : PasskeyPayload = from_json(&extensiom)?;
-            let stored_ext : PasskeyExtension = from_json(&stored_extension.unwrap())?;
-            let pubkey = payload_ext.pubkey.or(stored_ext.pubkey);
-            ensure!(
-                pubkey.is_some(),
-                AuthError::generic("No public key provided for 'passkey' credential")
-            );
-            let challenge = saa_auth::passkey::utils::base64_to_url(&message.to_base64());
+
+     
+            let stored_info  = info.extension
+                .map(|e| from_json::<PasskeyInfo>(e).ok() )
+                .flatten()
+                .ok_or_else(|| AuthError::generic("Missing passkey info"))?;
+            
+            let (origin, other_keys) = match extension
+                .map(|e| from_json::<PasskeyPayload>(e).ok())
+                .flatten()
+            {
+                Some(payload) => (payload.origin, payload.other_keys.unwrap_or(false)),
+                None => (None, false),
+            };
+            
             let client_data = ClientData::new(
                 "webauthn.get",
-                challenge,
-                stored_ext.origin,
-                stored_ext.cross_origin,
-                payload_ext.other_keys.unwrap_or_default()
+                utils::base64_to_url(message.to_base64().as_str()),
+                origin.unwrap_or(stored_info.origin),
+                stored_info.cross_origin,
+                other_keys
             );
+
             Credential::Passkey(PasskeyCredential {
                 id,
-                pubkey,
                 signature,
                 client_data,
-                authenticator_data: payload_ext.authenticator_data,
-                user_handle: stored_ext.user_handle,
+                pubkey: Some(stored_info.pubkey),
+                authenticator_data: stored_info.authenticator_data,
+                user_handle: stored_info.user_handle,
             })
         },
         #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
@@ -171,7 +186,7 @@ pub fn construct_credential(
                     pubkey,
                     signature,
                     message,
-                    hrp,
+                    hrp: info.hrp,
                 }),
                 CredentialName::Secp256r1 => Credential::Secp256r1(saa_curves::secp256r1::Secp256r1 {
                     pubkey,

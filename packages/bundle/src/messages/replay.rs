@@ -1,3 +1,4 @@
+use saa_common::Uint64;
 use saa_schema::wasm_serde;
 
 
@@ -6,7 +7,7 @@ pub struct MsgDataToSign<M = String> {
     pub chain_id: String,
     pub contract_address: String,
     pub messages: Vec<M>,
-    pub nonce: String,
+    pub nonce: Uint64,
 }
 
 
@@ -30,7 +31,7 @@ pub struct MsgDataToSign<M = String> {
 pub struct MsgDataToVerify {
     pub chain_id: String,
     pub contract_address: String,
-    pub nonce: String,
+    pub nonce: Uint64,
 }
 
 

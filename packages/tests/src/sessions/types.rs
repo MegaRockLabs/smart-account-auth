@@ -1,10 +1,11 @@
 use std::{fmt::Debug, str::FromStr};
-use cosmwasm_std::CosmosMsg;
 use serde::{Deserialize, Serialize};
 use strum::{EnumCount, EnumMessage, IntoDiscriminant, IntoEnumIterator, 
     VariantMetadata, VariantNames, VariantArray
 };
 use strum_macros::{EnumString, Display, FromRepr, EnumDiscriminants, EnumIter};
+use crate::types::CosmosMsg;
+
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

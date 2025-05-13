@@ -29,14 +29,13 @@ serde                   = { workspace = true }
 
 strum                   = { workspace = true }
 strum_macros            = { workspace = true }
+serde_json              = { workspace = true, optional = true }
 
-serde_json              = { version = "1.0.140", optional = true, default-features = false }
-serde-json-wasm         = { version = "1.0.1",   optional = true, default-features = false }
 
 # Storage dependencies
-cw-storage-plus     = { workspace = true, optional = true }
-cw-storage-plus-one = { workspace = true, optional = true }
-secret-toolkit      = { workspace = true, optional = true }
+cw-storage-plus         = { workspace = true, optional = true }
+cw-storage-plus-one     = { workspace = true, optional = true }
+secret-toolkit          = { workspace = true, optional = true }
 
 
 
@@ -58,6 +57,7 @@ std = [
 ]
 session     = [
     "saa-common/session",
+    "storage",
 ]
 
 native = [
@@ -94,10 +94,7 @@ injective = [
     "cosmwasm",
 ]
 cwasm  = ["wasm"]
-wasm      = [
-    "dep:schemars",
-    "dep:serde-json-wasm",
-]
+wasm   = ["dep:schemars"]
 replay    = [
     "saa-common/replay",
     "storage",
@@ -116,7 +113,7 @@ storage   = [
 passkeys    = []
 
 # Blockchain specific authenticators
-ethereum    = ["saa-common/ethereum"]
+ethereum    = []
 cosmos      = []
 
 # Enable raw curve credentials without envelops
@@ -125,14 +122,16 @@ curves      = []
 # Set separately for Solana
 ed25519     = []
 
-# Enable the export of inner types that the lib uses
-types       = []
-
-# Enable the export of inner traits that the lib uses
+# Enable the export of extra traits that the lib uses internally
 traits      = []
+
+# Enable the export of extra types that the lib uses internally
+types       = ["saa-common/types"]
 
 # Enable the export of inner utils that the lib uses
 utils       = ["saa-auth/utils", "dep:serde_json"]
 
 # Expose inner dependencies  
 derive      = []
+
+multimsg    = []

@@ -71,11 +71,13 @@ impl ClientData {
     ::saa_schema::serde::Deserialize,
 ))]
 #[wasm_serde]
-pub struct PasskeyExtension {
+pub struct PasskeyInfo {
+    /// webauthn Authenticator data
+    pub authenticator_data: Binary,
     /// Origin of the client where the passkey was created
     pub origin: String,
     /// Secpk256r1 Public key used for verification 
-    pub pubkey: Option<Binary>,
+    pub pubkey: Binary,
     // Flag to allow cross origin requests
     #[serde(rename = "crossOrigin")]
     pub cross_origin: bool,
@@ -86,12 +88,10 @@ pub struct PasskeyExtension {
 
 #[wasm_serde]
 pub struct PasskeyPayload {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Public key is essential for verification but can be supplied on the contract side
-    pub pubkey: Option<Binary>,
     /// client data other keys
     pub other_keys: Option<bool>,
+    // overriding default origin value (if allowed)
+    pub origin: Option<String>
 }
 
 

@@ -54,6 +54,9 @@ borsh               = { version = "1.5.7", default-features = false, features = 
 
 strum               = { version = "0.27.1" }
 strum_macros        = { version = "0.27.1" }
+serde-json-wasm     = { version = "1.0.1",   default-features = false }
+serde_json          = { version = "1.0.140", default-features = false }
+
 
 
 [profile.release.package.smart-account-auth]

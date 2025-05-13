@@ -1,157 +1,146 @@
-use saa_common::wasm::{Api, MessageInfo, StdError, Storage};
-use saa_common::{from_json, AuthError};
-use saa_common::{ensure, types::expiration::Expiration, wasm::Env, CredentialId, SessionError};
-use serde::de::DeserializeOwned;
-use crate::messages::{is_session_action_name, Action, ActionMsg, AllowedActions, CreateSession, CreateSessionFromMsg, DerivableMsg, DerivationMethod, GranteeInfo, MsgDataToSign, Session, SessionActionMsg, SessionInfo};
-use crate::traits::SessionActionsMatch;
-use crate::utils::construct_credential;
-use crate::CredentialName;
+use core::fmt::Debug;
 
-use super::stores::SESSIONS;
-
-
-impl SessionInfo {
-    pub(crate) fn checked_params(
-        &self, 
-        env: &Env,
-        actions: Option<&AllowedActions>
-    ) -> Result<(CredentialId, GranteeInfo, Expiration, AllowedActions), SessionError> {
-        let granter = self.granter.clone().unwrap_or_default();
-        //ensure!(!granter.is_empty(), SessionError::InvalidGranter);
-        let (id, info) = self.grantee.clone();
-        ensure!(!id.is_empty(), SessionError::InvalidGrantee);
-        let expiration = self.expiration.unwrap_or_default();
-        ensure!(!expiration.is_expired(&env.block), SessionError::Expired);
-        if let Some(granter) = &self.granter {
-            ensure!(!granter.is_empty() && *granter != id, SessionError::InvalidGranter);
-        }
-        let actions = match actions {
-            Some(actions) => {
-                if let AllowedActions::Include(ref actions) = actions {
-                    ensure!(actions.len() > 0, SessionError::EmptyCreateActions);
-
-                    let validity_ok = actions
-                        .iter()
-                        .enumerate()
-                        .all(|(i, action)| {
-                            let ok = !action.result.is_empty() 
-                                &&  actions
-                                    .into_iter()
-                                    .skip(i + 1)
-                                    .filter(|action2| action == *action2)
-                                    .count() == 0;
-                            ok
-                        });
-                    ensure!(validity_ok, SessionError::InvalidActions);
-
-                    let no_inner_sessions = actions
-                        .iter()
-                        .all(|action| {
-                            match action.method {
-                                // it's okay to generate identical session messages
-                                DerivationMethod::Json => !action.result.contains("\"session_actions\"") &&
-                                                            !action.result.contains("\"session_info\""),
-                                // works well for names and better than nothing for strum strings
-                                _ => !is_session_action_name(action.result.as_str())
-                                
-                            }
-                        });
-                    ensure!(no_inner_sessions, SessionError::InnerSessionAction);
-                }
-                actions.clone()
-            },
-            None => AllowedActions::All {},
-        };
-        Ok((granter, (id, info), expiration, actions))
-    }
-}
-
-
-
-impl CreateSession {
-    pub fn to_session(
-        &self, 
-        env: &Env
-    ) -> Result<Session, SessionError> {
-        
-        let (
-            granter,
-            grantee, 
-            expiration, 
-            actions
-        ) = self.session_info.checked_params(env, Some(&self.allowed_actions))?;
-
-
-        Ok(Session {
-            actions,
-            expiration,
-            grantee,
-            granter,
-            nonce: 0,
-        })
-    }
-}
-
-
-
-impl<M: DerivableMsg> CreateSessionFromMsg<M> {
-
-    pub fn to_session(
-        &self, 
-        env: &Env
-    ) -> Result<Session, SessionError> {
-        let (
-            granter, 
-            grantee, 
-            expiration, 
-            _
-        ) = self.session_info.checked_params(env, None)?;
-        
-        let method = self.derivation_method.clone().unwrap_or_default();
-        let action = Action::new(&self.message, method)?;
-
-        Ok(Session {
-            actions: AllowedActions::Include(vec![action]),
-            expiration,
-            grantee,
-            granter,
-            nonce: 0,
-        })
-    }
-}
+use crate::{
+    credential::{CredentialName, Credential}, 
+    messages::{
+        actions::{ActionMsg, DerivableMsg}, 
+        SignedDataMsg,
+    },
+    sessions::{actions::SessionActionMsg, Session}, 
+};
+use saa_auth::caller::Caller;
+use saa_common::{
+    ensure, wasm::{Api, Env, MessageInfo, Storage}, 
+    AuthError, SessionError, Verifiable
+};
+use super::{
+    stores::{map_get, map_remove, SESSIONS}, 
+    update_session, session_cred_from_signed
+};
 
 
 
 
-
-
-pub fn save_session(
-    storage: &mut dyn Storage,
-    key: String,
-    mut session: Session,
-) -> Result<(), StdError> {
-    if let Ok(loaded) = load_session(storage, key.clone()) {
-        session.nonce = loaded.nonce;
-    }
-    SESSIONS.save(storage, key, &session)?;
-    Ok(())
-}
-
-
-
-pub fn load_session(
+#[cfg(all(feature = "iterator", feature = "utils"))]
+pub fn get_session_records(
     storage: &dyn Storage,
-    key: String
-) -> Result<Session, StdError> {
-    SESSIONS.load(storage, key)
+) -> Result<Vec<(String, Session)>, saa_common::StorageError> {
+    super::stores::get_map_records(storage, &SESSIONS, "session keys")
 }
 
 
-pub fn revoke_session(
+#[cfg(feature = "multimsg")]
+type ReturnMsg<D> = Vec<D>;
+#[cfg(not(feature = "multimsg"))]
+type ReturnMsg<D> = Option<D>;
+
+type VerifyResult<D> = Result<ReturnMsg<D>, AuthError>;
+
+fn default_return_msg<D>() -> ReturnMsg<D> {
+    #[cfg(feature = "multimsg")]
+    {
+        vec![]
+    }
+    #[cfg(not(feature = "multimsg"))]
+    {
+        None
+    }
+}
+
+fn wrap_one_rmsg<D>(msg: D) -> ReturnMsg<D> {
+    #[cfg(feature = "multimsg")]
+    {
+        vec![msg]
+    }
+    #[cfg(not(feature = "multimsg"))]
+    {
+        Some(msg)
+    }
+}
+
+
+fn verify_common<D: DerivableMsg>(
+    session: &Session,
+    cred    : &Credential,
+    msgs    : Vec<D> 
+) -> VerifyResult<D> {
+    let (id, info) = session.grantee.clone();
+    ensure!(info.name == CredentialName::Native, SessionError::InvalidGrantee);
+    ensure!(id == cred.id(), SessionError::NotGrantee);
+    #[cfg(feature = "multimsg")]
+    {
+        ensure!(msgs.iter().all(|m| session.can_do_msg(m)), SessionError::NotAllowedAction);
+        return Ok(msgs)
+    }
+    #[cfg(not(feature = "multimsg"))]
+    {
+        ensure!(msgs.len() == 1, SessionError::InvalidActions);
+        let msg = msgs[0].clone();
+        ensure!(session.can_do_msg(&msg), SessionError::NotAllowedAction);
+        return Ok(Some(msg))
+    }
+}
+
+
+pub fn verify_session_native<D : DerivableMsg>(
+    api: &dyn Api,
+    address: &str,
+    session: &Session,
+    msg: D
+) -> VerifyResult<D> {
+    let cred = Caller::from(address);
+    cred.verify_cosmwasm(api)?;
+    verify_common( &session, &cred.into(), vec![msg])
+}
+
+
+#[cfg(feature = "replay")]
+pub fn verify_session_signed<T : serde::de::DeserializeOwned + DerivableMsg>(
+    api: &dyn Api,
     storage: &mut dyn Storage,
-    key: String
-) -> () {
-    SESSIONS.remove(storage, key);
+    env: &Env,
+    key: &str,
+    session: &Session,
+    msg: SignedDataMsg
+) -> VerifyResult<T> {
+
+    let signed : crate::msgs::MsgDataToSign<T> = crate::convert_validate_return(
+        msg.data.as_slice(), 
+        env, 
+        session.nonce
+    )?;
+    let cred = session_cred_from_signed(api, storage,  key, msg)?;
+    
+    let res = verify_common(&session, &cred, signed.messages)?;
+    
+    super::stores::map_save(storage, &SESSIONS, key, &Session {
+        nonce: session.nonce + 1,
+        ..session.clone()
+    }, "session key")?;
+
+    Ok(res)
+}
+
+
+#[cfg(not(feature = "replay"))]
+pub fn verify_session_signed<T : serde::de::DeserializeOwned + DerivableMsg>(
+    api: &dyn Api,
+    storage: &dyn Storage,
+    _env: &Env,
+    key: &str,
+    session: &Session,
+    msg: SignedDataMsg
+) -> VerifyResult<T> {
+    let res : ReturnMsg<T> =  crate::messages::utils::convert(msg.data.as_slice(), "Action Msg")?;
+    let cred = session_cred_from_signed(api, storage,  key, msg)?;
+    verify_common(
+        &session, 
+        &cred,
+        #[cfg(feature = "multimsg")]
+        res,
+        #[cfg(not(feature = "multimsg"))]
+        vec![res.unwrap()]
+    )
 }
 
 
@@ -164,100 +153,71 @@ pub fn handle_actions<M>(
     env: &Env,
     info: &MessageInfo,
     msg: M,
-) -> Result<(Option<Session>, Vec<M>), AuthError> 
-    where M : DeserializeOwned + SessionActionsMatch,
+    admin: Option<String>,
+) -> Result<(Option<Session>, ReturnMsg<M>), AuthError> 
+    where M : serde::de::DeserializeOwned + crate::msgs::SessionActionsMatch + Debug,
 {
+
     let session_msg = match msg.match_actions() {
         Some(msg) => msg,
-        None => return Ok((None, vec![msg])),
+        None => return Ok((None, wrap_one_rmsg(msg))),
     };
+
+    let addr = admin.unwrap_or(info.sender.to_string());
        
     match session_msg {
         SessionActionMsg::CreateSession(
             mut create
         ) => {
             // set sender as granter
-            create.session_info.granter = Some(info.sender.to_string());
-            let session = create.to_session(&env).unwrap();
+            create.session_info.granter = Some(addr);
+            let session = create.to_session(&env)?;
             let key = session.key();
-            save_session(storage,  key.clone(), session.clone())?;
-            Ok((Some(session), vec![]))
+            update_session(storage,  &key, &session)?;
+            return Ok((Some(session), default_return_msg()));
         },
 
         SessionActionMsg::CreateSessionFromMsg(
             mut create
         ) => {
             // set sender as granter
-            create.session_info.granter = Some(info.sender.to_string());
-            let session = create.to_session(&env).unwrap();
+            create.session_info.granter = Some(addr);
+            let session = create.to_session(&env)?;
             let key = session.key();
-            save_session(storage,  key.clone(), session.clone())?;
-            Ok((Some(session), vec![create.message.clone()]))
+            update_session(storage,  &key, &session)?;
+            return Ok((Some(session), wrap_one_rmsg(create.message.clone())));
         },
 
         SessionActionMsg::WithSessionKey(with_msg) => {
-
             let key = &with_msg.session_key;
-            let mut session = load_session(storage, key.clone())?;
-            let (id, cred_info) = session.grantee.clone();
-
+            let session = map_get(storage, &SESSIONS, key, "session key")?;
             if session.expiration.is_expired(&env.block) {
-                revoke_session(storage, key.clone());
+                map_remove(storage, &SESSIONS, key);
                 return Err(SessionError::Expired.into())
             }
+            let msgs   = match with_msg.message {
 
-            let msgs : Vec<M>  = match with_msg.message {
                 ActionMsg::Signed(msg) => {
-                    let stored_ext = cred_info.extension.clone();
-                    let (hrp, ext) = match msg.payload {
-                        Some(p) => (p.hrp, p.extension),
-                        None => (None, None)
-                    };
-                    let cred = construct_credential(
-                        id, 
-                        cred_info.name, 
-                        msg.data.clone(), 
-                        msg.signature, 
-                        hrp, 
-                        stored_ext, 
-                        ext
-                    )?;
-
-                    cred.verify_cosmwasm(api)?;
-
-                    let to_sign : MsgDataToSign<M> = from_json(msg.data)?;
-                    to_sign.check_fields(env)?;
-                    ensure!(session.nonce.to_string() == to_sign.nonce, AuthError::DifferentNonce);
-                    
-                    session.nonce += 1;
-                    save_session(storage, key.clone(), session.clone())?;
-                    
-                    to_sign.messages
+                    verify_session_signed(api, storage, env, key.as_str(), &session, msg)?
                 }
                 ActionMsg::Native(execute) => {
-                    ensure!(
-                        cred_info.name == CredentialName::Native && id == info.sender.to_string(),
-                        AuthError::Unauthorized(String::from("This key wasn't for this address"))
-                    );
-                    vec![execute.clone()]
+                    verify_session_native(api,  addr.as_str(), &session, execute)?
                 },
             };
-            ensure!(!msgs.is_empty(), SessionError::EmptyPassedActions);
-            ensure!(msgs.iter().all(|m| session.actions.is_message_allowed(m)), SessionError::NotAllowedAction);
             Ok((Some(session), msgs))
         },
 
         SessionActionMsg::RevokeSession(msg) => {
             let key = &msg.session_key;
-            if let Ok(loaded) = load_session(storage, key.clone()) {
-                ensure!(
-                    loaded.granter == info.sender.to_string(), 
-                    AuthError::Unauthorized("Only owner can revoke the session key".into())
-                );
-                revoke_session(storage, key.clone());
-                Ok((None, vec![]))
+            if let Ok(loaded) = map_get(storage, &SESSIONS, key, "session key") {
+                // anyone can revoke the expired session
+                if !loaded.expiration.is_expired(&env.block) {
+                    ensure!(loaded.granter == addr, SessionError::NotOwner);
+                }
+                map_remove(storage, &SESSIONS, key);
+                Ok((None, default_return_msg()))
             } else {
-                return Err(SessionError::Expired.into())
+                return Err(SessionError::NotFound.into())
             }            
         },
     }
@@ -266,7 +226,7 @@ pub fn handle_actions<M>(
 
 
 
-pub fn handle_queries<M>(
+/* pub fn handle_queries<M>(
     storage: &dyn Storage,
     env: &Env,
     info: &MessageInfo,
@@ -292,3 +252,4 @@ where M : SessionActionsMatch + DeserializeOwned,
         _ => Ok(vec![msg])
     }
 }
+ */

@@ -123,11 +123,12 @@ impl Credential {
         #[cfg(feature = "passkeys")]
         if let Credential::Passkey(c) = self {
             use saa_auth::passkey::*;
-            return Ok(Some(saa_common::to_json_binary(&PasskeyExtension {
+            return Ok(Some(saa_common::to_json_binary(&PasskeyInfo {
                 origin: c.client_data.origin.clone(),
                 cross_origin: c.client_data.cross_origin.clone(),
-                pubkey: c.pubkey.clone(),
+                pubkey: c.pubkey.clone().unwrap_or_default(),
                 user_handle: c.user_handle.clone(),
+                authenticator_data: c.authenticator_data.clone(),
             })?));
         }
         Ok(None)
