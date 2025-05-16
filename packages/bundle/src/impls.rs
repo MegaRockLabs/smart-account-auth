@@ -49,7 +49,7 @@ impl From<saa_curves::secp256r1::Secp256r1> for Credential {
 }
 
 
-#[cfg(any(feature = "curves", feature = "ed25519"))]
+#[cfg(feature = "ed25519")]
 impl From<saa_curves::ed25519::Ed25519> for Credential {
     fn from(c: saa_curves::ed25519::Ed25519) -> Self {
         Credential::Ed25519(c)
@@ -72,14 +72,13 @@ impl Deref for Credential {
             Credential::EthPersonalSign(c) => c,
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c,
-            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c,
             #[cfg(feature = "curves")]
             curve => {
                 match curve {
                     Credential::Secp256k1(c) => c,
                     Credential::Secp256r1(c) => c,
-                    Credential::Ed25519(c) => c,
                     _ => unreachable!(),
                 }
             },
@@ -235,14 +234,14 @@ impl CredentialData {
     /// or constuct a new wrapper with the credential being set
     /// @param cal: native caller of the environment
     /// @return: checked wrapper and a flag indicating whether the copy deviated from the original Self
-    pub fn with_native_caller<C: Into::<Caller>> (&self, cal: C) -> Self {
+    pub fn with_native<C: Into::<Caller>> (&self, cal: C) -> Self {
         if !self.use_native.unwrap_or(false) {
             return self.clone()
         }
         let caller : Caller = cal.into();
         let mut credentials = self.credentials.clone();
 
-        match self.cred_index(CredentialName::Native, Some(caller.id.clone())) {
+        match self.cred_index(CredentialName::Native, Some(caller.0.clone())) {
             Some(index) => credentials[index] = caller.into(),
             None => credentials.push(caller.into())
         };
@@ -253,44 +252,7 @@ impl CredentialData {
         }
     }
 
-    pub fn with_credential(&self, new: Credential) -> Self {
-        let mut credentials = self.credentials.clone();
-        match self.cred_index(new.name(), Some(new.id())) {
-            Some(index) => credentials[index] = new,
-            None => credentials.push(new)
-        };
-        Self { 
-            credentials, 
-            use_native: self.use_native,
-            primary_index: self.primary_index
-        }
-    }
-
 
 }
 
 
-
-
-#[cfg(test)]
-impl Default for CredentialData {
-    fn default() -> Self {
-        Self {
-            use_native: Some(true),
-            credentials: vec![],
-            primary_index: None,
-        }
-    }
-}
-
-
-
-impl CredentialInfo {
-    pub fn from_name(name: CredentialName) -> Self {
-        Self {
-            name,
-            hrp: None,
-            extension: None,
-        }
-    }
-}

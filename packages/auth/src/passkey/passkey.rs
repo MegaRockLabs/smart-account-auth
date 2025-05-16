@@ -1,4 +1,4 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 
 // expand later after adding implementations for other platforms
@@ -8,95 +8,10 @@ use {
     sha2::{Digest, Sha256}
 };
 
-// Enforce serde for now until figuring how to rename fields with other serialization libraries
-#[derive(
-    Clone, Debug, PartialEq,
-    ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize
-)]
-// Manual derivation due to #[deny_unknown_fields] in the macro
-#[cfg_attr(feature = "wasm", 
-    derive(::saa_schema::schemars::JsonSchema), 
-    schemars(crate = "::saa_schema::schemars")
-)]
-#[cfg_attr(feature = "substrate", derive(
-    ::saa_schema::scale::Encode, 
-    ::saa_schema::scale::Decode
-))]
-#[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, 
-    ::saa_schema::borsh::BorshDeserialize
-))]
-#[cfg_attr(all(feature = "std", feature="substrate"), derive(
-    saa_schema::scale_info::TypeInfo)
-)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[non_exhaustive]
-pub struct ClientData {
-    #[serde(rename = "type")]
-    pub ty: String,
-    pub challenge: String,
-    pub origin: String,
-    #[serde(rename = "crossOrigin")]
-    pub cross_origin: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub other_keys_can_be_added_here: Option<String>,
-}
-
-
-impl ClientData {
-    pub fn new(
-        ty: impl ToString, 
-        challenge: impl ToString, 
-        origin: impl ToString, 
-        cross_origin: bool, 
-        others: bool
-    ) -> Self {
-        Self {
-            ty: ty.to_string(),
-            challenge: challenge.to_string(),
-            origin: origin.to_string(),
-            cross_origin,
-            other_keys_can_be_added_here: if others { 
-                Some("do not compare clientDataJSON against a template. See https://goo.gl/yabPex".to_string()) 
-            } else { None }
-        }
-    }
-}
 
 
 
-#[cfg_attr(not(feature = "wasm"), derive(
-    ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize,
-))]
-#[wasm_serde]
-pub struct PasskeyInfo {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Origin of the client where the passkey was created
-    pub origin: String,
-    /// Secpk256r1 Public key used for verification 
-    pub pubkey: Binary,
-    // Flag to allow cross origin requests
-    #[serde(rename = "crossOrigin")]
-    pub cross_origin: bool,
-    /// Optional user handle reserved for future use
-    pub user_handle: Option<String>,
-}
-
-
-#[wasm_serde]
-pub struct PasskeyPayload {
-    /// client data other keys
-    pub other_keys: Option<bool>,
-    // overriding default origin value (if allowed)
-    pub origin: Option<String>
-}
-
-
-
-#[wasm_serde]
+#[saa_type]
 pub struct PasskeyCredential {
     /// Passkey id
     pub id                   :       String,
@@ -108,10 +23,110 @@ pub struct PasskeyCredential {
     pub client_data          :       ClientData,
     /// Optional user handle reserved for future use
     pub user_handle          :       Option<String>,
-    /// Public key is essential for verification but can be supplied on the contract side
-    /// and omitted by client
+    /// Public key is essential for verification but can be supplied on the backend / contract side
+    /// and omitted by client. Must be set when going through the verification process.
     pub pubkey               :       Option<Binary>,
 }
+
+
+
+
+
+#[saa_type]
+pub struct PasskeyInfo {
+    /// webauthn Authenticator data
+    pub authenticator_data: Binary,
+    /// Origin of the client where the passkey was created
+    pub origin: String,
+    /// Secpk256r1 Public key used for verification 
+    pub pubkey: Binary,
+    // Flag to allow cross origin requests
+    #[cfg_attr(feature = "wasm", serde(rename = "crossOrigin"))]
+    pub cross_origin: bool,
+    /// Optional user handle reserved for future use
+    pub user_handle: Option<String>,
+}
+
+
+
+
+
+#[cfg(feature = "wasm")]
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientData {
+    #[serde(rename = "type")]
+    pub ty: String,
+    pub challenge: String,
+    pub origin: String,
+    #[serde(rename = "crossOrigin")]
+    pub cross_origin: bool,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    pub other_keys : Option<ClientDataOtherKeys>,
+}
+
+
+#[cfg(not(feature = "wasm"))]
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientData {
+    pub ty: String,
+    pub challenge: String,
+    pub origin: String,
+    pub cross_origin: bool,
+    pub other_keys_can_be_added_here: Option<String>,
+}
+
+
+
+#[saa_type]
+pub struct PasskeyPayload {
+    /// client data other keys
+    pub other_keys :  Option<ClientDataOtherKeys>,
+    // reserved for future use
+    pub origin: Option<String>
+}
+
+
+
+
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientDataOtherKeys {
+    pub other_keys_can_be_added_here :  Option<String>,
+}
+
+
+impl ClientData {
+    pub fn new(
+        ty: impl ToString, 
+        challenge: impl ToString, 
+        origin: impl ToString, 
+        cross_origin: bool, 
+        other_keys: Option<ClientDataOtherKeys>
+    ) -> Self {
+        Self {
+            ty: ty.to_string(),
+            challenge: challenge.to_string(),
+            origin: origin.to_string(),
+            cross_origin,
+            other_keys,
+        }
+    }
+}
+
+
+impl ClientDataOtherKeys {
+    pub fn new(
+        other_keys_can_be_added_here: Option<String>
+    ) -> Self {
+        Self {
+            other_keys_can_be_added_here
+        }
+    }
+}
+
+
 
 
 impl PasskeyCredential {

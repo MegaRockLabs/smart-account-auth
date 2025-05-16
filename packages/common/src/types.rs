@@ -1,6 +1,7 @@
 // Apache license in both but giving the credits to the original authors
 // Copied to derive custom traits. Most of the features removed except for +/- operations
 
+use saa_schema::{saa_type};
 
 // Copied from `cosmwasm_crypto` [here](https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto)
 pub mod identity;
@@ -37,4 +38,22 @@ pub mod timestamp {
     pub use super::ts::Timestamp;
     #[cfg(feature = "wasm")]
     pub use crate::wasm::Timestamp;
+}
+
+
+#[saa_type]
+pub struct Empty {}
+
+#[cfg(feature = "session")]
+impl saa_schema::strum::IntoDiscriminant for Empty {
+    type Discriminant = String;
+    fn discriminant(&self) -> Self::Discriminant {
+        String::from("empty")
+    }
+}
+
+impl core::fmt::Display for Empty {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "empty")
+    }
 }

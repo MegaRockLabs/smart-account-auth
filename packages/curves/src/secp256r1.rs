@@ -1,4 +1,4 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 use saa_common::{
     CredentialId, 
@@ -6,7 +6,7 @@ use saa_common::{
 };
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct Secp256r1 {
     pub pubkey:    Binary,
     pub message:   Binary,

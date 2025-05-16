@@ -8,7 +8,13 @@ license             = { workspace = true }
 repository          = { workspace = true }
 
 [dependencies]
-saa-macros-proto    = { workspace = true }
+saa-proto-core      = { workspace = true  }
+saa-proto-wasm      = { workspace = true, optional = true }
+#saa-proto-session   = { workspace = true, optional = true }
+
+thiserror           = { version = "2.0.12", default-features = false }
+
+
 serde               = { workspace = true } 
 
 # Substrate
@@ -19,14 +25,14 @@ schemars            = { workspace = true, optional = true }
 # Solana
 borsh               = { workspace = true, optional = true }
 
-strum               = { workspace = true, optional = true }
-strum_macros       = { workspace = true, optional = true }
-
+strum               = { workspace = true }
+strum_macros        = { workspace = true }
+cosmwasm-schema     = { workspace = true, optional = true }
 
 [features]
 default        = ["std"]
-solana         = ["dep:borsh",                   "saa-macros-proto/solana"    ]
-substrate      = ["dep:scale", "dep:scale-info", "saa-macros-proto/substrate" ]
-cosmwasm       = ["dep:schemars",                "saa-macros-proto/cosmwasm"  ]
-std            = ["scale?/std", "scale-info?/std"                             ]
-session        = ["saa-macros-proto/session", "dep:strum_macros", "dep:strum" ]
+solana         = ["dep:borsh",                     ]
+substrate      = ["dep:scale", "dep:scale-info"    ]
+std            = ["scale?/std", "scale-info?/std",                             ]
+cosmwasm       = ["dep:schemars", "dep:cosmwasm-schema", "saa-proto-wasm", "std"     ]
+session        = [  ]

@@ -1,9 +1,9 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 
 /// CredentialData is wrapper for dealing with multiple credentials at the same time.
 /// Implements both `Verifiable` and `CredentialWrapper` traits.
-#[wasm_serde]
+#[saa_type]
 pub struct CredentialData {
     /// The list of credentials to be verified
     pub credentials            :  Vec<crate::Credential>,
@@ -14,22 +14,4 @@ pub struct CredentialData {
     pub use_native             :  Option<bool>,
     /// An optional index indicating which credential will be used as the primary. Default to the first one
     pub primary_index          :  Option<u8>,
-}
-
-
-
-#[cfg(feature = "wasm")]
-#[wasm_serde]
-pub enum UpdateOperation<D : serde::Serialize = CredentialData> {
-    Add(D),
-    Remove(Vec<crate::CredentialId>),
-}
-
-
-#[cfg(feature = "wasm")]
-#[wasm_serde]
-pub enum UpdateMethod<D : serde::Serialize = CredentialData> {
-    Native(UpdateOperation<D>),
-    Signed(crate::msgs::SignedDataMsg)
-    
 }

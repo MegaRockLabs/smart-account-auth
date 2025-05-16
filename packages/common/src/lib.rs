@@ -9,7 +9,7 @@ pub mod utils;
 pub mod hashes;
 
 pub use errors::*;
-pub use traits::*;
+pub use types::Empty;
 pub use types::binary::*;
 pub use types::uints::Uint64;
 pub use types::expiration::Expiration;
@@ -26,6 +26,7 @@ pub use {core::str::FromStr, std::{string::{ToString, String}, vec, vec::Vec, fo
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
 pub use ink::prelude::{string::{String, ToString, FromStr}, vec, vec::Vec, format};
 
+pub use traits::Verifiable;
 
 #[cfg(feature = "substrate")]
 pub mod substrate {

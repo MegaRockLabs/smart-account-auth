@@ -1,8 +1,8 @@
 use core::fmt::Display;
 use strum::IntoDiscriminant;
 use saa_common::{AuthError, SessionError, FromStr, ToString, ensure};
-use super::actions::{Action, AllowedActions, DerivationMethod, DerivableMsg};
-use super::utils::is_session_action_name;
+use super::{actions::{Action, ActionDerivation, AllowedActions, DerivableMsg}, sessions::SessionInfo};
+
 
 
 
@@ -18,7 +18,7 @@ impl FromStr for Action {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Action {
             result: s.to_string(),
-            method: DerivationMethod::Name
+            method: ActionDerivation::Name
         })
     }
 }
@@ -35,7 +35,7 @@ impl<A : ToString> From<Vec<A>> for AllowedActions {
                     let result = action.to_string();
                     Action {
                         result,
-                        method: DerivationMethod::Name
+                        method: ActionDerivation::Name
                     }
                 })
                 .collect())
@@ -78,6 +78,10 @@ where
 
 
 
+fn is_session_action(name: &str) -> bool {
+    name.is_empty() || name.contains("session_actions") || name.contains("session_info")
+}
+
 
 
 
@@ -85,16 +89,16 @@ where
 impl Action {
 
     #[cfg(not(feature = "wasm"))]
-    pub fn new<M : DerivableMsg>(message: &M, method: DerivationMethod) -> Result<Self, SessionError> {
+    pub fn new<M : DerivableMsg>(message: &M, method: ActionDerivation) -> Result<Self, SessionError> {
         let name = message.discriminant().to_string();
-        ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
+        ensure!(!is_session_action(name.as_str()), SessionError::InnerSessionAction);
         let action = match method {
-            DerivationMethod::Name => Self {
-                method: DerivationMethod::Name,
+            ActionDerivation::Name => Self {
+                method: ActionDerivation::Name,
                 result: message.discriminant().to_string(),
             },
-            DerivationMethod::String => Self {
-                method: DerivationMethod::String,
+            ActionDerivation::String => Self {
+                method: ActionDerivation::String,
                 result: message.to_string(),
             },
         };
@@ -103,22 +107,21 @@ impl Action {
     }
 
     #[cfg(feature = "wasm")]
-    pub fn new<M : DerivableMsg>(message: &M, method: DerivationMethod) -> Result<Self, SessionError> {
-
+    pub fn new<M : DerivableMsg>(message: &M, method: ActionDerivation) -> Result<Self, SessionError> {
 
         let name = message.discriminant().to_string();
-        ensure!(!is_session_action_name(name.as_str()), SessionError::InnerSessionAction);
+        ensure!(!is_session_action(name.as_str()), SessionError::InnerSessionAction);
         let action = match method {
-            DerivationMethod::Name => Self {
-                method: DerivationMethod::Name,
+            ActionDerivation::Name => Self {
+                method: ActionDerivation::Name,
                 result: message.discriminant().to_string(),
             },
-            DerivationMethod::String => Self {
-                method: DerivationMethod::String,
+            ActionDerivation::String => Self {
+                method: ActionDerivation::String,
                 result: message.to_string(),
             },
-            DerivationMethod::Json => Self {
-                method: DerivationMethod::Json,
+            ActionDerivation::Json => Self {
+                method: ActionDerivation::Json,
                 result: saa_common::to_json_string(message)
                     .map_err(|_| SessionError::DerivationError)?,
             },
@@ -131,7 +134,7 @@ impl Action {
     #[cfg(feature = "utils")]
     pub fn with_str<A : core::fmt::Display>(message: A) -> Self {
         Self {
-            method: DerivationMethod::String,
+            method: ActionDerivation::String,
             result: message.to_string()
         }
     }
@@ -141,7 +144,7 @@ impl Action {
         where A: IntoDiscriminant<Discriminant : ToString>,
     {
         Self {
-            method: DerivationMethod::Name,
+            method: ActionDerivation::Name,
             result: message.discriminant().to_string()
         }
     }
@@ -149,7 +152,7 @@ impl Action {
     #[cfg(all(feature = "wasm", feature = "utils"))]
     pub fn with_serde_name<A : serde::Serialize>(message: A) -> Result<Self, SessionError> {
         Ok(Self {
-            method: DerivationMethod::Name,
+            method: ActionDerivation::Name,
             result: serde_json::to_value(message)
                     .map_err(|_| SessionError::DerivationError)?
                     .as_object()
@@ -165,7 +168,7 @@ impl Action {
     #[cfg(all(feature = "wasm", feature = "utils"))]
     pub fn with_serde_json<A : serde::Serialize>(message: A) -> Result<Self, SessionError> {
         Ok(Self {
-            method: DerivationMethod::Json,
+            method: ActionDerivation::Json,
             result: saa_common::to_json_string(&message)
                     .map_err(|_| SessionError::DerivationError)?
         })
@@ -179,15 +182,9 @@ impl AllowedActions {
 
 
     pub fn can_do_action(&self, act: &Action) -> bool {
-        if match act.method {
-            #[cfg(feature = "wasm")]
-            DerivationMethod::Json => act.result.contains("\"session_actions\"") || 
-                                        act.result.contains("\"session_info\""),
-            _ => is_session_action_name(act.result.as_str())
-        } {
+        if is_session_action(act.result.as_str()) {
             return false;
         }
-
         match self {
             AllowedActions::All {} => true,
             AllowedActions::Include(ref actions) => actions
@@ -196,27 +193,8 @@ impl AllowedActions {
         }
     }
 
-
-    #[cfg(not(feature = "wasm"))]
     pub fn can_do_msg<M : DerivableMsg>(&self, message: &M) -> bool {
-        if self.is_msg_name_ok(message) {
-            return false;
-        }
-        match self {
-            AllowedActions::All {} => true,
-            AllowedActions::Include(ref actions) => actions
-                .iter()
-                .any(|allowed| Action::new(
-                        message, allowed.method
-                    ).result == allowed.result
-                )
-        }
-    }
-
-
-    #[cfg(feature = "wasm")]
-    pub fn can_do_msg<M : DerivableMsg>(&self, message: &M) -> bool {
-        if is_session_action_name(message.discriminant().as_ref()) {
+        if is_session_action(message.name().as_str()) {
             return false;
         }
         match self {
@@ -239,31 +217,13 @@ impl AllowedActions {
 impl AllowedActions {
 
 
-    pub fn can_do_name<M: AsRef<str>>(&self, msg: &M) -> bool 
-        where M: strum::IntoDiscriminant<Discriminant : AsRef<str>>
-    {
-        if is_session_action_name(msg.discriminant().as_ref()) {
-            return false;
-        }
-        match self {
-            AllowedActions::All {} => true,
-            AllowedActions::Include(ref actions) => actions
-                .iter()
-                .any(|action| 
-                    action.method == DerivationMethod::Name && 
-                    action.result.as_str() == msg.discriminant().as_ref()
-                )
-        }
-    }
-
-
     pub fn can_do_str<S: saa_common::ToString>(&self, msg: &S) -> bool {
         match self {
             AllowedActions::All {} => true,
             AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|action| 
-                    action.method == DerivationMethod::String && 
+                    action.method == ActionDerivation::String && 
                     action.result == msg.to_string()
                 )
         }
@@ -276,7 +236,7 @@ impl AllowedActions {
             AllowedActions::Include(ref actions) => actions
                 .iter()
                 .any(|action| {
-                    if action.method != DerivationMethod::Json {
+                    if action.method != ActionDerivation::Json {
                         return false;
                     }
                     let res = Action::with_serde_json(msg)
@@ -288,6 +248,62 @@ impl AllowedActions {
       
     }
 
+}
+
+
+
+
+
+
+
+
+
+
+#[cfg(all(feature = "wasm", feature = "session"))]
+impl SessionInfo {
+    pub fn checked_params(
+        &self, 
+        env: &saa_common::wasm::Env,
+        actions: Option<&AllowedActions>
+    ) -> Result<(crate::CredentialId, crate::CredentialRecord, crate::Expiration, AllowedActions), SessionError> {
+        use saa_common::ensure;
+        let granter = self.granter.clone().unwrap_or_default();
+        let (id, info) = self.grantee.clone();
+        ensure!(!id.is_empty(), SessionError::InvalidGrantee);
+        let expiration = self.expiration.clone().unwrap_or_default();
+        ensure!(!expiration.is_expired(&env.block), SessionError::Expired);
+        if let Some(granter) = &self.granter {
+            ensure!(!granter.is_empty() && *granter != id, SessionError::InvalidGranter);
+        }
+        let actions : AllowedActions = match actions {
+            Some(actions) => {
+                if let AllowedActions::Include(ref actions) = actions {
+                    ensure!(actions.len() > 0, SessionError::EmptyCreateActions);
+                    actions
+                        .iter()
+                        .enumerate()
+                        .try_for_each(|(i, action)| {
+                            ensure!(
+                                !action.result.is_empty()  && actions
+                                    .into_iter()
+                                    .skip(i + 1)
+                                    .filter(|action2| action == *action2)
+                                    .count() == 0,
+                                SessionError::InvalidActions
+                            );
+                            ensure!(
+                                !is_session_action(action.result.as_str()),
+                                SessionError::InnerSessionAction
+                            );
+                            Ok(())
+                        })?;
+                }
+                actions.clone()
+            },
+            None => AllowedActions::All {},
+        };
+        Ok((granter, (id, info), expiration, actions))
+    }
 }
 
 

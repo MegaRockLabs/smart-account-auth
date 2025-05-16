@@ -30,12 +30,9 @@ serde                   = { workspace = true }
 strum                   = { workspace = true }
 strum_macros            = { workspace = true }
 serde_json              = { workspace = true, optional = true }
+enum_dispatch           = { workspace = true  }
 
-
-# Storage dependencies
-cw-storage-plus         = { workspace = true, optional = true }
-cw-storage-plus-one     = { workspace = true, optional = true }
-secret-toolkit          = { workspace = true, optional = true }
+cosmwasm-schema         = { workspace = true, optional = true }
 
 
 
@@ -47,7 +44,6 @@ default = [
     "ed25519",
     "passkeys",
     "replay",
-    "iterator",
     "session",
 ]
 std = [
@@ -57,7 +53,6 @@ std = [
 ]
 session     = [
     "saa-common/session",
-    "storage",
 ]
 
 native = [
@@ -73,17 +68,15 @@ substrate = [
     "saa-auth/substrate",
 ]
 cosmwasm = [
-    "dep:cw-storage-plus",
     "saa-auth/cosmwasm",
-    "cwasm",
+    "wasm",
+    "std",
 ]
 cosmwasm_1 = [
-    "dep:cw-storage-plus-one",
     "saa-auth/cosmwasm_1",
-    "cwasm",
+    "wasm",
 ]
 secretwasm  = [
-    "dep:secret-toolkit",
     "saa-common/secretwasm",
     "saa-auth/wasm",
     "saa-curves/wasm",
@@ -93,22 +86,8 @@ injective = [
     "saa-auth/injective",
     "cosmwasm",
 ]
-cwasm  = ["wasm"]
-wasm   = ["dep:schemars"]
-replay    = [
-    "saa-common/replay",
-    "storage",
-]
-iterator  = [
-    "cw-storage-plus?/iterator",
-    "cw-storage-plus-one?/iterator",
-    "saa-common/iterator",
-    "storage",
-]
-storage   = [
-    "secret-toolkit?/storage",
-]
-
+wasm   = ["dep:schemars", "dep:cosmwasm-schema"]
+replay    = ["saa-common/replay",]
 # Passkey credential 
 passkeys    = []
 
@@ -117,7 +96,7 @@ ethereum    = []
 cosmos      = []
 
 # Enable raw curve credentials without envelops
-curves      = []
+curves      = ["ed25519"]
 
 # Set separately for Solana
 ed25519     = []
@@ -133,5 +112,3 @@ utils       = ["saa-auth/utils", "dep:serde_json"]
 
 # Expose inner dependencies  
 derive      = []
-
-multimsg    = []

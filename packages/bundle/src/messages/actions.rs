@@ -1,12 +1,11 @@
 use core::fmt::Display;
-use saa_schema::wasm_serde;
-use saa_common::{AuthError, ToString};
-use super::SignedDataMsg;
+use saa_schema::saa_type;
+use saa_common::ToString;
 
 
-#[wasm_serde]
+#[saa_type]
 #[derive(Default)]
-pub enum DerivationMethod {
+pub enum ActionDerivation {
     #[default]
     Name,
     String,
@@ -15,27 +14,26 @@ pub enum DerivationMethod {
 }
 
 
+#[saa_type]
+#[derive(Default)]
+pub enum AllQueryDerivation {
+    #[default]
+    Names,
+    Strings,
+}
 
-#[wasm_serde]
+
+
+#[saa_type]
 pub struct  Action {
     pub result  :  String,
-    pub method  :  DerivationMethod
+    pub method  :  ActionDerivation
 }
 
 
 
 
-
-#[wasm_serde]
-pub enum ActionMsg<M> {
-    Native(M),
-    Signed(SignedDataMsg)
-}
-
-
-
-
-#[wasm_serde]
+#[saa_type]
 pub enum AllowedActions {
     Include(Vec<Action>),
     All {},
@@ -51,7 +49,7 @@ pub trait DerivableMsg
     + strum::IntoDiscriminant<Discriminant : ToString + AsRef<str>>
 {
     fn name(&self) -> String;
-    fn to_json_string(&self) -> Result<String, AuthError>;
+    fn to_json_string(&self) -> Result<String, saa_common::AuthError>;
 }
 
 

@@ -1,5 +1,5 @@
 use saa_auth::caller::Caller;
-use saa_schema::wasm_serde;
+use saa_schema::{saa_derivable, saa_type};
 
 #[cfg(feature = "curves")]
 use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
@@ -15,28 +15,13 @@ use saa_auth::eth::EthPersonalSign;
 
 #[cfg(feature = "cosmos")]
 use saa_auth::cosmos::CosmosArbitrary;
-use strum_macros::{Display, EnumString, EnumDiscriminants};
-
 
 use saa_common::{AuthError, Binary, CredentialId};
-
 use crate::msgs::SignedDataMsg;
 
 
 
-#[wasm_serde]
-#[derive(EnumDiscriminants)]
-#[strum_discriminants(
-    name(CredentialName), 
-    derive(Display, EnumString),
-    strum(serialize_all = "snake_case")
-)]
-#[cfg_attr(feature = "wasm", strum_discriminants(derive(
-    ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize,
-    ::saa_schema::schemars::JsonSchema
-), schemars(crate = "::saa_schema::schemars"
-)))]
+#[saa_derivable(name(CredentialName))]
 pub enum Credential {
     Native(Caller),
 
@@ -64,7 +49,7 @@ pub enum Credential {
 
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct CredentialInfo {
     /// name of the used credential
     pub name: CredentialName,
@@ -80,33 +65,8 @@ pub type CredentialRecord = (CredentialId, CredentialInfo);
 
 
 
-#[cfg(feature = "storage")]
-#[wasm_serde]
-pub struct StoredCredentials {
-    /// whether there are stored native credentials that don't require a signature
-    pub has_natives     :   bool,
-
-    /// Default ID used for verification
-    pub verifying_id    :   CredentialId,
-
-     /// ID and info about every stored credential
-    #[cfg(feature = "iterator")]
-    pub records         :   Vec<CredentialRecord>,
-
-    // Nonce or account number used for replay attack protection
-    #[cfg(feature = "replay")]
-    pub account_number  :   u64,
-
-    // Session keys that can be used used for specific actions
-    #[cfg(feature = "session")]
-    pub sessions        :   Option<CredentialId>,
-}
-
-
-
-
-#[allow(dead_code, unused_variables)]
-pub fn construct_credential(
+#[allow(unused, dead_code)]
+pub fn build_credential(
     record      : CredentialRecord,
     msg         : SignedDataMsg,
     extension   : Option<Binary>,
@@ -118,7 +78,7 @@ pub fn construct_credential(
     
     let credential = match name {
 
-        CredentialName::Native => Credential::Native(saa_auth::caller::Caller { id }),
+        CredentialName::Native => Credential::Native(saa_auth::caller::Caller(id)),
 
         #[cfg(feature = "ethereum")]
         CredentialName::EthPersonalSign => Credential::EthPersonalSign(saa_auth::eth::EthPersonalSign {
@@ -151,8 +111,8 @@ pub fn construct_credential(
                 .map(|e| from_json::<PasskeyPayload>(e).ok())
                 .flatten()
             {
-                Some(payload) => (payload.origin, payload.other_keys.unwrap_or(false)),
-                None => (None, false),
+                Some(payload) => (payload.origin, payload.other_keys),
+                None => (None, None),
             };
             
             let client_data = ClientData::new(

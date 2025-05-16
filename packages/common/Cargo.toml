@@ -39,26 +39,25 @@ schemars            = { workspace = true, optional = true }
 serde-json-wasm     = { workspace = true, optional = true }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
-
+enum_dispatch       = { workspace = true  }
 
 [features]
 default     = [
     "std", 
     "replay",
-    "iterator",
 ]
 solana      = [
     "dep:borsh", 
     "saa-schema/solana"
 ]
 cosmwasm    = [
-    "dep:cosmwasm-std",
     "std",
-    "cwasm"
+    "wasm",
+    "cosmwasm-std/std",
 ]
 cosmwasm_1 = [
     "dep:cosmwasm-std-one",
-    "cwasm"
+    "wasm"
 ]
 secretwasm  = [
     "dep:secretwasm-std",
@@ -84,27 +83,15 @@ native     = [
 session    = [
     "saa-schema/session",
 ]
-iterator   = [
-    "cosmwasm-std?/iterator",
-    "cosmwasm-std-one?/iterator",
-    "secretwasm-std?/iterator",
-    "storage",
-]
 injective  = [
     "cosmwasm"
-]
-cwasm      = [
-    "wasm"
 ]
 wasm       = [
     "dep:schemars",
     "saa-schema/cosmwasm",
 ]
-replay     = [
-    "storage"
-]
+replay     = []
 types      = [
     "dep:serde-json-wasm",
     "dep:schemars",
 ]
-storage    = []

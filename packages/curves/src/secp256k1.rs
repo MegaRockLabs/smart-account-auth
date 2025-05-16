@@ -4,10 +4,10 @@ use saa_common::{
     ensure
 };
 
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct Secp256k1 {
     pub pubkey:    Binary,
     pub message:   Binary,

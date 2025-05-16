@@ -3,28 +3,19 @@ mod data;
 mod credential;
 mod messages;
 mod impls;
+
 #[cfg(feature = "traits")]
 mod wrapper;
 #[cfg(feature = "wasm")]
 mod wasm;
-#[cfg(feature = "session")]
-mod sessions;
 #[cfg(feature = "native")]
 pub use saa_common::crypto;
-#[cfg(feature = "derive")]
-pub use saa_schema as schema;
-#[cfg(all(feature = "wasm", feature = "derive"))]
-pub use saa_common::wasm as cosmwasm_std;
-#[cfg(all(feature = "wasm", feature = "storage"))]
-pub use wasm::{storage_methods as storage, top_methods::*};
 
-#[cfg(feature = "replay")]
-pub(crate) use messages::utils::*;
 
-pub use saa_schema::wasm_serde;
-pub use saa_common::{AuthError, CredentialId};
-pub use credential::{Credential, CredentialName, CredentialInfo, CredentialRecord};
-pub use data::*;
+pub use saa_schema::saa_type;
+pub use saa_common::{AuthError, ReplayError, StorageError, CredentialId, Verifiable, ensure};
+pub use credential::{Credential, CredentialName, CredentialInfo, CredentialRecord, build_credential};
+pub use data::CredentialData;
 
 
 pub mod msgs {
@@ -34,42 +25,26 @@ pub mod msgs {
     pub use msgs::replay::{MsgDataToSign, MsgDataToVerify};
     #[cfg(feature = "session")]
     pub use {
-        super::sessions::queries::{SessionQueryMsg, SessionQueriesMatch, QueryUsesActions},
-        super::sessions::actions::{
-            CreateSession, CreateSessionFromMsg, RevokeKeyMsg, WithSessionMsg,
-            SessionActionMsg, SessionActionName, SessionActionsMatch,
-        },
-        msgs::actions::{Action, ActionMsg, AllowedActions, DerivationMethod}
+        msgs::actions::{Action, AllowedActions, DerivableMsg, ActionDerivation, AllQueryDerivation},
+        saa_common::Empty
     };
     pub use msgs::{SignedDataMsg, AuthPayload};
 
-    #[cfg(all(feature = "utils", feature = "replay"))]
-    pub use msgs::utils::{convert, convert_validate, convert_validate_return};
-
 }
 
-
 #[cfg(feature = "session")]
-pub use {
-    sessions::{Session, SessionInfo}, 
+pub use { 
     saa_common::{Expiration, SessionError},
-    saa_schema::session_action
+    messages::sessions::{SessionInfo, Session}
 };
 
-#[cfg(feature = "session")]
-pub mod session {
-    #[cfg(all(feature = "wasm", feature = "storage"))]
-    pub use super::wasm::session_methods::*;
-}
-
-
+#[cfg(all(feature = "wasm", feature = "types"))]
+pub use saa_common::wasm as cosmwasm_std;
 #[cfg(feature = "types")]
 pub mod types {
     pub use saa_common::types::*;
     #[cfg(feature = "passkeys")]
-    pub use saa_auth::passkey::ClientData;
-    #[cfg(feature = "storage")]
-    pub use super::credential::CredentialRecord;
+    pub use saa_auth::passkey::{ClientData, ClientDataOtherKeys, PasskeyInfo, PasskeyPayload};
 }
 
 
@@ -83,16 +58,12 @@ pub mod utils {
     pub use saa_auth::eth::utils as eth;
     #[cfg(feature = "passkeys")]
     pub use saa_auth::passkey::utils as passkey;
-    pub use super::credential::construct_credential;
 }
 
 
 #[cfg(feature = "traits")]
 pub mod traits {
-    #[cfg(feature = "session")]
-    pub use super::messages::actions::DerivableMsg;
     pub use super::wrapper::CredentialsWrapper;
-    pub use saa_common::Verifiable;
 }
 
 

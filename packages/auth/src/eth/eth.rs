@@ -1,6 +1,6 @@
 
 use saa_common::{CredentialId, AuthError, Binary, String, ToString, Verifiable };
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 #[cfg(any(feature = "wasm", feature = "native"))]
 use  {
@@ -9,7 +9,7 @@ use  {
 };
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct EthPersonalSign {
     pub message:   Binary,
     pub signature: Binary,

@@ -1,6 +1,6 @@
 use core::ops::Deref;
-
 use crate::{AuthError, CredentialId};
+
 
 pub trait Verifiable  {
 
@@ -9,13 +9,11 @@ pub trait Verifiable  {
     fn hrp(&self) -> Option<String> {
         None
     }
-    
 
     fn validate(&self) -> Result<(), AuthError>;
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError>;
-
 
     #[cfg(feature = "wasm")]
     fn verify_cosmwasm(&self,  _:  &dyn crate::wasm::Api) -> Result<(), AuthError>  {
@@ -27,9 +25,7 @@ pub trait Verifiable  {
         #[cfg(not(feature = "native"))]
         Err(AuthError::generic("Not implemented"))
     }
-
 }
-
 
 
 

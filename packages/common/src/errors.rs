@@ -1,14 +1,9 @@
-use crate::String;
-
 
 mod std_mod {
-    use super::String;
-    use saa_schema::wasm_serde;
-    use thiserror::Error;
+    use saa_schema::saa_error;
 
     #[cfg(feature = "session")]
-    #[wasm_serde]
-    #[derive(Error)]
+    #[saa_error]
     pub enum SessionError {
         #[error("The session key has already expired")]
         Expired,
@@ -49,8 +44,7 @@ mod std_mod {
 
 
     #[cfg(feature = "replay")]
-    #[wasm_serde]
-    #[derive(Error)]
+    #[saa_error]
     pub enum ReplayError {
         #[error("{0} is invalid as nonce. Expected: {1}")]
         DifferentNonce(u64, u64),
@@ -60,13 +54,14 @@ mod std_mod {
 
         #[error("The provided credential was meant for a different contract address")]
         ContractMismatch,
+
+        #[error("Error converting binary to {0}")]
+        Convertion(String),
     }
 
 
 
-    #[cfg(all(feature = "storage", feature = "wasm"))]
-    #[wasm_serde]
-    #[derive(Error)]
+    #[saa_error]
     pub enum StorageError {
         #[error("Error reading {0} from storage: {1}")]
         Read(String, String),
@@ -79,12 +74,19 @@ mod std_mod {
 
         #[error("The given credential was not found on this account")]
         NotFound, 
+
+        #[cfg(feature = "wasm")]
+        #[error("Standard error: {0}")]
+        Std(#[from] crate::wasm::StdError),
+
+        #[error("Generic error: {0}")]
+        Generic(String)
     }
 
 
 
-    #[wasm_serde]
-    #[derive(Error)]
+
+    #[saa_error]
     pub enum AuthError {
 
         #[error("No credentials provided or credentials are partially missing")]
@@ -137,7 +139,7 @@ mod std_mod {
         #[error("Session Error: {0}")]
         Session(#[from] SessionError),
 
-        #[cfg(all(feature = "storage", feature = "wasm"))]
+        #[cfg(feature = "wasm")]
         #[error("{0}")]
         Storage(#[from] StorageError),
     }
@@ -187,12 +189,11 @@ mod std_mod {
 
 #[cfg(not(feature = "std"))]
 mod no_std_mod {
-    use saa_schema::{strum_macros, wasm_serde};
+    use crate::String;
+    use saa_schema::{strum_macros, saa_type};
 
     
     #[cfg(feature = "replay")]
-    #[wasm_serde]
-    #[derive(strum_macros::Display)]
     pub enum ReplayError {
         DifferentNonce(u64, u64),
         ChainIdMismatch,
@@ -200,8 +201,6 @@ mod no_std_mod {
     }
 
     #[cfg(feature = "session")]
-    #[wasm_serde]
-    #[derive(strum_macros::Display)]
     pub enum SessionError {
         Expired,
         InvalidGrantee,
@@ -216,7 +215,6 @@ mod no_std_mod {
 
 
     #[wasm_serde]
-    #[derive(strum_macros::Display)]
     pub enum AuthError {
         NoCredentials,
         MissingData(String),

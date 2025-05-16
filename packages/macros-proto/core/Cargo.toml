@@ -1,6 +1,6 @@
 [package]
-name        = "saa-macros-proto"
-description = "Procedural macros for saa-schema"
+name        = "saa-proto-core"
+description = "Procedural macros of saa-schema for wasm"
 edition     = { workspace = true }
 authors     = { workspace = true }
 version     = { workspace = true }
@@ -23,12 +23,3 @@ features = [
     "printing",
     "extra-traits",
 ]
-
-
-[features]
-default        = ["std"]
-std            = [     ]
-substrate      = [     ]
-solana         = [     ]
-cosmwasm       = [     ]
-session        = [     ]

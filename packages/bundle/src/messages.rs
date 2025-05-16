@@ -1,18 +1,18 @@
 #[cfg(feature = "session")]
-mod impls;
+pub(crate) mod impls;
 #[cfg(feature = "session")]
 pub mod actions;
+#[cfg(feature = "session")]
+pub mod sessions;
 #[cfg(feature = "replay")]
 pub mod replay;
-#[cfg(feature = "wasm")]
-pub mod utils;
 
 
 
 
 /// Payload message used for telling which credential to use
 /// or how to modify it
-#[saa_schema::wasm_serde]
+#[saa_schema::saa_type]
 pub struct AuthPayload {
     /// Human readable prefix to use to derive an address
     pub hrp             :   Option<String>,
@@ -27,7 +27,7 @@ pub struct AuthPayload {
 /// A wrapper for signed data used for constructing credentials and verifying them
 /// `data` is base64 encoded JSON string that contains the data to be verified.  
 /// When `replay` feature tag is enabled, must be a JSON object corresponding to `MsgDataToSign` struct.
-#[saa_schema::wasm_serde]
+#[saa_schema::saa_type]
 pub struct SignedDataMsg {
     /// Base64 encoded JSON string of replay envelope, serialized actions messages, both of them or none of them
     pub data        :   saa_common::Binary,
