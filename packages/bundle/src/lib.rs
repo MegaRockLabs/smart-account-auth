@@ -75,7 +75,7 @@ pub use saa_auth::passkey::PasskeyCredential;
 pub use saa_auth::eth::EthPersonalSign;
 #[cfg(feature = "cosmos")]
 pub use saa_auth::cosmos::CosmosArbitrary;
-#[cfg(feature = "curves")]
-pub use saa_curves::{ed25519::Ed25519, secp256k1::Secp256k1, secp256r1::Secp256r1};
-#[cfg(all(not(feature = "curves"), feature = "ed25519" ))]
+#[cfg(feature = "ed25519" )]
 pub use saa_curves::ed25519::Ed25519;
+#[cfg(feature = "curves")]
+pub use saa_curves::{secp256k1::Secp256k1, secp256r1::Secp256r1};

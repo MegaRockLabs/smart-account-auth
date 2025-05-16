@@ -10,29 +10,47 @@ repository          = { workspace = true }
 [dependencies]
 saa-proto-core      = { workspace = true  }
 saa-proto-wasm      = { workspace = true, optional = true }
-#saa-proto-session   = { workspace = true, optional = true }
+saa-proto-solana    = { workspace = true, optional = true }
+saa-proto-substrate = { workspace = true, optional = true }
 
-thiserror           = { version = "2.0.12", default-features = false }
-
-
-serde               = { workspace = true } 
 
 # Substrate
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 # CosmWasm
+cosmwasm-schema     = { workspace = true, optional = true }
 schemars            = { workspace = true, optional = true }
+serde               = { workspace = true, optional = true } 
 # Solana
 borsh               = { workspace = true, optional = true }
 
-strum               = { workspace = true }
+thiserror           = { workspace = true }
 strum_macros        = { workspace = true }
-cosmwasm-schema     = { workspace = true, optional = true }
+strum               = { workspace = true }
+
+
 
 [features]
-default        = ["std"]
-solana         = ["dep:borsh",                     ]
-substrate      = ["dep:scale", "dep:scale-info"    ]
-std            = ["scale?/std", "scale-info?/std",                             ]
-cosmwasm       = ["dep:schemars", "dep:cosmwasm-schema", "saa-proto-wasm", "std"     ]
-session        = [  ]
+default        = [
+    "std"
+]
+solana         = [
+    "dep:borsh",
+    "saa-proto-solana",
+]
+substrate      = [
+    "dep:scale", 
+    "dep:scale-info",
+    "saa-proto-substrate",
+]
+cosmwasm       = [
+    "dep:serde", 
+    "dep:schemars", 
+    "dep:cosmwasm-schema", 
+    "saa-proto-wasm", 
+    "std"     
+]
+std            = [
+    "scale?/std", 
+    "scale-info?/std"
+]

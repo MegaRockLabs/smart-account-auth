@@ -1,5 +1,4 @@
 use core::ops::Deref;
-
 use strum::IntoDiscriminant;
 use saa_auth::caller::Caller;
 use saa_common::{ensure, AuthError, Binary, CredentialId, Verifiable};

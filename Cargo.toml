@@ -7,6 +7,8 @@ members = [
     "packages/schema",
     "packages/macros-proto/wasm",
     "packages/macros-proto/core",
+    "packages/macros-proto/solana",
+    "packages/macros-proto/substrate",
     #"packages/tests",
 ]
 
@@ -35,11 +37,11 @@ saa-common              = { version = "0.25.0", path = "packages/common" }
 saa-schema              = { version = "0.25.0", path = "packages/schema" }
 saa-curves              = { version = "0.25.0", path = "packages/curves" }
 
-saa-proto-meta          = { version = "0.25.0", path = "packages/macros-proto/meta" }
-saa-proto-msg           = { version = "0.25.0", path = "packages/macros-proto/msg" }
 
 saa-proto-core          = { version = "0.25.0", path = "packages/macros-proto/core" }
 saa-proto-wasm          = { version = "0.25.0", path = "packages/macros-proto/wasm" }
+saa-proto-solana        = { version = "0.25.0", path = "packages/macros-proto/solana" }
+saa-proto-substrate     = { version = "0.25.0", path = "packages/macros-proto/substrate" }
 
 cosmwasm-schema         = { version = "1.5.11", default-features = false }
 cosmwasm-crypto         = { version = "2.2.2", default-features = false }

@@ -109,6 +109,3 @@ types       = ["saa-common/types"]
 
 # Enable the export of inner utils that the lib uses
 utils       = ["saa-auth/utils", "dep:serde_json"]
-
-# Expose inner dependencies  
-derive      = []

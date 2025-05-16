@@ -74,15 +74,13 @@ std         = [
     "ink?/std",
     "scale?/std",
     "scale-info?/std",
-    "saa-schema/std",
     "serde-json-wasm?/std",
+    "saa-schema/std",
 ]
 native     = [
     "dep:cosmwasm-crypto"
 ]
-session    = [
-    "saa-schema/session",
-]
+session    = []
 injective  = [
     "cosmwasm"
 ]

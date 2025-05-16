@@ -125,14 +125,6 @@ fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::Tok
         #[allow(clippy::derive_partial_eq_without_eq)]
         #input
 
-       /*  
-       impl #impl_generics ::saa_schema::strum::IntoDiscriminant for Box<#ident #ty_generics>  #where_clause {
-            type Discriminant = <#ident as ::saa_schema::strum::IntoDiscriminant>::Discriminant;
-            fn discriminant(&self) -> Self::Discriminant {
-                (*self).discriminant()
-            }
-        }
-        */
         impl ::saa_schema::strum::IntoDiscriminant for Box<#ident> {
             type Discriminant = <#ident as ::saa_schema::strum::IntoDiscriminant>::Discriminant;
             fn discriminant(&self) -> Self::Discriminant {
