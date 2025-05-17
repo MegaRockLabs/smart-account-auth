@@ -1,11 +1,27 @@
 mod utils;
 use quote::{ToTokens, quote};
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, parse_quote, DeriveInput};
+use syn::{parse_macro_input, parse_quote, AttributeArgs, DeriveInput, Meta, MetaList, NestedMeta};
 use utils::{fallible_macro, Options};
 
 
-fn strum_enum(input: &DeriveInput) -> proc_macro2::TokenStream {
+fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::TokenStream {
+    // Extract optional name(...) argument
+    let name_arg = attr_args.iter().find_map(|meta| {
+        if let NestedMeta::Meta(Meta::List(MetaList { path, nested, .. })) = meta {
+            if path.is_ident("name") {
+                return Some(quote! { name(#nested) });
+            }
+        }
+        None
+    });
+
+    let maybe_name = if let Some(name) = name_arg {
+        quote! { #name, }
+    } else {
+        quote! {}
+    };
+    
     let ident = &input.ident;
     quote! {
         #[derive(
@@ -15,6 +31,7 @@ fn strum_enum(input: &DeriveInput) -> proc_macro2::TokenStream {
             ::saa_schema::strum_macros::VariantNames
         )]
         #[strum_discriminants(
+            #maybe_name
             derive(
                 ::saa_schema::strum_macros::Display,
                 ::saa_schema::strum_macros::EnumString,
@@ -97,11 +114,42 @@ fn saa_error_impl(input: DeriveInput, options: Options) -> syn::Result<DeriveInp
 
 
 
-#[proc_macro_attribute]
+/* #[proc_macro_attribute]
 pub fn saa_derivable(
-    _attr: TokenStream,
+    attr: TokenStream,
     input: TokenStream,
 ) -> TokenStream {
+    let attr_args = parse_macro_input!(attr as AttributeArgs);
+    let input_ast = parse_macro_input!(input as DeriveInput);
+    match &input_ast.data {
+        syn::Data::Struct(_) => {
+            quote! {
+                #[derive(
+                    Debug,
+                    Clone,
+                    PartialEq,
+                    ::saa_schema::serde::Serialize,
+                    ::saa_schema::serde::Deserialize,
+                    ::saa_schema::schemars::JsonSchema
+                )]
+                #[allow(clippy::derive_partial_eq_without_eq)]
+                #input_ast
+            }
+            .into()
+        }
+        syn::Data::Enum(_) => {
+            strum_enum(&input_ast, &attr_args).into()
+        }
+        syn::Data::Union(_) => panic!("unions are not supported"),
+    }
+}
+ */
+#[proc_macro_attribute]
+pub fn saa_derivable(
+    attr: TokenStream,
+    input: TokenStream,
+) -> TokenStream {
+    let attr_args = parse_macro_input!(attr as AttributeArgs);
     let input_ast = parse_macro_input!(input as DeriveInput);
     match &input_ast.data {
         syn::Data::Struct(_) => {
@@ -112,7 +160,7 @@ pub fn saa_derivable(
             }.into()
         },
         syn::Data::Enum(_) => {
-            strum_enum(&input_ast).into()
+            strum_enum(&input_ast, &attr_args).into()
         },
         syn::Data::Union(_) => panic!("unions are not supported"),
     }

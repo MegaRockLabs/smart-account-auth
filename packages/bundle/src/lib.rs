@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
 mod data;
 mod credential;
 mod messages;
@@ -13,9 +14,9 @@ pub use saa_common::crypto;
 
 
 pub use saa_schema::saa_type;
-pub use saa_common::{AuthError, ReplayError, StorageError, CredentialId, Verifiable, ensure};
-pub use credential::{Credential, CredentialName, CredentialInfo, CredentialRecord, build_credential};
-pub use data::CredentialData;
+pub use saa_common::{AuthError, ReplayError, StorageError, CredentialId, ensure};
+pub use credential::*;
+pub use data::*;
 
 
 pub mod msgs {
@@ -63,19 +64,8 @@ pub mod utils {
 
 #[cfg(feature = "traits")]
 pub mod traits {
-    pub use super::wrapper::CredentialsWrapper;
+    pub use {
+        super::wrapper::CredentialsWrapper,
+        saa_common::Verifiable
+    };
 }
-
-
-// ---  Credentials  ---
-pub use saa_auth::caller::Caller;
-#[cfg(feature = "passkeys")]
-pub use saa_auth::passkey::PasskeyCredential;
-#[cfg(feature = "ethereum")]
-pub use saa_auth::eth::EthPersonalSign;
-#[cfg(feature = "cosmos")]
-pub use saa_auth::cosmos::CosmosArbitrary;
-#[cfg(feature = "ed25519" )]
-pub use saa_curves::ed25519::Ed25519;
-#[cfg(feature = "curves")]
-pub use saa_curves::{secp256k1::Secp256k1, secp256r1::Secp256r1};

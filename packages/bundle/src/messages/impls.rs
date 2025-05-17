@@ -1,13 +1,12 @@
-use core::fmt::Display;
+use std::fmt::Display;
 use strum::IntoDiscriminant;
 use saa_common::{AuthError, SessionError, FromStr, ToString, ensure};
-use super::{actions::{Action, ActionDerivation, AllowedActions, DerivableMsg}, sessions::SessionInfo};
+use super::actions::{Action, ActionDerivation, AllowedActions, DerivableMsg};
 
 
 
-
-impl Display for Action {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for Action {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.result)
     }
 }
@@ -177,9 +176,7 @@ impl Action {
 }
 
 
-
 impl AllowedActions {
-
 
     pub fn can_do_action(&self, act: &Action) -> bool {
         if is_session_action(act.result.as_str()) {
@@ -211,6 +208,12 @@ impl AllowedActions {
         }
     }
 }
+
+
+
+
+
+
 
 
 #[cfg(feature = "utils")]
@@ -258,9 +261,8 @@ impl AllowedActions {
 
 
 
-
 #[cfg(all(feature = "wasm", feature = "session"))]
-impl SessionInfo {
+impl super::sessions::SessionInfo {
     pub fn checked_params(
         &self, 
         env: &saa_common::wasm::Env,

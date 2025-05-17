@@ -1,5 +1,5 @@
 use saa_schema::saa_type;
-use saa_common::{to_json_binary, Binary, CredentialId, Expiration};
+use saa_common::{Binary, CredentialId, Expiration, Vec, String, vec, hashes::sha256};
 use crate::{credential::CredentialRecord, msgs::{Action, AllowedActions, DerivableMsg}};
 
 
@@ -28,18 +28,33 @@ pub struct Session {
 
 
 
-
 impl Session {
+
     pub fn key(&self) -> CredentialId {
         let (id, info) = &self.grantee;
-        let actions = to_json_binary(&self.actions).unwrap_or_default();
-        let msg = [
-            self.granter.as_bytes(),
-            id.as_bytes(),
-            info.name.to_string().as_bytes(),
-            actions.as_slice(),
-        ].concat();
-        Binary::from(saa_common::hashes::sha256(&msg)).to_base64()
+        
+        let actions  = match self.actions {
+            AllowedActions::All {  } => vec![],
+            AllowedActions::Include(ref actions) => {
+                actions.iter().map(|a| a.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+                    .as_bytes()
+                    .to_vec()
+            }
+        };
+
+        Binary::from(
+            sha256(
+            &[
+                    self.granter.as_bytes(),
+                    id.as_bytes(),
+                    info.name.to_string().as_bytes(),
+                    actions.as_slice()
+                ]
+                .concat()
+            )
+        ).to_base64()
     }
 
     pub fn can_do_action(&self, act: &Action) -> bool {
@@ -49,7 +64,6 @@ impl Session {
     pub fn can_do_msg<M : DerivableMsg>(&self, message: &M) -> bool {
         self.actions.can_do_msg(message)
     }
-    
 }
 
 

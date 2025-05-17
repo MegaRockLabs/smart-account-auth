@@ -26,6 +26,16 @@ impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
 }
 
 
+
+#[cfg(feature = "ed25519")]
+impl From<saa_curves::ed25519::Ed25519> for Credential {
+    fn from(c: saa_curves::ed25519::Ed25519) -> Self {
+        Credential::Ed25519(c)
+    }
+}
+
+
+
 #[cfg(feature = "passkeys")]
 impl From<saa_auth::passkey::PasskeyCredential> for Credential {
     fn from(c: saa_auth::passkey::PasskeyCredential) -> Self {
@@ -46,16 +56,6 @@ impl From<saa_curves::secp256r1::Secp256r1> for Credential {
         Credential::Secp256r1(c)
     }
 }
-
-
-#[cfg(feature = "ed25519")]
-impl From<saa_curves::ed25519::Ed25519> for Credential {
-    fn from(c: saa_curves::ed25519::Ed25519) -> Self {
-        Credential::Ed25519(c)
-    }
-}
-
-
 
 
 
@@ -100,7 +100,7 @@ impl Credential {
             Credential::EthPersonalSign(c) => c.message.to_vec(),
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c.message.to_vec(),
-            #[cfg(all(not(feature = "curves"), feature = "ed25519"))]
+            #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c.message.to_vec(),
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c.base64_message_bytes().unwrap(),
@@ -118,7 +118,7 @@ impl Credential {
     }
 
     pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
-        #[cfg(feature = "passkeys")]
+        #[cfg(all(feature = "passkeys", feature = "wasm"))]
         if let Credential::Passkey(c) = self {
             use saa_auth::passkey::*;
             return Ok(Some(saa_common::to_json_binary(&PasskeyInfo {

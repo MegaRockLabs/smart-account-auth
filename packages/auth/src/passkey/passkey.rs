@@ -74,7 +74,7 @@ pub struct ClientData {
     pub challenge: String,
     pub origin: String,
     pub cross_origin: bool,
-    pub other_keys_can_be_added_here: Option<String>,
+    pub other_keys: Option<ClientDataOtherKeys>,
 }
 
 
