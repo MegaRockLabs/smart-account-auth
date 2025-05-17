@@ -130,7 +130,7 @@ pub fn saa_str_struct(
 
     let expanded : DeriveInput = match input.data {
         syn::Data::Struct(_) => parse_quote! {
-            #[derive(Copy, Clone, Debug, Eq, PartialOrd, Ord, Default)]
+            #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
             #input 
         },
         syn::Data::Enum(_) => panic!("enums are not supported"),

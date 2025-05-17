@@ -62,7 +62,7 @@ impl Binary {
 
     pub fn to_array<const LENGTH: usize>(&self) -> Result<[u8; LENGTH], AuthError> {
         if self.len() != LENGTH {
-            return Err(AuthError::InvalidLength(LENGTH as u16, self.len() as u16));
+            return Err(AuthError::InvalidLength("Binary".to_string(), LENGTH as u16, self.len() as u16));
         }
 
         let mut out: [u8; LENGTH] = [0; LENGTH];

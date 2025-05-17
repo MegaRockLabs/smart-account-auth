@@ -179,7 +179,7 @@ pub fn saa_str_struct(
     let expanded : DeriveInput = match input.data {
         syn::Data::Struct(_) => parse_quote! {
             #[derive(
-                Copy, Clone, Debug, Eq, PartialOrd, Ord, Default
+                Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default
                 ::saa_schema::schemars::JsonSchema
             )]
             #[serde(deny_unknown_fields, crate = "::saa_schema::serde")]

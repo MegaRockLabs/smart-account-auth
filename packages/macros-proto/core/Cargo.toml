@@ -3,7 +3,7 @@ name        = "saa-proto-core"
 description = "Procedural macros of saa-schema for wasm"
 edition     = { workspace = true }
 authors     = { workspace = true }
-version     = "0.25.1"
+version     = "0.25.2"
 license     = { workspace = true }
 repository  = { workspace = true }
 

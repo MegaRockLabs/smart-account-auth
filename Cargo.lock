@@ -1939,7 +1939,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-core"
-version = "0.25.1"
+version = "0.25.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1966,7 +1966,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-wasm"
-version = "0.25.0"
+version = "0.25.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1975,7 +1975,7 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.25.0"
+version = "0.25.1"
 dependencies = [
  "borsh",
  "cosmwasm-schema",

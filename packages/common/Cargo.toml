@@ -36,7 +36,7 @@ sha2                = { workspace = true }
 serde               = { workspace = true }
 schemars            = { workspace = true, optional = true }
 
-serde-json-wasm     = { workspace = true, optional = true }
+serde-json-wasm     = { workspace = true  }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
 enum_dispatch       = { workspace = true  }
@@ -61,7 +61,6 @@ cosmwasm_1 = [
 ]
 secretwasm  = [
     "dep:secretwasm-std",
-    "dep:serde-json-wasm",
     "wasm",
 ]
 substrate   = [
@@ -74,7 +73,7 @@ std         = [
     "ink?/std",
     "scale?/std",
     "scale-info?/std",
-    "serde-json-wasm?/std",
+    "serde-json-wasm/std",
     "saa-schema/std",
 ]
 native     = [
@@ -90,6 +89,5 @@ wasm       = [
 ]
 replay     = []
 types      = [
-    "dep:serde-json-wasm",
     "dep:schemars",
 ]
