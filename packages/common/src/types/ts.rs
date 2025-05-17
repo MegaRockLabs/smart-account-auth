@@ -1,10 +1,8 @@
 use core::fmt;
-use saa_schema::wasm_serde;
+use saa_schema::saa_str_struct;
 use super::uints::Uint64;
 
-
-#[wasm_serde]
-#[derive(Copy, Default, Eq, PartialOrd, Ord,)]
+#[saa_str_struct]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {

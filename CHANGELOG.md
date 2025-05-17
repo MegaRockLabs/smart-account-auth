@@ -24,7 +24,7 @@ Project **TRIES** adhering to
 - `Caller` credential is now an enum struct (after being a regular struct)
 - Minor changes to `ClientData` of `PasskeyCredential` related to optional key fields
 - renamed module with static storage variables from `storage` to `stores` 
-- renamed `wasm_serde` to `saa_type` and added ability to omit exlusion of unknown properties by passing `no_deny`
+- renamed `saa_type` to `saa_type` and added ability to omit exlusion of unknown properties by passing `no_deny`
 - split type macros into separate files for each type
 - `CredentialData`'s method was renamed to `with_native` and now inject the new caller from attached info only if the flag is set to `Some(true)` and return a miiror copy otherwise
 - renamed `construct_credential` to `build_credential` and expose by default

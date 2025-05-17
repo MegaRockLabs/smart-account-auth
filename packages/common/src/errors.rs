@@ -190,7 +190,7 @@ mod std_mod {
 #[cfg(not(feature = "std"))]
 mod no_std_mod {
     use crate::String;
-    use saa_schema::{strum_macros, saa_type};
+    use saa_schema::{saa_error, saa_type, strum_macros};
 
     
     #[cfg(feature = "replay")]
@@ -214,7 +214,7 @@ mod no_std_mod {
     }
 
 
-    #[wasm_serde]
+    #[saa_error]
     pub enum AuthError {
         NoCredentials,
         MissingData(String),

@@ -1,7 +1,7 @@
 mod utils;
 use quote::{ToTokens, quote};
 use proc_macro::TokenStream;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, parse_quote, DeriveInput};
 use utils::{fallible_macro, Options};
 
 
@@ -116,4 +116,28 @@ pub fn saa_derivable(
         },
         syn::Data::Union(_) => panic!("unions are not supported"),
     }
+}
+
+
+
+
+#[proc_macro_attribute]
+pub fn saa_str_struct(
+    _attr: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    let expanded : DeriveInput = match input.data {
+        syn::Data::Struct(_) => parse_quote! {
+            #[derive(Copy, Clone, Debug, Eq, PartialOrd, Ord, Default)]
+            #input 
+        },
+        syn::Data::Enum(_) => panic!("enums are not supported"),
+        syn::Data::Union(_) => panic!("unions are not supported"),
+    };
+
+    let stream = expanded.into_token_stream();
+
+    proc_macro::TokenStream::from(stream)
 }
