@@ -33,7 +33,7 @@ thiserror               = { version = "2.0.12", default-features = false }
 
 smart-account-auth      = { version = "0.25.0", path = "packages/bundle" }
 saa-auth                = { version = "0.25.0", path = "packages/auth" }
-saa-common              = { version = "0.25.0", path = "packages/common" }
+saa-common              = { version = "0.25.1", path = "packages/common" }
 saa-schema              = { version = "0.25.1", path = "packages/schema" }
 saa-curves              = { version = "0.25.0", path = "packages/curves" }
 

@@ -3,7 +3,7 @@ name        = "saa-common"
 description = "Common types and utilities for smart account auth"
 edition     = { workspace = true }
 authors     = { workspace = true }
-version     = { workspace = true }
+version     = "0.25.1"
 license     = { workspace = true }
 repository  = { workspace = true }
 
@@ -51,9 +51,9 @@ solana      = [
     "saa-schema/solana"
 ]
 cosmwasm    = [
+    "cosmwasm-std/std",
     "std",
     "wasm",
-    "cosmwasm-std/std",
 ]
 cosmwasm_1 = [
     "dep:cosmwasm-std-one",
@@ -70,10 +70,10 @@ substrate   = [
     "saa-schema/substrate",
 ]
 std         = [
+    "serde-json-wasm/std",
     "ink?/std",
     "scale?/std",
     "scale-info?/std",
-    "serde-json-wasm/std",
     "saa-schema/std",
 ]
 native     = [
@@ -90,4 +90,5 @@ wasm       = [
 replay     = []
 types      = [
     "dep:schemars",
+    "saa-schema/cosmwasm",
 ]

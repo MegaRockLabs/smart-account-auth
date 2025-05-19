@@ -1,13 +1,13 @@
-#[cfg(all(feature = "cosmwasm_1", not(feature = "cosmwasm")))]
+#[cfg(all(feature = "cosmwasm_1", not(feature = "cosmwasm"), not(feature = "secretwasm")))]
 use cosmwasm_std_one as cosmwasm_std;
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm"), not(feature = "cosmwasm_1")))]
 use secretwasm_std as cosmwasm_std;
 
 
-#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm"), not(feature = "cosmwasm_1")))]
 pub use {
     cosmwasm_std::{from_binary as from_json, to_binary as to_json_binary},
-    crate::types::binary::to_json_string
+    serde_json_wasm::to_string as to_json_string
 };
 
 #[cfg(any(feature = "cosmwasm", feature = "cosmwasm_1"))]

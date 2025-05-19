@@ -267,3 +267,9 @@ pub fn from_json<T: DeserializeOwned>(value: impl AsRef<[u8]>) -> Result<T, Auth
     serde_json_wasm::from_slice(value.as_ref())
         .map_err(|e| AuthError::generic(e.to_string()))
 }
+
+
+pub fn to_json_string<T>(data: &T) -> Result<String, AuthError>
+where T: Serialize + ?Sized,{
+    serde_json_wasm::to_string(data).map_err(|e| AuthError::generic(e.to_string()))
+}

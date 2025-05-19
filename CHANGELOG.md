@@ -6,7 +6,12 @@ Project **TRIES** adhering to
 
 <!-- next-header -->
 
-## [0.25.0] Rust - 2024-12-17 
+## [Unreleased] Rust
+
+## Fixed
+-- `to_json_string` imports and definitions
+
+## [0.25.0] Rust - 2024-12-18 
 
 ## Added
 

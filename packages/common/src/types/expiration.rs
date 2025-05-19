@@ -1,9 +1,7 @@
-use saa_schema::{saa_type};
-use saa_schema::strum_macros::Display;
+use saa_schema::{saa_type, strum_macros::Display};
 use std::cmp::Ordering;
-use std::ops::Add;
-use crate::AuthError;
 use super::timestamp::Timestamp;
+use crate::AuthError;
 
 
 
@@ -60,7 +58,7 @@ impl Expiration {
 }
 
 
-impl Add<Duration> for Expiration {
+impl std::ops::Add<Duration> for Expiration {
     type Output = Result<Expiration, AuthError>;
 
     fn add(self, duration: Duration) -> Result<Expiration, AuthError> {

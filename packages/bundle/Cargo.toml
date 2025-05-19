@@ -87,7 +87,7 @@ injective = [
     "cosmwasm",
 ]
 wasm   = ["dep:schemars", "dep:cosmwasm-schema"]
-replay    = ["saa-common/replay",]
+replay    = ["saa-common/replay"]
 # Passkey credential 
 passkeys    = []
 

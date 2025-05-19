@@ -1,7 +1,7 @@
 // Apache license in both but giving the credits to the original authors
 // Copied to derive custom traits. Most of the features removed except for +/- operations
 
-use saa_schema::{saa_type};
+use saa_schema::saa_type;
 
 // Copied from `cosmwasm_crypto` [here](https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto)
 pub mod identity;
@@ -19,11 +19,10 @@ mod uint;
 
 pub mod binary {
     #[cfg(not(feature = "wasm"))]
-    pub use super::bin::{Binary, to_json_binary, from_json};
+    pub use super::bin::{Binary, to_json_binary, from_json, to_json_string};
+
     #[cfg(feature = "wasm")]
     pub use crate::wasm::{Binary, to_json_binary, from_json, to_json_string};
-    #[cfg(all(feature = "types", not(feature = "wasm")))]
-    pub use serde_json_wasm::to_string as to_json_string;
 }
 
 pub mod uints {
