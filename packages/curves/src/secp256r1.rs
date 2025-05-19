@@ -1,4 +1,4 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 use saa_common::{
     CredentialId, 
@@ -6,7 +6,7 @@ use saa_common::{
 };
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct Secp256r1 {
     pub pubkey:    Binary,
     pub message:   Binary,
@@ -18,7 +18,7 @@ pub struct Secp256r1 {
 impl Verifiable for Secp256r1 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -43,8 +43,18 @@ impl Verifiable for Secp256r1 {
 
 
     #[cfg(feature = "wasm")]
-    #[allow(unused_variables)]
-    fn verify_cosmwasm(&self, api : &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(
+        &self,
+        #[allow(unused_variables)]
+        api : &dyn saa_common::wasm::Api
+    ) -> Result<(), AuthError> {
+        #[cfg(feature = "cosmwasm")]
+        let res = api.secp256r1_verify(
+            &saa_common::hashes::sha256(&self.message),
+            &self.signature,
+            &self.pubkey
+        )?;
+        #[cfg(not(feature = "cosmwasm"))]
         let res = implementation::secp256r1_verify(
             &saa_common::hashes::sha256(&self.message), 
             &self.signature, 
@@ -56,12 +66,15 @@ impl Verifiable for Secp256r1 {
 }
 
 
+
+
 #[cfg(feature = "native")]
 pub mod implementation {
     pub use saa_common::crypto::secp256r1_verify;
 }
 
-#[cfg(not(feature = "native"))]
+
+#[cfg(all(not(feature="native"), not(feature = "cosmwasm")))]
 pub mod implementation {
 
     use saa_common::{hashes::Identity256, AuthError};

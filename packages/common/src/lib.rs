@@ -1,56 +1,37 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod types;
-pub mod utils;
-pub mod messages;
-pub mod hashes;
-
 mod errors;
 mod traits;
 mod macros;
-mod credential;
+
+pub mod types;
+pub mod utils;
+pub mod hashes;
 
 pub use errors::*;
-pub use traits::*;
-pub use credential::*;
-
-
-
-#[cfg(feature = "storage")]
-pub mod stores;
+pub use types::Empty;
+pub use types::binary::*;
+pub use types::uints::Uint64;
+pub use types::expiration::Expiration;
+pub type CredentialId = String;
 
 
 #[cfg(feature = "native")]
 pub mod crypto {pub use cosmwasm_crypto::*;} 
-
-
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-
 #[cfg(any(feature = "std", not(feature = "substrate")))]
-pub use std::{
-    string::{ToString, String},
-    vec, vec::Vec, 
-    format
-};
-
+pub use {core::str::FromStr, std::{string::{ToString, String}, vec, vec::Vec, format}};
 #[cfg(all(not(feature = "std"), feature = "substrate"))]
-pub use ink::prelude::{
-    string::{ToString, String},
-    vec, vec::Vec, 
-    format, 
-};
+pub use ink::prelude::{string::{String, ToString, FromStr}, vec, vec::Vec, format};
 
+pub use traits::Verifiable;
 
 #[cfg(feature = "substrate")]
 pub mod substrate {
     pub use ink::env as ink_env;
-    pub use {
-        ink_env::Environment as InkEnvironment,
-        ink::EnvAccess as InkApi,
-    };
-
+    pub use {ink_env::Environment as InkEnvironment, ink::EnvAccess as InkApi};
     pub mod default {
         use ink::env as ink_env;
         pub use ink_env::DefaultEnvironment;
@@ -58,8 +39,3 @@ pub mod substrate {
         pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
     }
 }
-
-
-
-pub use types::binary::{Binary, to_json_binary, from_json};
-

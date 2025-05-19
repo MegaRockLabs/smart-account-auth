@@ -3,29 +3,55 @@ name                = "saa-schema"
 description         = "Macros and serialization utlities for various blockchain based virtual machines"
 edition             = { workspace = true }
 authors             = { workspace = true }
-version             = { workspace = true }
+version             = "0.25.1"
+
 license             = { workspace = true }
 repository          = { workspace = true }
 
 [dependencies]
-saa-macros-proto    = { workspace = true }
-serde               = { workspace = true } 
+saa-proto-core      = { workspace = true  }
+saa-proto-wasm      = { workspace = true, optional = true }
+saa-proto-solana    = { workspace = true, optional = true }
+saa-proto-substrate = { workspace = true, optional = true }
+
 
 # Substrate
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 # CosmWasm
+cosmwasm-schema     = { workspace = true, optional = true }
 schemars            = { workspace = true, optional = true }
+serde               = { workspace = true, optional = true } 
 # Solana
 borsh               = { workspace = true, optional = true }
 
+thiserror           = { workspace = true }
+strum_macros        = { workspace = true }
+strum               = { workspace = true }
+
+
 
 [features]
-default        = ["std"]
-solana         = ["dep:borsh",                   "saa-macros-proto/solana"    ]
-substrate      = ["dep:scale", "dep:scale-info", "saa-macros-proto/substrate" ]
-cosmwasm       = ["dep:schemars",                "saa-macros-proto/cosmwasm"  ]
+default        = [
+    "std"
+]
+solana         = [
+    "dep:borsh",
+    "saa-proto-solana",
+]
+substrate      = [
+    "dep:scale", 
+    "dep:scale-info",
+    "saa-proto-substrate",
+]
+cosmwasm       = [
+    "dep:serde", 
+    "dep:schemars", 
+    "dep:cosmwasm-schema", 
+    "saa-proto-wasm", 
+    "std"     
+]
 std            = [
     "scale?/std", 
-    "scale-info?/std", 
+    "scale-info?/std"
 ]

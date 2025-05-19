@@ -10,13 +10,13 @@ repository  = { workspace = true }
 
 
 [lib]
-name        = "smart_account_auth"
-path        = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
+name        =  "smart_account_auth"
+path        =  "src/lib.rs"
+crate-type  =  ["cdylib", "rlib"]
 
 
 [dependencies]
-saa-auth              = { workspace = true }
+saa-auth                = { workspace = true }
 saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
@@ -27,6 +27,14 @@ borsh                   = { workspace = true, optional = true }
 schemars                = { workspace = true, optional = true }
 serde                   = { workspace = true }
 
+strum                   = { workspace = true }
+strum_macros            = { workspace = true }
+serde_json              = { workspace = true, optional = true }
+enum_dispatch           = { workspace = true  }
+
+cosmwasm-schema         = { workspace = true, optional = true }
+
+
 
 [features]
 default = [
@@ -36,14 +44,17 @@ default = [
     "ed25519",
     "passkeys",
     "replay",
-    "iterator",
-    "traits",
+    "session",
 ]
 std = [
     "scale?/std",
     "scale-info?/std",
     "saa-auth/std",
 ]
+session     = [
+    "saa-common/session",
+]
+
 native = [
     "saa-auth/native",
 ]
@@ -59,10 +70,11 @@ substrate = [
 cosmwasm = [
     "saa-auth/cosmwasm",
     "wasm",
+    "std",
 ]
-injective = [
-    "saa-auth/injective",
-    "cosmwasm",
+cosmwasm_1 = [
+    "saa-auth/cosmwasm_1",
+    "wasm",
 ]
 secretwasm  = [
     "saa-common/secretwasm",
@@ -70,20 +82,12 @@ secretwasm  = [
     "saa-curves/wasm",
     "wasm",
 ]
-wasm      = [
-    "dep:schemars",
+injective = [
+    "saa-auth/injective",
+    "cosmwasm",
 ]
-replay    = [
-    "saa-common/replay",
-    "storage",
-]
-iterator  = [
-    "saa-common/iterator",
-    "storage",
-]
-storage   = []
-
-
+wasm   = ["dep:schemars", "dep:cosmwasm-schema"]
+replay    = ["saa-common/replay",]
 # Passkey credential 
 passkeys    = []
 
@@ -92,16 +96,16 @@ ethereum    = []
 cosmos      = []
 
 # Enable raw curve credentials without envelops
-curves      = []
+curves      = ["ed25519"]
 
 # Set separately for Solana
 ed25519     = []
 
-# Enable the export of inner types that the lib uses
-types       = []
-
-# Enable the export of inner traits that the lib uses
+# Enable the export of extra traits that the lib uses internally
 traits      = []
 
+# Enable the export of extra types that the lib uses internally
+types       = ["saa-common/types"]
+
 # Enable the export of inner utils that the lib uses
-utils       = []
+utils       = ["saa-auth/utils", "dep:serde_json"]

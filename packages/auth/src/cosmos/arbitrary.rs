@@ -5,10 +5,10 @@ use {
     super::utils::preamble_msg_arb_036
 };
 use saa_common::{AuthError, Binary, CredentialId, String, ToString, Verifiable};
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct CosmosArbitrary {
     pub pubkey:    Binary,
     pub signature: Binary,
@@ -38,7 +38,7 @@ impl CosmosArbitrary {
 impl Verifiable for CosmosArbitrary {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
 
     fn hrp(&self) -> Option<String> {

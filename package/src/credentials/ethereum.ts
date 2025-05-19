@@ -35,7 +35,7 @@ export const getEthPersonalSignCredential = async (
 
     return {
         eth_personal_sign: {
-            signer: signerAddress.toLowerCase(),
+            signer: signerAddress,
             signature: toBase64(sigBytes),
             message: toBase64(message)
         }

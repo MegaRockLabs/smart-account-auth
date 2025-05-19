@@ -1,27 +1,39 @@
-use saa_common::{Vec, vec, CredentialId, Verifiable};
+use saa_common::{Vec, CredentialId, Verifiable};
+
+#[cfg(feature = "utils")]
+use strum::IntoDiscriminant;
 
 pub trait CredentialsWrapper : Clone + Verifiable {
 
-    type Credential         : Verifiable + Clone;
-
+    #[cfg(feature = "utils")]
+    type Credential  : Verifiable + Clone + strum::IntoDiscriminant<Discriminant : ToString>;
+    #[cfg(not(feature = "utils"))]
+    type Credential  : Verifiable + Clone;
 
     fn credentials(&self) -> &Vec<Self::Credential>;
 
-  
-    fn primary_index(&self) -> &Option<u8> {
-        &None
+    
+    fn primary_index(&self) -> Option<u8> {
+        None
     }
 
     fn primary(&self) -> Self::Credential {
         let creds = self.credentials();
-        if self.primary_index().is_some() {
-            return creds[self.primary_index().unwrap() as usize].clone();
+        if let Some(index) = self.primary_index() {
+            return creds[index as usize].clone();
         } else {
-            creds.first().unwrap().clone()
-        }
+            return creds[0].clone();
+        } 
     }
 
+    fn primary_id(&self) -> CredentialId {
+        self.primary().id()
+    }
+
+    #[cfg(feature = "utils")]
     fn secondaries(&self) -> Vec<Self::Credential> {
+        use saa_common::vec;
+
         let creds = self.credentials();
 
         if self.primary_index().is_some() {
@@ -45,8 +57,17 @@ pub trait CredentialsWrapper : Clone + Verifiable {
         }
     }
 
-    fn primary_id(&self) -> CredentialId {
-        self.primary().id()
+    #[cfg(feature = "utils")]
+    fn count(&self) -> usize {
+        self.credentials().len()
+    }
+
+    #[cfg(feature = "utils")]
+    fn names(&self) -> Vec<String> {
+        self.credentials()
+            .iter()
+            .map(|c| c.discriminant().to_string())
+            .collect()
     }
 
 }

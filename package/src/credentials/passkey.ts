@@ -296,7 +296,6 @@ export const getPasskeyCredential = async (
       console.log("Passkey Request Client Data", client_data);
     }
 
-    client_data.challenge = urlToBase64(client_data.challenge);
     if (!pubkey) pubkey = (passkeys[id] ?? passkeys[urlToBase64(id)])?.publicKey;
 
     const passkey : PasskeyCredential = {

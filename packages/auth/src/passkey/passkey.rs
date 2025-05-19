@@ -1,4 +1,4 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 
 // expand later after adding implementations for other platforms
@@ -8,89 +8,10 @@ use {
     sha2::{Digest, Sha256}
 };
 
-// Enforce serde for now until figuring how to rename fields with other serialization libraries
-#[derive(
-    Clone, Debug, PartialEq,
-    ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize
-)]
-// Manual derivation due to #[deny_unknown_fields] in the macro
-#[cfg_attr(feature = "wasm", 
-    derive(::saa_schema::schemars::JsonSchema), 
-    schemars(crate = "::saa_schema::schemars")
-)]
-#[cfg_attr(feature = "substrate", derive(
-    ::saa_schema::scale::Encode, 
-    ::saa_schema::scale::Decode
-))]
-#[cfg_attr(feature = "solana", derive(
-    ::saa_schema::borsh::BorshSerialize, 
-    ::saa_schema::borsh::BorshDeserialize
-))]
-#[cfg_attr(all(feature = "std", feature="substrate"), derive(
-    saa_schema::scale_info::TypeInfo)
-)]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[non_exhaustive]
-pub struct ClientData {
-    #[serde(rename = "type")]
-    pub ty: String,
-    pub challenge: String,
-    pub origin: String,
-    #[serde(rename = "crossOrigin")]
-    pub cross_origin: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub other_keys_can_be_added_here: Option<String>,
-}
-
-
-impl ClientData {
-    pub fn new(ty: String, challenge: String, origin: String, cross_origin: bool, others: bool) -> Self {
-        Self {
-            ty,
-            challenge,
-            origin,
-            cross_origin,
-            other_keys_can_be_added_here: if others { 
-                Some("do not compare clientDataJSON against a template. See https://goo.gl/yabPex".to_string()) 
-            } else { None }
-        }
-    }
-}
 
 
 
-#[cfg_attr(not(feature = "wasm"), derive(
-    ::saa_schema::serde::Serialize,
-    ::saa_schema::serde::Deserialize,
-))]
-#[wasm_serde]
-pub struct PasskeyExtension {
-    /// Origin of the client where the passkey was created
-    pub origin: String,
-    /// Secpk256r1 Public key used for verification 
-    pub pubkey: Option<Binary>,
-    // Flag to allow cross origin requests
-    #[serde(rename = "crossOrigin")]
-    pub cross_origin: bool,
-    /// Optional user handle reserved for future use
-    pub user_handle: Option<String>,
-}
-
-
-#[wasm_serde]
-pub struct PasskeyPayload {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Public key is essential for verification but can be supplied on the contract side
-    pub pubkey: Option<Binary>,
-    /// client data other keys
-    pub other_keys: Option<bool>,
-}
-
-
-
-#[wasm_serde]
+#[saa_type]
 pub struct PasskeyCredential {
     /// Passkey id
     pub id                   :       String,
@@ -102,14 +23,122 @@ pub struct PasskeyCredential {
     pub client_data          :       ClientData,
     /// Optional user handle reserved for future use
     pub user_handle          :       Option<String>,
-    /// Public key is essential for verification but can be supplied on the contract side
-    /// and omitted by client
+    /// Public key is essential for verification but can be supplied on the backend / contract side
+    /// and omitted by client. Must be set when going through the verification process.
     pub pubkey               :       Option<Binary>,
 }
 
 
-#[cfg(any(feature = "wasm", feature = "native"))]
+
+
+
+#[saa_type]
+pub struct PasskeyInfo {
+    /// webauthn Authenticator data
+    pub authenticator_data: Binary,
+    /// Origin of the client where the passkey was created
+    pub origin: String,
+    /// Secpk256r1 Public key used for verification 
+    pub pubkey: Binary,
+    // Flag to allow cross origin requests
+    #[cfg_attr(feature = "wasm", serde(rename = "crossOrigin"))]
+    pub cross_origin: bool,
+    /// Optional user handle reserved for future use
+    pub user_handle: Option<String>,
+}
+
+
+
+
+
+#[cfg(feature = "wasm")]
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientData {
+    #[serde(rename = "type")]
+    pub ty: String,
+    pub challenge: String,
+    pub origin: String,
+    #[serde(rename = "crossOrigin")]
+    pub cross_origin: bool,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    pub other_keys : Option<ClientDataOtherKeys>,
+}
+
+
+#[cfg(not(feature = "wasm"))]
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientData {
+    pub ty: String,
+    pub challenge: String,
+    pub origin: String,
+    pub cross_origin: bool,
+    pub other_keys: Option<ClientDataOtherKeys>,
+}
+
+
+
+#[saa_type]
+pub struct PasskeyPayload {
+    /// client data other keys
+    pub other_keys :  Option<ClientDataOtherKeys>,
+    // reserved for future use
+    pub origin: Option<String>
+}
+
+
+
+
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct ClientDataOtherKeys {
+    pub other_keys_can_be_added_here :  Option<String>,
+}
+
+
+impl ClientData {
+    pub fn new(
+        ty: impl ToString, 
+        challenge: impl ToString, 
+        origin: impl ToString, 
+        cross_origin: bool, 
+        other_keys: Option<ClientDataOtherKeys>
+    ) -> Self {
+        Self {
+            ty: ty.to_string(),
+            challenge: challenge.to_string(),
+            origin: origin.to_string(),
+            cross_origin,
+            other_keys,
+        }
+    }
+}
+
+
+impl ClientDataOtherKeys {
+    pub fn new(
+        other_keys_can_be_added_here: Option<String>
+    ) -> Self {
+        Self {
+            other_keys_can_be_added_here
+        }
+    }
+}
+
+
+
+
 impl PasskeyCredential {
+    
+    pub fn base64_message_bytes(&self) -> Result<Vec<u8>, AuthError> {
+        let base64_str = super::utils::url_to_base64(&self.client_data.challenge);
+        let binary = Binary::from_base64(&base64_str)
+            .map_err(|_| AuthError::PasskeyChallenge)?;
+        Ok(binary.to_vec())
+    }
+
+    #[cfg(any(feature = "wasm", feature = "native"))]
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
         let client_data_hash = sha256(saa_common::to_json_binary(&self.client_data)?.as_slice());
         let mut hasher = Sha256::new();
@@ -123,7 +152,7 @@ impl PasskeyCredential {
 impl Verifiable for PasskeyCredential {
 
     fn id(&self) -> CredentialId {
-        self.id.as_bytes().to_vec()
+        self.id.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -132,6 +161,7 @@ impl Verifiable for PasskeyCredential {
         ensure!(self.client_data.challenge.len() > 0, AuthError::generic("Empty challenge"));
         ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
         ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
+        self.base64_message_bytes()?;
         Ok(())
     }
 
@@ -142,19 +172,32 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::generic("Signature verification failed"));
+        ensure!(res, AuthError::generic("Passkey Signature verification failed"));
         Ok(())
     }
 
 
     #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, _ : &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
+    fn verify_cosmwasm(
+        &self,  
+        #[allow(unused_variables)]    
+        api : &dyn saa_common::wasm::Api
+    ) -> Result<(), AuthError> {
+
+        #[cfg(feature = "cosmwasm")]
+        let res = api.secp256r1_verify(
+            &self.message_digest()?,
+            &self.signature,
+            &self.pubkey.as_ref().unwrap()
+        )?;
+
+        #[cfg(not(feature = "cosmwasm"))]
         let res = saa_curves::secp256r1::implementation::secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        ensure!(res, AuthError::Signature("Passkey Signature verification failed".to_string()));
         Ok(())
     }
 

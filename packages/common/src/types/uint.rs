@@ -1,13 +1,13 @@
 use core::{fmt, ops::{Add, Sub,}};
-use saa_schema::wasm_string_struct;
+use saa_schema::saa_str_struct;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 
-#[wasm_string_struct]
+#[saa_str_struct]
 pub struct Uint64(#[cfg_attr(feature = "wasm", schemars(with = "String"))]pub(crate) u64);
 
 
-#[wasm_string_struct]
+#[saa_str_struct]
 pub struct Uint128(#[cfg_attr(feature = "wasm", schemars(with = "String"))] pub(crate) u128);
 
 

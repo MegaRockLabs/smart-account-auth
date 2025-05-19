@@ -1,36 +1,21 @@
-mod messages;
-
-#[cfg(feature = "storage")]
-pub mod storage;
-
-
-#[cfg(feature = "cosmwasm")]
-pub mod module {
-    pub use cosmwasm_std::{
-        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary, BlockInfo,
-        from_json, to_json_binary, CustomMsg, StdResult,
-        StdError, VerificationError, RecoverPubkeyError
-    };
-    #[cfg(feature = "storage")]
-    pub use cosmwasm_std::Storage;
-    #[cfg(feature = "iterator")]
-    pub use cosmwasm_std::Order;
-}
+#[cfg(all(feature = "cosmwasm_1", not(feature = "cosmwasm")))]
+use cosmwasm_std_one as cosmwasm_std;
+#[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
+use secretwasm_std as cosmwasm_std;
 
 
 #[cfg(all(feature = "secretwasm", not(feature = "cosmwasm")))]
-pub mod module {
-    pub use secretwasm_std::{
-        Api, Env, Addr, CanonicalAddr, MessageInfo, Binary, BlockInfo,
-        from_binary as from_json, to_binary as to_json_binary, StdResult,
-        StdError, VerificationError, RecoverPubkeyError,
-        CustomMsg
-    };
-    #[cfg(feature = "storage")]
-    pub use secretwasm_std::Storage;
-    #[cfg(feature = "iterator")]
-    pub use secretwasm_std::Order;
-}
+pub use {
+    cosmwasm_std::{from_binary as from_json, to_binary as to_json_binary},
+    crate::types::binary::to_json_string
+};
+
+#[cfg(any(feature = "cosmwasm", feature = "cosmwasm_1"))]
+pub use cosmwasm_std::{to_json_binary, to_json_string, from_json};
 
 
-pub use module::*;
+pub use cosmwasm_std::{
+    Api, Env, Addr, CanonicalAddr, MessageInfo, Binary, BlockInfo, StdResult, Timestamp,
+    StdError, VerificationError, RecoverPubkeyError, CustomMsg, Uint128, Uint64,
+    Order, Storage
+};

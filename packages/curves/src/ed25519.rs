@@ -1,11 +1,11 @@
-use saa_schema::wasm_serde;
+use saa_schema::saa_type;
 use saa_common::{
     CredentialId, 
     AuthError, Binary, ToString, Verifiable, ensure
 };
 
 
-#[wasm_serde]
+#[saa_type]
 pub struct Ed25519 {
     pub pubkey:    Binary,
     pub message:   Binary,
@@ -16,9 +16,8 @@ pub struct Ed25519 {
 impl Verifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_vec()
+        self.pubkey.to_string()
     }
-
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(
