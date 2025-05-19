@@ -9,7 +9,7 @@ members = [
     "packages/macros-proto/core",
     "packages/macros-proto/solana",
     "packages/macros-proto/substrate",
-    #"packages/tests",
+    "packages/tests",
 ]
 
 resolver = "2"
@@ -45,9 +45,6 @@ saa-proto-substrate     = { version = "0.25.0", path = "packages/macros-proto/su
 
 cosmwasm-schema         = { version = "1.5.11", default-features = false }
 cosmwasm-crypto         = { version = "2.2.2", default-features = false }
-cosmwasm-std            = { version = "2.2.2", default-features = false, features = ["iterator"]}
-cosmwasm-std-one        = { version = "1.5.11", default-features = false, package = "cosmwasm-std", features = ["iterator"] }
-secretwasm-std          = { version = "1.1.11", default-features = false, package = "secret-cosmwasm-std", features = ["iterator"] }
 
 
 # Substrate

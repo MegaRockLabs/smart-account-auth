@@ -1,0 +1,24 @@
+[package]
+name        = "saa-tests"
+description = "Tests"
+edition     = { workspace = true }
+authors     = { workspace = true }
+version     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+
+
+[dependencies]
+smart-account-auth  = { workspace = true, features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
+saa-common          = { workspace = true }
+saa-schema          = { workspace = true }
+strum_macros        = { workspace = true }
+strum               = { workspace = true }
+
+cosmwasm-std        = { version = "2.2.2", default-features = false }
+cosmwasm-schema     = { workspace = true  }
+serde_json          = { workspace = true }
+serde               = { workspace = true }
+schemars            = { workspace = true }
+
+cw-auths            = { version = "0.3.1", default-features = false, features = ["cw_2", "session", "multimsg", "utils", "types"] }

@@ -27,16 +27,6 @@ impl Credential {
             let addr = api.addr_validate(&id)?;
             return Ok(addr)
         }
-        #[cfg(all(feature = "injective", feature="ethereum"))]
-        {
-            if name == CredentialName::EthPersonalSign {
-                return Ok(Addr::unchecked(
-                    pubkey_to_address(
-                        id.as_bytes(), "inj"
-                    )?
-                ))
-            } 
-        }
         Ok(match self.hrp() {
             Some(hrp) => Addr::unchecked(
                 pubkey_to_address(id.as_bytes(), &hrp)?
@@ -62,12 +52,6 @@ impl CredentialInfo {
         if name == CredentialName::Native {
             let addr = api.addr_validate(&id)?;
             return Ok(addr)
-        }
-        #[cfg(all(feature = "injective", feature="ethereum"))]
-        {
-            if name == CredentialName::EthPersonalSign {
-                return Ok(Addr::unchecked(pubkey_to_address(id.as_bytes(), "inj")?))
-            } 
         }
         Ok(match &self.hrp {
             Some(hrp) => api.addr_validate(&pubkey_to_address(id.as_bytes(), &hrp)?)?,

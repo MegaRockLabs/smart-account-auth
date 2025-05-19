@@ -21,18 +21,12 @@ saa-curves              = { workspace = true }
 saa-schema              = { workspace = true }
 saa-common              = { workspace = true }
 
+serde                   = { workspace = true }
+strum                   = { workspace = true }
+serde_json              = { workspace = true, optional = true }
+borsh                   = { workspace = true, optional = true }
 scale                   = { workspace = true, optional = true }
 scale-info              = { workspace = true, optional = true }
-borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true, optional = true }
-serde                   = { workspace = true }
-
-strum                   = { workspace = true }
-strum_macros            = { workspace = true }
-serde_json              = { workspace = true, optional = true }
-enum_dispatch           = { workspace = true  }
-
-cosmwasm-schema         = { workspace = true, optional = true }
 
 
 
@@ -44,7 +38,7 @@ default = [
     "ed25519",
     "passkeys",
     "replay",
-    "session",
+    "traits",
 ]
 std = [
     "scale?/std",
@@ -54,23 +48,20 @@ std = [
 session     = [
     "saa-common/session",
 ]
-
 native = [
     "saa-auth/native",
 ]
 solana = [
-    "borsh/derive",
-    "saa-auth/solana",
+    "saa-common/solana",
 ]
 substrate = [
     "dep:scale",
     "dep:scale-info",
-    "saa-auth/substrate",
+    "saa-common/substrate",
 ]
 cosmwasm = [
     "saa-auth/cosmwasm",
     "wasm",
-    "std",
 ]
 cosmwasm_1 = [
     "saa-auth/cosmwasm_1",
@@ -82,11 +73,7 @@ secretwasm  = [
     "saa-curves/wasm",
     "wasm",
 ]
-injective = [
-    "saa-auth/injective",
-    "cosmwasm",
-]
-wasm   = ["dep:schemars", "dep:cosmwasm-schema"]
+wasm      = ["std"]
 replay    = ["saa-common/replay"]
 # Passkey credential 
 passkeys    = []
@@ -108,4 +95,4 @@ traits      = []
 types       = ["saa-common/types"]
 
 # Enable the export of inner utils that the lib uses
-utils       = ["saa-auth/utils", "dep:serde_json"]
+utils       = ["dep:serde_json"]

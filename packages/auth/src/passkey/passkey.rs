@@ -184,6 +184,7 @@ impl Verifiable for PasskeyCredential {
         api : &dyn saa_common::wasm::Api
     ) -> Result<(), AuthError> {
 
+        // this is flag for version 2 that does have an api method already
         #[cfg(feature = "cosmwasm")]
         let res = api.secp256r1_verify(
             &self.message_digest()?,

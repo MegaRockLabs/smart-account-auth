@@ -36,8 +36,9 @@ impl Verifiable for Caller {
     fn hrp(&self) -> Option<String> {
         #[cfg(feature = "wasm")]
         {
-            return Some(prefix_from_address(&self.0))
+            return Some(prefix_from_address(&self.0));
         }
+        #[cfg(not(feature = "wasm"))]
         None
     }
 

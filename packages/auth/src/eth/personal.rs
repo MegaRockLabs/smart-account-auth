@@ -24,13 +24,6 @@ impl Verifiable for EthPersonalSign {
         self.signer.to_string()
     }
 
-    fn hrp(&self) -> Option<String> {
-        #[cfg(feature = "injective")]
-        {
-            return Some("inj".to_string());
-        }
-        None
-    }
 
     fn validate(&self) -> Result<(), AuthError> {
         if !self.signer.starts_with("0x") {

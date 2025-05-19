@@ -1,6 +1,3 @@
-mod eth;
-pub use eth::*;
+mod personal;
+pub use personal::*;
 pub mod utils;
-
-#[cfg(test)]
-mod tests;

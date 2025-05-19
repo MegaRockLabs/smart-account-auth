@@ -2,8 +2,7 @@ mod tests {
 
     use cosmwasm_std::testing::mock_dependencies;
     use saa_common::{Binary, Verifiable};
-
-    use crate::eth::EthPersonalSign;
+    use smart_account_auth::EthPersonalSign;
 
 
     #[test]

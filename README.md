@@ -63,11 +63,11 @@ saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwa
 
 Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
 - `native` - for native rust code
-- `substrate` - for smart contracts written in ink (substrate) 
-- `solana` - for solana programs ( serialization only )
-- `cosmwasm` - for cosmwasm 1.x
-- `secretwasm` - for cosmwasm of secret network (testing)
-- `injective` - for cosmwasm of injective network (in development)
+- `cosmwasm` - for cosmwasm 2.x
+- `cosmwasm_1` - for cosmwasm 1.x 
+- `secretwasm` - for cosmwasm of secret network (in development)
+- `substrate` - for smart contracts written in ink (in development)
+- `solana` - for solana programs (in development)
 
 
 Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size
@@ -79,9 +79,8 @@ Credential specifc features allow you to include / exclude specific credential t
 - `ed25519` - same as above but only for Ed25519 curve
 
 The following features give you access to additional logic related to better control or additional security
-- `storage` - expose methods and provide storage for storing and retrieving credentials from storage (coswasm only)
-- `iterator`- expose methods for iterating and retrivieng all the credentials (coswasm only)
-- `replay` - enable replay protection and enforce signed messages to follow a specific format that includes a nonce 
+- `session` - tool and primitives for session keys and message type identification 
+- `replay` - enable replay protection and enforce signed messages to follow a specific format that includes nonces 
 - `std` - whether to enable native Rust std library 
 
 The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
@@ -90,19 +89,16 @@ The following features enable or disable inner primitives to ether help you out 
 - `traits` - for importing trait `Verifiable` used internally or `CredentialsWrapper` to customise or simply use the wrapper methods 
 
 The following credentials are not meant to be specified directly and used only internal purposes 🚫
-- `wasm` - common logic for cosmwasm and it's derivatives like secretwasm, injective and others   
+- `wasm` - common logic for different versions of cosmwasm or it's derivatives
 
-The following credentials are included by default
-```ts
-"ethereum", "cosmos", "ed25519", "passkeys", "replay", "iterator", "std", "traits"
-```
 
 
 ## Verification
 
 ### Single Credential
 ```rust
-use smart_acccount_auth::{Verifiable, EvmCredential, Binary};
+use cosmwasm_std::Binary;
+use smart_acccount_auth::{traits::Verifiable, EvmCredential};
 
 let evm_credential = EvmCredential {
     message:   Binary::from_base64( ** your message ** ),
@@ -120,7 +116,7 @@ evm_credential.verify_cosmwasm(deps.api)?;
 ### Multiple Credentials / Credentil Data Wrapper
 
 ```rust
-use smart_acccount_auth::{Verifiable, CredentialsWrapper, CredentialData};
+use smart_acccount_auth::{traits::{Verifiable, CredentialsWrapper}, CredentialData};
 
 let credential_data = CredentialData {
     credentials         :  vec![ ** your credentials here **  ],
@@ -150,42 +146,6 @@ if cred.is_cosmos_derivable() {
 
 ```
 
-
-### Storage / Replay
-
-The library is aim tp provide helpful primitives for verifying and then storing credentials in a secure and easy way
-```rust
-# first verify all the credentials and then store them stored in the storage
-credential_data.save_cosmwasm(deps.api, deps.storage, &env, &info)?;
-```
-
-When replay attack protection is enabled, the library will enforce the message to include a contract address, a chain id and a nonce that should be equal to the current account number
- 
-
-After a successful verification an account contract must increment the nonce to prevent replay attacks
-```rust
-increment_account_number(deps.storage)?;
-```
-
-The library also provides a helper function to verify the signed actions which will verify the credentials and then increment the nonce automatically
-```rust
-verify_signed_actions(deps.api, deps.storage, &env, data)?;
-```
-
-#### Registries / Factories
-
-In some cases you can want to use credemtials for accounts that are not yet created and therefire do not have an account number (unless instantiate2 is used). 
-
-In cases like that you can use address of a registry / factory contract in data to sign. Later after the account contract is created you can create a new `Env` object with overwritten contract address
-
-```rust
-let registry_env = Env {
-    contract: ContractInfo { address: info.sender.clone() },
-    ..env.clone()
-};
-
-data.save_cosmwasm(api, storage, &registry_env, &info)?;
-```
 
 # Typescript
 
