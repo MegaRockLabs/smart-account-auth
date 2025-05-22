@@ -1,4 +1,5 @@
-use saa_common::{hashes::keccak256, AuthError, vec, format};
+use saa_common::{AuthError, vec, format};
+use saa_crypto::hashes::keccak256;
 
 
 pub fn preamble_msg_eth(msg: &[u8]) -> [u8; 32] {

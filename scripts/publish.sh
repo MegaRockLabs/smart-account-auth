@@ -10,6 +10,8 @@ cd packages/schema && cargo publish && cd ../..
 sleep 10
 cd packages/common && cargo publish && cd ../..
 sleep 10
+cd packages/crypto && cargo publish && cd ../..
+sleep 10
 cd packages/curves && cargo publish && cd ../..
 sleep 10
 cd packages/auth && cargo publish && cd ../..

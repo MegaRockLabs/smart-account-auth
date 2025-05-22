@@ -1,10 +1,8 @@
-use crate::{msgs::SignedDataMsg, credential::{Credential, CredentialInfo, CredentialName}};
-use saa_common::{wasm::{Addr, Api, CustomMsg}, AuthError, CredentialId};
+use crate::credential::{Credential, CredentialInfo, CredentialName};
+use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
+#[cfg(feature= "wasm")]
+use saa_crypto::{pubkey_to_address, pubkey_to_canonical};
 
-
-
-// Allow usage of `CosmosMsg<SignedDataMsg>` in CosmWasm contracts
-impl CustomMsg for SignedDataMsg {}
 
 
 impl Credential {
@@ -20,7 +18,6 @@ impl Credential {
     }
 
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        use saa_common::utils::*;
         let id = self.id();
         let name = self.name();
         if name == CredentialName::Native {
@@ -42,12 +39,10 @@ impl Credential {
 }
 
 
-
 impl CredentialInfo {
     
 
     pub fn cosmos_address(&self, api: &dyn Api, id: CredentialId) -> Result<Addr, crate::AuthError> {
-        use saa_common::utils::*;
         let name = self.name.clone();
         if name == CredentialName::Native {
             let addr = api.addr_validate(&id)?;

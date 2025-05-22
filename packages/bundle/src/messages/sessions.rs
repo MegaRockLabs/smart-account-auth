@@ -1,7 +1,7 @@
 use saa_schema::saa_type;
-use saa_common::{Binary, CredentialId, Expiration, Vec, String, vec, hashes::sha256};
-use crate::{credential::CredentialRecord, msgs::{Action, AllowedActions, DerivableMsg}};
-
+use saa_common::{Binary, CredentialId, Expiration, Vec, String, vec};
+use super::actions::{Action, AllowedActions, DerivableMsg};
+use crate::credential::CredentialRecord;
 
 type GranteeInfo = CredentialRecord;
 
@@ -33,7 +33,7 @@ impl Session {
     pub fn key(&self) -> CredentialId {
         let (id, info) = &self.grantee;
         
-        let actions  = match self.actions {
+        let act_bytes  = match self.actions {
             AllowedActions::All {  } => vec![],
             AllowedActions::Include(ref actions) => {
                 actions.iter().map(|a| a.to_string())
@@ -45,12 +45,12 @@ impl Session {
         };
 
         Binary::from(
-            sha256(
+            saa_crypto::sha256(
             &[
                     self.granter.as_bytes(),
                     id.as_bytes(),
                     info.name.to_string().as_bytes(),
-                    actions.as_slice()
+                    act_bytes.as_slice()
                 ]
                 .concat()
             )

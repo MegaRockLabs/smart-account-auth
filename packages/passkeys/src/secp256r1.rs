@@ -1,29 +1,19 @@
-use saa_common::{
-    CredentialId,  
-    AuthError, Binary, ToString, Verifiable,
-    ensure
-};
-
-use saa_schema::saa_type;
+use saa_common::{AuthError,  Binary,  ToString, Verifiable, ensure};
 
 
-#[saa_type]
-pub struct Secp256k1 {
+#[saa_schema::saa_type]
+pub struct Secp256r1 {
     pub pubkey:    Binary,
     pub message:   Binary,
     pub signature: Binary,
-    pub hrp:       Option<String>
 }
 
 
-impl Verifiable for Secp256k1 {
 
-    fn id(&self) -> CredentialId {
+impl Verifiable for Secp256r1 {
+
+    fn id(&self) -> saa_common::CredentialId {
         self.pubkey.to_string()
-    }
-
-    fn hrp(&self) -> Option<String> {
-        self.hrp.clone()
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -37,7 +27,7 @@ impl Verifiable for Secp256k1 {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let res = saa_crypto::secp256k1_verify(
+        let res = saa_crypto::secp256r1_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
@@ -48,9 +38,21 @@ impl Verifiable for Secp256k1 {
 
 
     #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
-        let res = api.secp256k1_verify(
-            &saa_crypto::hashes::sha256(&self.message), 
+    fn verify_cosmwasm(
+        &self,
+        #[allow(unused_variables)]
+        api : &dyn saa_common::wasm::Api
+    ) -> Result<(), AuthError> {
+        use saa_crypto::hashes::sha256;
+        #[cfg(feature = "no_api_r1")]
+        let res = saa_crypto::secp256r1_verify(
+            &sha256(&self.message), 
+            &self.signature, 
+            &self.pubkey
+        )?;
+        #[cfg(not(feature = "no_api_r1"))]
+        let res = api.secp256r1_verify(
+            &sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
@@ -58,3 +60,4 @@ impl Verifiable for Secp256k1 {
         Ok(())
     }
 }
+

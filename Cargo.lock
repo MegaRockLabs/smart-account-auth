@@ -242,6 +242,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
+name = "base64-url"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38e2b6c78c06f7288d5e3c3d683bde35a79531127c83b087e5d0d77c974b4b28"
+dependencies = [
+ "base64 0.22.1",
+]
+
+[[package]]
 name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1238,9 +1247,9 @@ dependencies = [
 
 [[package]]
 name = "ink"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "038bb299d0947223bb08e79c06125665b9318a3abc8234e0d2462af9b707615a"
+checksum = "15d7438a13d38fa8f4eebea8d1e7c2931058eafd0336c79f4141d4ed0162a412"
 dependencies = [
  "derive_more 1.0.0",
  "ink_env",
@@ -1257,18 +1266,18 @@ dependencies = [
 
 [[package]]
 name = "ink_allocator"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f339ca8bde70e85a8a8aaf3b85c47c223505464026c14d4e8674b262e2c8f702"
+checksum = "2ec348ce75d284bc2e698187dc01da416a52dfa2d685e2a57d04e9e580447df0"
 dependencies = [
  "cfg-if",
 ]
 
 [[package]]
 name = "ink_codegen"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8372b4923134c0491ae29f0275dc3c82a6d6cc2001faa5e62be8c6aa0daf6a3a"
+checksum = "2238f147295746f1fee4cf7dcdee6378c94e61fbf7b9f9f4bb2a7f918530801b"
 dependencies = [
  "blake2",
  "derive_more 1.0.0",
@@ -1288,9 +1297,9 @@ dependencies = [
 
 [[package]]
 name = "ink_engine"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71e99d2fa2172fca9bccc80545de3fd15c1679fb2054b2acfce9addbbb2285f6"
+checksum = "d273f2aa983d04a6476d3c5ac76ddbef07555664b88f923996e7465e261dda48"
 dependencies = [
  "blake2",
  "derive_more 1.0.0",
@@ -1304,9 +1313,9 @@ dependencies = [
 
 [[package]]
 name = "ink_env"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f99c28db777ffd7c70f9ca9a3f15481e9b06901fc71cdb76a92d109553103283"
+checksum = "f9ee6089a1836c2e92d00be97d42308b7fb2c2b51ff6150b1130166a58107092"
 dependencies = [
  "blake2",
  "cfg-if",
@@ -1335,9 +1344,9 @@ dependencies = [
 
 [[package]]
 name = "ink_ir"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61a848ed81c791a3b0685490aca5cf704fba18f367c7d602a6bde76a015bce0e"
+checksum = "e201688fb27ff97496a4231a393dd4befcc5a9c092d6bf231f0f5d409ef44f34"
 dependencies = [
  "blake2",
  "either",
@@ -1351,9 +1360,9 @@ dependencies = [
 
 [[package]]
 name = "ink_macro"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41915a71a644798b82f4bf6c3d63afde66140b8a325951fe2ea26f35f5cb68a7"
+checksum = "8ce9465553d3066a8e28bd94a94880289084c4ff12f1852312553e902fa1ffdd"
 dependencies = [
  "ink_codegen",
  "ink_ir",
@@ -1367,9 +1376,9 @@ dependencies = [
 
 [[package]]
 name = "ink_metadata"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a0a9f9ec91e9b3959d65f942a31b974553581f56d5d3e6110103389275fcebd"
+checksum = "27135c651274087ba0578d2c07866c31d8dd481ae8de5bb7295fe3931491aa80"
 dependencies = [
  "derive_more 1.0.0",
  "impl-serde",
@@ -1384,18 +1393,18 @@ dependencies = [
 
 [[package]]
 name = "ink_prelude"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06e9cea08327df71f1d30f7efd1fc5fd3934a4b66ad03741229f30712f675d1"
+checksum = "b29c9b7f686f4305f523bca5e2ae6f22a09531ec2bf0a9498cdc877959f70ad0"
 dependencies = [
  "cfg-if",
 ]
 
 [[package]]
 name = "ink_primitives"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76971939c364a0fafd57687e581f96df299400679f421ad3cd9d05d14816dc10"
+checksum = "a530c1b352a53176ea718f3a65f15003e54e0474ec12353ea0e0e5bb60b25741"
 dependencies = [
  "derive_more 1.0.0",
  "ink_prelude",
@@ -1408,9 +1417,9 @@ dependencies = [
 
 [[package]]
 name = "ink_storage"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee944e196e4c4ad48cb4e27f0d8f03c4231670e0517f3720f2900af580d0b1d4"
+checksum = "9bed602a974481b194084b93957917f27e724c7561fd0de9b6f3c171590c839b"
 dependencies = [
  "array-init",
  "cfg-if",
@@ -1427,9 +1436,9 @@ dependencies = [
 
 [[package]]
 name = "ink_storage_traits"
-version = "5.1.0"
+version = "5.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfa55ef65b50240824ea08abe3130d7971e633393239df83dfdd4a2a4731aaff"
+checksum = "fde9b3f4a1e355682e5d13fd5639e5da4d0a2029537292e05a4255ea1169663e"
 dependencies = [
  "ink_metadata",
  "ink_prelude",
@@ -1952,15 +1961,11 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 name = "saa-auth"
 version = "0.25.0"
 dependencies = [
- "base64 0.22.1",
- "bech32 0.11.0",
  "hex",
  "saa-common 0.25.1",
- "saa-curves 0.25.0",
+ "saa-crypto",
  "saa-schema 0.25.1",
- "schemars",
  "serde",
- "sha2 0.10.9",
 ]
 
 [[package]]
@@ -2017,19 +2022,30 @@ dependencies = [
  "cosmwasm-crypto 2.2.2",
  "cosmwasm-std 1.5.11",
  "cosmwasm-std 2.2.2",
- "digest 0.10.7",
  "getrandom",
  "ink",
  "parity-scale-codec",
- "ripemd",
  "saa-schema 0.25.1",
  "scale-info",
  "schemars",
  "secret-cosmwasm-std",
  "serde",
  "serde-json-wasm 1.0.1",
- "sha2 0.10.9",
  "thiserror 2.0.12",
+]
+
+[[package]]
+name = "saa-crypto"
+version = "0.25.0"
+dependencies = [
+ "bech32 0.11.0",
+ "cosmwasm-crypto 2.2.2",
+ "digest 0.10.7",
+ "p256",
+ "ripemd",
+ "saa-common 0.25.1",
+ "saa-schema 0.25.1",
+ "sha2 0.10.9",
  "tiny-keccak",
 ]
 
@@ -2037,16 +2053,9 @@ dependencies = [
 name = "saa-curves"
 version = "0.25.0"
 dependencies = [
- "bech32 0.11.0",
- "borsh",
- "digest 0.10.7",
- "p256",
- "parity-scale-codec",
  "saa-common 0.25.1",
+ "saa-crypto",
  "saa-schema 0.25.1",
- "scale-info",
- "schemars",
- "serde",
 ]
 
 [[package]]
@@ -2063,6 +2072,16 @@ dependencies = [
  "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "scale-info",
  "schemars",
+ "serde",
+]
+
+[[package]]
+name = "saa-passkeys"
+version = "0.25.0"
+dependencies = [
+ "saa-common 0.25.1",
+ "saa-crypto",
+ "saa-schema 0.25.1",
  "serde",
 ]
 
@@ -2165,6 +2184,7 @@ dependencies = [
 name = "saa-tests"
 version = "0.25.0"
 dependencies = [
+ "base64-url",
  "cosmwasm-schema 1.5.11",
  "cosmwasm-std 2.2.2",
  "cw-auths",
@@ -2570,13 +2590,12 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "smart-account-auth"
 version = "0.25.0"
 dependencies = [
- "borsh",
- "parity-scale-codec",
  "saa-auth 0.25.0",
  "saa-common 0.25.1",
+ "saa-crypto",
  "saa-curves 0.25.0",
+ "saa-passkeys",
  "saa-schema 0.25.1",
- "scale-info",
  "serde",
  "serde_json",
  "strum",

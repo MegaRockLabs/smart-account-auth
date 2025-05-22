@@ -31,8 +31,8 @@ impl Verifiable for Ed25519 {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let success = saa_common::crypto::ed25519_verify(
-            &saa_common::hashes::sha256(&self.message), 
+        let success = saa_crypto::ed25519_verify(
+            &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
@@ -41,12 +41,12 @@ impl Verifiable for Ed25519 {
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> 
         where Self: Clone
     {
         let success = api.ed25519_verify(
-            &saa_common::hashes::sha256(&self.message), 
+            &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;

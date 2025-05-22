@@ -1,5 +1,10 @@
-pub(crate) mod types;
-pub(crate) mod utils;
+// ---
+
+#[cfg(test)]
+mod types;
+#[cfg(test)]
+mod utils;
+
 
 #[cfg(test)]
 mod sessions;
@@ -8,8 +13,7 @@ mod sessions;
 mod storage;
 
 #[cfg(test)]
-mod data;
-
+mod credential;
 
 #[cfg(test)]
-mod credential;
+mod data;

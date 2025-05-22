@@ -1,11 +1,11 @@
-use std::fmt::Display;
-use strum::IntoDiscriminant;
+use core::fmt::Display;
+use strum::{IntoDiscriminant};
 use saa_common::{AuthError, SessionError, FromStr, ToString, ensure};
 use super::actions::{Action, ActionDerivation, AllowedActions, DerivableMsg};
 
 
 
-impl core::fmt::Display for Action {
+impl Display for Action {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.result)
     }

@@ -154,7 +154,7 @@ mod std_mod {
 
     #[cfg(feature = "wasm")] 
     mod wasm {
-        use crate::AuthError;
+        use super::AuthError;
 
         impl From<crate::wasm::RecoverPubkeyError> for AuthError {
             fn from(err: crate::wasm::RecoverPubkeyError) -> Self {
@@ -173,7 +173,20 @@ mod std_mod {
                 Self::Crypto(err.to_string())
             }
         }
+
+         impl From<bech32::primitives::hrp::Error> for AuthError {
+            fn from(err: bech32::primitives::hrp::Error) -> Self {
+                Self::Crypto(err.to_string())
+            }
+        }
+
+        impl From<bech32::EncodeError> for AuthError {
+            fn from(err: bech32::EncodeError) -> Self {
+                Self::Crypto(err.to_string())
+            }
+        }
     }
+
 
     #[cfg(feature = "native")] 
     impl From<cosmwasm_crypto::CryptoError> for AuthError {
@@ -182,6 +195,7 @@ mod std_mod {
         }
     }
 
+   
 
 }
 
@@ -267,19 +281,6 @@ pub use no_std_mod::*;
 impl AuthError {
     pub fn generic<M: Into<String>>(msg: M) -> Self {
         AuthError::Generic(msg.into())
-    }
-}
-
-impl From<bech32::primitives::hrp::Error> for AuthError {
-    fn from(err: bech32::primitives::hrp::Error) -> Self {
-        Self::Crypto(err.to_string())
-    }
-}
-
-
-impl From<bech32::EncodeError> for AuthError {
-    fn from(err: bech32::EncodeError) -> Self {
-        Self::Crypto(err.to_string())
     }
 }
 

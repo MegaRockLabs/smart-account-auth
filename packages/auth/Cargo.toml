@@ -8,36 +8,17 @@ license     = { workspace = true }
 repository  = { workspace = true }
 
 [dependencies]
-hex                     = "0.4.3"
-sha2                    = { workspace = true } 
-bech32                  = { workspace = true }
-base64                  = { workspace = true }
-
-saa-common              = { workspace = true }
-saa-schema              = { workspace = true }
-saa-curves              = { workspace = true }
-
-schemars                = { workspace = true, optional = true }
-serde                   = { workspace = true, optional = true }
-
+hex                 = { version = "0.4.3", optional = true, default-features = false }
+serde               = { workspace = true,  optional = true }
+saa-crypto          = { workspace = true }
+saa-common          = { workspace = true }
+saa-schema          = { workspace = true }
 
 [features]
-default = [
-    "std"
-]
-std = [
-    "saa-curves/std",
-    "bech32/std"
-]
-native = [
-    "saa-curves/native",
-]
-cosmwasm = [
-    "saa-curves/cosmwasm",
-    "wasm"
-]
-cosmwasm_1 = [
-    "saa-curves/cosmwasm_1",
-    "wasm",
-]
-wasm  = ["dep:serde", "dep:schemars"]
+default             =   ["std"]
+std                 =   ["saa-crypto/std",     "hex?/std"]
+eth_personal        =   ["saa-crypto/ethereum", "dep:hex"]
+eth_typed_data      =   ["saa-crypto/ethereum", "dep:hex", "dep:serde"]
+native              =   ["saa-crypto/native"   ] 
+cosmwasm            =   ["saa-crypto/cosmwasm"]
+cosmos              =   []

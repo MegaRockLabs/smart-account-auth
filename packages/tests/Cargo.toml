@@ -8,7 +8,7 @@ license     = { workspace = true }
 repository  = { workspace = true }
 
 
-[dependencies]
+[dev-dependencies]
 smart-account-auth  = { workspace = true, features = ["cosmwasm", "native", "curves", "session", "utils", "types"]}
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
@@ -22,3 +22,4 @@ serde               = { workspace = true }
 schemars            = { workspace = true }
 
 cw-auths            = { version = "0.3.1", default-features = false, features = ["cw_2", "session", "multimsg", "utils", "types"] }
+base64-url          = { version = "3.0.0", default-features = false }

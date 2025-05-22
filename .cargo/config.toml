@@ -1,0 +1,2 @@
+[alias]
+features = "hack check   --group-features eth_personal,eth_typed_data,cosmos --group-features ed25519,secp256k1 --group-features passkeys,secp256r1  --mutually-exclusive-features cosmwasm,cosmwasm_v1,native --at-least-one-of cosmwasm,cosmwasm_v1  --exclude-features solana,substrate,secretwasm,default,majors,curves,ethereum,wasm  --group-features utils,traits,types,replay,session    --feature-powerset  -v --color auto --target wasm32-unknown-unknown -p smart-account-auth" 

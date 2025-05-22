@@ -1,17 +1,19 @@
 use saa_schema::{saa_derivable, saa_type};
 use saa_common::{Binary, String, CredentialId};
 
-pub use saa_auth::caller::Caller;
-#[cfg(feature = "ethereum")]
+pub use super::caller::Caller;
+#[cfg(feature = "eth_personal")]
 pub use saa_auth::eth::EthPersonalSign;
 #[cfg(feature = "cosmos")]
 pub use saa_auth::cosmos::CosmosArbitrary;
 #[cfg(feature = "passkeys")]
-pub use saa_auth::passkey::PasskeyCredential;
+pub use saa_passkeys::passkey::PasskeyCredential;
+#[cfg(feature = "secp256r1")]
+pub use saa_passkeys::secp256r1::Secp256r1;
+#[cfg(feature = "secp256k1")]
+pub use saa_curves::secp256k1::Secp256k1;
 #[cfg(feature = "ed25519")]
 pub use saa_curves::ed25519::Ed25519;
-#[cfg(feature = "curves")]
-pub use saa_curves::{secp256k1::Secp256k1, secp256r1::Secp256r1};
 
 
 
@@ -19,7 +21,7 @@ pub use saa_curves::{secp256k1::Secp256k1, secp256r1::Secp256r1};
 pub enum Credential {
     Native(Caller),
 
-    #[cfg(feature = "ethereum")]
+    #[cfg(feature = "eth_personal")]
     EthPersonalSign(EthPersonalSign),
 
     #[cfg(feature = "cosmos")]
@@ -28,16 +30,16 @@ pub enum Credential {
     #[cfg(feature = "passkeys")]
     Passkey(PasskeyCredential),
 
+    #[cfg(feature = "secp256r1")]
+    Secp256r1(Secp256r1),
+
+    #[cfg(feature = "secp256k1")]
+    Secp256k1(Secp256k1),
+
     #[cfg(feature = "ed25519")]
     Ed25519(Ed25519),
 
-    #[cfg(feature = "curves")]
-    Secp256k1(Secp256k1),
-
-    #[cfg(feature = "curves")]
-    Secp256r1(Secp256r1),
 }
-
 
 
 
@@ -75,7 +77,7 @@ pub fn build_credential(
 
         CredentialName::Native => Credential::Native(Caller(id)),
 
-        #[cfg(feature = "ethereum")]
+        #[cfg(feature = "eth_personal")]
         CredentialName::EthPersonalSign => Credential::EthPersonalSign(EthPersonalSign {
                 message,
                 signature,
@@ -93,10 +95,10 @@ pub fn build_credential(
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
-            use saa_auth::passkey::{
-                ClientData, PasskeyInfo, PasskeyPayload, utils::base64_to_url
+            use saa_passkeys::passkey::{
+                ClientData, PasskeyInfo, PasskeyPayload, 
+                utils::base64_to_url
             };
-
             let stored_info  = info.extension
                 .map(|e| saa_common::from_json::<PasskeyInfo>(e).ok() )
                 .flatten()
@@ -111,7 +113,6 @@ pub fn build_credential(
             };
             
             let client_data = ClientData::new(
-                "webauthn.get",
                 base64_to_url(message.to_base64().as_str()),
                 origin.unwrap_or(stored_info.origin),
                 stored_info.cross_origin,
@@ -127,25 +128,26 @@ pub fn build_credential(
                 user_handle: stored_info.user_handle,
             })
         },
+
+        #[cfg(feature = "secp256r1")]
+        CredentialName::Secp256r1 => Credential::Secp256r1(Secp256r1 {
+            pubkey: Binary::from_base64(&id)?,
+            signature,
+            message,
+        }),
+        #[cfg(feature = "secp256k1")]
+        CredentialName::Secp256k1 => Credential::Secp256k1(Secp256k1 {
+            pubkey: Binary::from_base64(&id)?,
+            signature,
+            message,
+            hrp: info.hrp,
+        }),
         #[cfg(feature = "ed25519")]
         CredentialName::Ed25519 => Credential::Ed25519(Ed25519 {
             pubkey: Binary::from_base64(&id)?,
             signature,
             message,
         }),
-        #[cfg(feature = "curves")]
-        curves => {
-            let pubkey = Binary::from_base64(&id)?;
-            match curves {
-                CredentialName::Secp256k1 => Credential::Secp256k1(Secp256k1 {
-                    pubkey,
-                    signature,
-                    message,
-                    hrp: info.hrp,
-                }),
-                _ => return Err(saa_common::AuthError::generic("Unsupported curve")),
-            }
-        }
     };
     Ok(credential)
 }

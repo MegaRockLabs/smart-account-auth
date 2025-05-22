@@ -21,21 +21,21 @@ pub use scale_info;
     not(feature = "solana"), 
     not(feature = "substrate"))
 )]
-pub use saa_proto_core::{saa_type};
+pub use saa_proto_core::saa_type;
 #[cfg(all(
     feature = "solana", 
     not(feature = "cosmwasm"), 
     not(feature = "substrate"))
 )]
-pub use {borsh, saa_proto_solana::{saa_type}};
+pub use {borsh, saa_proto_solana::saa_type};
 #[cfg(all(
     feature = "substrate", 
     not(feature = "cosmwasm"), 
     not(feature = "solana"))
 )]
-pub use {scale, saa_proto_substrate::{saa_type}};
+pub use {saa_proto_substrate::saa_type, scale};
 #[cfg(not(feature = "cosmwasm"))]
 pub use saa_proto_core::{saa_derivable, saa_str_struct};
 #[cfg(feature = "cosmwasm")]
-pub use {saa_proto_wasm::{saa_type, saa_derivable, saa_str_struct}};
+pub use saa_proto_wasm::{saa_derivable, saa_str_struct, saa_type};
 

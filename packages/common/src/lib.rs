@@ -1,42 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
-mod errors;
 mod traits;
 mod macros;
+mod env;
 
 pub mod types;
-pub mod utils;
-pub mod hashes;
-
-pub use errors::*;
-pub use types::Empty;
+pub use env::*;
+pub use types::errors::*;
 pub use types::binary::*;
 pub use types::uints::Uint64;
-pub use types::expiration::Expiration;
-pub type CredentialId = String;
-
-
-
-#[cfg(feature = "native")]
-pub mod crypto {pub use cosmwasm_crypto::*;} 
-#[cfg(feature = "wasm")]
-pub mod wasm;
-
-#[cfg(any(feature = "std", not(feature = "substrate")))]
-pub use {core::str::FromStr, std::{string::{ToString, String}, vec, vec::Vec, format}};
-#[cfg(all(not(feature = "std"), feature = "substrate"))]
-pub use ink::prelude::{string::{String, ToString, FromStr}, vec, vec::Vec, format};
-
+pub use types::exp::Expiration;
 pub use traits::Verifiable;
 
-#[cfg(feature = "substrate")]
-pub mod substrate {
-    pub use ink::env as ink_env;
-    pub use {ink_env::Environment as InkEnvironment, ink::EnvAccess as InkApi};
-    pub mod default {
-        use ink::env as ink_env;
-        pub use ink_env::DefaultEnvironment;
-        pub type AccountId = <DefaultEnvironment as ink_env::Environment>::AccountId;
-        pub type EnvAccess<'a> = ink::EnvAccess<'a, DefaultEnvironment>;
-    }
-}
+pub type CredentialId = String;

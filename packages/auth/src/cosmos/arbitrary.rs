@@ -1,29 +1,25 @@
 
-#[cfg(any(feature = "wasm", feature = "native"))]
-use {
-    saa_common::{hashes::sha256, utils::pubkey_to_address, ensure},
-    super::utils::preamble_msg_arb_036
-};
 use saa_common::{AuthError, Binary, CredentialId, String, ToString, Verifiable};
-use saa_schema::saa_type;
 
 
-#[saa_type]
+#[saa_schema::saa_type]
 pub struct CosmosArbitrary {
     pub pubkey:    Binary,
     pub signature: Binary,
     pub message:   Binary,
     pub hrp:       Option<String>
+    
 }
 
 
-#[cfg(any(feature = "wasm", feature = "native"))]
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
 impl CosmosArbitrary {
     fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+        use saa_crypto::{hashes::sha256, pubkey_to_address};
         match self.hrp {
             Some(ref hrp) => Ok(
                 sha256(
-                    preamble_msg_arb_036(
+                    super::utils::preamble_msg_arb_036(
                         pubkey_to_address(&self.pubkey, hrp)?.as_str(),
                         &self.message.to_string()
                     ).as_bytes()
@@ -56,17 +52,17 @@ impl Verifiable for CosmosArbitrary {
 
     #[cfg(feature = "native")]
     fn verify(&self) -> Result<(), AuthError> {
-        let success = saa_common::crypto::secp256k1_verify(
+        let success = saa_crypto::secp256k1_verify(
             &self.message_digest()?,
             &self.signature,
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
+        saa_common::ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 
 
-    #[cfg(feature = "wasm")]
+    #[cfg(feature = "cosmwasm")]
     fn verify_cosmwasm(
         &self, 
         api:  &dyn saa_common::wasm::Api
@@ -76,7 +72,7 @@ impl Verifiable for CosmosArbitrary {
             &self.signature,
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
+        saa_common::ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
         Ok(())
     }
 

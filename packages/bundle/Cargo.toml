@@ -16,83 +16,51 @@ crate-type  =  ["cdylib", "rlib"]
 
 
 [dependencies]
-saa-auth                = { workspace = true }
-saa-curves              = { workspace = true }
-saa-schema              = { workspace = true }
-saa-common              = { workspace = true }
-
 serde                   = { workspace = true }
 strum                   = { workspace = true }
-serde_json              = { workspace = true, optional = true }
-borsh                   = { workspace = true, optional = true }
-scale                   = { workspace = true, optional = true }
-scale-info              = { workspace = true, optional = true }
-
+saa-schema              = { workspace = true }
+saa-crypto              = { workspace = true }
+saa-common              = { workspace = true }
+saa-auth                = { workspace = true,  optional = true }
+saa-passkeys            = { workspace = true,  optional = true }
+saa-curves              = { workspace = true,  optional = true }
+serde_json              = { workspace = true,  optional = true }
 
 
 [features]
-default = [
-    "std", 
-    "ethereum", 
-    "cosmos", 
-    "ed25519",
-    "passkeys",
-    "replay",
-    "traits",
-]
-std = [
-    "scale?/std",
-    "scale-info?/std",
-    "saa-auth/std",
-]
-session     = [
-    "saa-common/session",
-]
-native = [
-    "saa-auth/native",
-]
-solana = [
-    "saa-common/solana",
-]
-substrate = [
-    "dep:scale",
-    "dep:scale-info",
-    "saa-common/substrate",
-]
-cosmwasm = [
-    "saa-auth/cosmwasm",
-    "wasm",
-]
-cosmwasm_1 = [
-    "saa-auth/cosmwasm_1",
-    "wasm",
-]
-secretwasm  = [
-    "saa-common/secretwasm",
-    "saa-auth/wasm",
-    "saa-curves/wasm",
-    "wasm",
-]
-wasm      = ["std"]
-replay    = ["saa-common/replay"]
-# Passkey credential 
-passkeys    = []
+# ---- Features ----
+session     =   ["saa-common/session"]
+replay      =   ["saa-common/replay"]
 
-# Blockchain specific authenticators
-ethereum    = []
-cosmos      = []
+# ---- Extra exports ----
+types       =   ["saa-common/types"]
+utils       =   ["dep:serde_json"]
+traits      =   []
 
-# Enable raw curve credentials without envelops
-curves      = ["ed25519"]
+# ---- Environement ----
 
-# Set separately for Solana
-ed25519     = []
+substrate    =   ["saa-common/substrate" ]
+solana       =   ["saa-schema/solana"    ]
+cosmwasm     =   ["saa-common/cosmwasm", "wasm"]
+std          =   ["saa-crypto/std",         "saa-auth?/std",      "saa-passkeys?/std",      "saa-curves?/std"             ]
+native       =   ["saa-crypto/native",      "saa-auth?/native",   "saa-passkeys?/native",   "saa-curves?/native"          ]
+cosmwasm_v1  =   ["saa-common/cosmwasm_v1", "saa-passkeys?/no_api_r1",  "wasm"]
+secretwasm   =   ["saa-common/secretwasm",  "saa-passkeys?/no_api_r1",  "wasm"]
+wasm         =   ["saa-crypto/cosmwasm", "saa-schema/cosmwasm",    "saa-auth?/cosmwasm", "saa-passkeys?/cosmwasm", "saa-curves?/cosmwasm",  "std"]
 
-# Enable the export of extra traits that the lib uses internally
-traits      = []
 
-# Enable the export of extra types that the lib uses internally
-types       = ["saa-common/types"]
+# ---- Credentials ----
+ed25519         =  ["saa-curves/ed25519"     ]
+secp256k1       =  ["saa-curves/secp256k1"   ]
+secp256r1       =  ["saa-passkeys/secp256r1" ]
+passkeys        =  ["saa-passkeys/passkeys"  ]
+cosmos          =  ["saa-auth/cosmos"        ]
+eth_personal    =  ["saa-auth/eth_personal"  ]
+eth_typed_data  =  ["saa-auth/eth_typed_data"]
 
-# Enable the export of inner utils that the lib uses
-utils       = ["dep:serde_json"]
+
+# ---- Grouped  ----    
+majors        =   ["cosmos", "eth_personal", "passkeys", "ed25519"]
+curves        =   ["secp256r1", "secp256k1", "ed25519"]
+ethereum      =   ["eth_personal", "eth_typed_data"]
+default       =   ["std", "majors", "replay"]

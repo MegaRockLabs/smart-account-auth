@@ -1,8 +1,7 @@
 use core::ops::Deref;
 use strum::IntoDiscriminant;
-use saa_auth::caller::Caller;
 use saa_common::{ensure, AuthError, Binary, CredentialId, Verifiable};
-use crate::{credential::CredentialName, Credential, CredentialData, CredentialInfo};
+use crate::{credential::CredentialName, Credential, CredentialData, CredentialInfo, caller::Caller};
 
 
 impl From<Caller> for Credential {
@@ -11,7 +10,7 @@ impl From<Caller> for Credential {
     }
 }
 
-#[cfg(feature = "ethereum")]
+#[cfg(feature = "eth_personal")]
 impl From<saa_auth::eth::EthPersonalSign> for Credential {
     fn from(c: saa_auth::eth::EthPersonalSign) -> Self {
         Credential::EthPersonalSign(c)
@@ -26,7 +25,6 @@ impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
 }
 
 
-
 #[cfg(feature = "ed25519")]
 impl From<saa_curves::ed25519::Ed25519> for Credential {
     fn from(c: saa_curves::ed25519::Ed25519) -> Self {
@@ -35,25 +33,25 @@ impl From<saa_curves::ed25519::Ed25519> for Credential {
 }
 
 
-
-#[cfg(feature = "passkeys")]
-impl From<saa_auth::passkey::PasskeyCredential> for Credential {
-    fn from(c: saa_auth::passkey::PasskeyCredential) -> Self {
-        Credential::Passkey(c)
-    }
-}
-
-#[cfg(feature = "curves")]
+#[cfg(feature = "secp256k1")]
 impl From<saa_curves::secp256k1::Secp256k1> for Credential {
     fn from(c: saa_curves::secp256k1::Secp256k1) -> Self {
         Credential::Secp256k1(c)
     }
 }
 
-#[cfg(feature = "curves")]
-impl From<saa_curves::secp256r1::Secp256r1> for Credential {
-    fn from(c: saa_curves::secp256r1::Secp256r1) -> Self {
+#[cfg(feature = "secp256r1")]
+impl From<saa_passkeys::secp256r1::Secp256r1> for Credential {
+    fn from(c: saa_passkeys::secp256r1::Secp256r1) -> Self {
         Credential::Secp256r1(c)
+    }
+}
+
+
+#[cfg(feature = "passkeys")]
+impl From<saa_passkeys::passkey::PasskeyCredential> for Credential {
+    fn from(c: saa_passkeys::passkey::PasskeyCredential) -> Self {
+        Credential::Passkey(c)
     }
 }
 
@@ -65,22 +63,18 @@ impl Deref for Credential {
     fn deref(&self) -> &Self::Target {
         match self {
             Credential::Native(c) => c,
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c,
-            #[cfg(feature = "ethereum")]
+            #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c,
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c,
+            #[cfg(feature = "passkeys")]
+            Credential::Passkey(c) => c,
+            #[cfg(feature = "secp256r1")]
+            Credential::Secp256r1(c) => c,
+            #[cfg(feature = "secp256k1")]
+            Credential::Secp256k1(c) => c,
             #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c,
-            #[cfg(feature = "curves")]
-            curve => {
-                match curve {
-                    Credential::Secp256k1(c) => c,
-                    Credential::Secp256r1(c) => c,
-                    _ => unreachable!(),
-                }
-            },
         }
     }
 }
@@ -96,31 +90,25 @@ impl Credential {
     pub fn message(&self) -> Vec<u8> {
         match self {
             Credential::Native(_) => Vec::new(),
-            #[cfg(feature = "ethereum")]
+            #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c.message.to_vec(),
             #[cfg(feature = "cosmos")]
             Credential::CosmosArbitrary(c) => c.message.to_vec(),
             #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c.message.to_vec(),
+            #[cfg(feature = "secp256k1")]
+            Credential::Secp256k1(c) => c.message.to_vec(),
+            #[cfg(feature = "secp256r1")]
+            Credential::Secp256r1(c) => c.message.to_vec(),
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c.base64_message_bytes().unwrap(),
-            #[cfg(feature = "curves")]
-            curve => {
-                match curve {
-                    Credential::Secp256k1(c) => c.message.to_vec(),
-                    Credential::Secp256r1(c) => c.message.to_vec(),
-                    Credential::Ed25519(c) => c.message.to_vec(),
-                    _ => unreachable!(),
-                }
-            },
-            
         }
     }
 
     pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
         #[cfg(all(feature = "passkeys", feature = "wasm"))]
         if let Credential::Passkey(c) = self {
-            use saa_auth::passkey::*;
+            use saa_passkeys::passkey::*;
             return Ok(Some(saa_common::to_json_binary(&PasskeyInfo {
                 origin: c.client_data.origin.clone(),
                 cross_origin: c.client_data.cross_origin.clone(),
@@ -147,10 +135,10 @@ impl Credential {
 
 
 #[cfg(feature = "traits")]
-use crate::traits::CredentialsWrapper;
+use crate::CredentialsWrapper;
 
 #[cfg(feature = "traits")]
-impl crate::traits::CredentialsWrapper for CredentialData {
+impl crate::CredentialsWrapper for CredentialData {
     type Credential = Credential;
 
     fn credentials(&self) -> &Vec<Self::Credential> {

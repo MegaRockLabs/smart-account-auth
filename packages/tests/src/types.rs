@@ -1,7 +1,6 @@
 
 use cosmwasm_std::Uint128;
 use cw_auths::{session_action, session_query};
-use saa_common::Empty;
 use saa_schema::saa_type;
 
 
@@ -76,7 +75,7 @@ pub enum QueryMsg {
     REAllyLongAnnoyingQuery(String),
 
 
-    #[returns(Option<Empty>)]
+    #[returns(Option<String>)]
     StrumQuery {
         #[strum(to_string = "{{ \"get_balance\": {{ \"address\": \"{address}\" }} }}")]
         address: String,

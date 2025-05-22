@@ -64,7 +64,7 @@ saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwa
 Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
 - `native` - for native rust code
 - `cosmwasm` - for cosmwasm 2.x
-- `cosmwasm_1` - for cosmwasm 1.x 
+- `cosmwasm_v1` - for cosmwasm 1.x 
 - `secretwasm` - for cosmwasm of secret network (in development)
 - `substrate` - for smart contracts written in ink (in development)
 - `solana` - for solana programs (in development)

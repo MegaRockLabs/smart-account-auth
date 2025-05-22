@@ -1,12 +1,11 @@
-use saa_common::{Vec, CredentialId, Verifiable};
-
 #[cfg(feature = "utils")]
 use strum::IntoDiscriminant;
+use saa_common::{Vec, CredentialId, Verifiable};
 
 pub trait CredentialsWrapper : Clone + Verifiable {
 
     #[cfg(feature = "utils")]
-    type Credential  : Verifiable + Clone + strum::IntoDiscriminant<Discriminant : ToString>;
+    type Credential  : Verifiable + Clone + IntoDiscriminant<Discriminant : ToString>;
     #[cfg(not(feature = "utils"))]
     type Credential  : Verifiable + Clone;
 

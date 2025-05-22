@@ -1,18 +1,21 @@
+use crate::types::{Coin, CosmosMsg, StakingMsg};
 use cosmwasm_std::testing::mock_dependencies;
 use saa_common::{to_json_binary, Binary, Verifiable};
-use saa_schema::saa_type;
-use smart_account_auth::types::ClientDataOtherKeys;
-use smart_account_auth::{types::ClientData, PasskeyCredential};
-use smart_account_auth::utils::passkey::base64_to_url;
-use smart_account_auth::msgs::MsgDataToSign;
-use crate::types::{Coin, CosmosMsg, StakingMsg};
+use smart_account_auth::{utils::passkey::base64_to_url,
+    types::{ClientDataOtherKeys, ClientData},
+    msgs::MsgDataToSign, PasskeyCredential,
+};
+
+
+#[saa_schema::saa_type]
+enum Action {
+    Execute { msgs: Vec<CosmosMsg> },
+}
 
 
 const OTHER_KEY : &str = "do not compare clientDataJSON against a template. See https://goo.gl/yabPex";
 
-fn new_cd_keys() -> ClientDataOtherKeys {
-    ClientDataOtherKeys::new(Some(OTHER_KEY.to_string()))
-}
+
 
 
 #[test]
@@ -20,19 +23,21 @@ fn can_check_passkeys_simple() {
 
     let deps = mock_dependencies();
     let deps = deps.as_ref();
-
-    let public_key = Binary::from_base64("BOirsl/nNsTWj3O5Qfseo9qZfs0uakJ6I97JLDZSbmeYk6nwkjIHM7UKp1DD/UnmurwUMFoqRIkO7sqsRFg8eUU=").unwrap();
-    let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MdAAAAAA==").unwrap();
+    let pubkey = Some(
+        Binary::from_base64(
+            "BOirsl/nNsTWj3O5Qfseo9qZfs0uakJ6I97JLDZSbmeYk6nwkjIHM7UKp1DD/UnmurwUMFoqRIkO7sqsRFg8eUU="
+        ).unwrap()
+    );
     let signature = Binary::from_base64("z+0mm8OPyXrkeowj0P9COBElCZqmd7L6oJS2WDVarM6hoeIz0v4pnvQ8FAmUQthbwhfa03WoUUXVvzufNNw+nA==").unwrap();
+    let authenticator_data  = Binary::from_base64("SZYN5YgOjGh0NBcPZHZgW4/krrmihjLHmVzzuoMdl2MdAAAAAA==").unwrap();
     
 
     let credential = PasskeyCredential { 
         id: String::default(),
-        pubkey: Some(public_key.clone()), 
-        signature: signature.clone(), 
-        authenticator_data: authenticator_data.clone(), 
+        pubkey, 
+        signature, 
+        authenticator_data, 
         client_data: ClientData::new(
-            "webauthn.get",
              "MTIz",
              "http://localhost:5173",
             false,
@@ -42,7 +47,7 @@ fn can_check_passkeys_simple() {
     };
 
     let res = credential.verify_cosmwasm(deps.api);
-    println!("Res: {:?}", res);
+    //println!("Res: {:?}", res);
     assert!(res.is_ok());
 
 }
@@ -75,7 +80,6 @@ fn can_check_passkeys_data_string() {
         signature: signature.clone(), 
         authenticator_data: authenticator_data.clone(), 
         client_data: ClientData::new(
-            "webauthn.get",
             challenge,
             "http://localhost:5173",
             false,
@@ -88,12 +92,6 @@ fn can_check_passkeys_data_string() {
 }
 
 
-
-
-#[saa_type]
-pub enum Action {
-    Execute { msgs: Vec<CosmosMsg> },
-}
 
 
 #[test]
@@ -123,10 +121,9 @@ fn can_check_passkeys_data_actions() {
     let binary =  to_json_binary(&sign_data).unwrap();
     let challenge = base64_to_url(&binary.to_base64());
     
-/*     let json_str = r#"{"chain_id":"elgafar-1","contract_address":"stars156t98r39hf3yr8n76e24asywy45y4lthwfs5349q0ucp28wqp9lsquujva","messages":[{"execute":{"msgs":[{"staking":{"delegate":{"validator":"starsvaloper1q48vyzzz82kh9sn2zsslna3mhujx70s7yg5jzf","amount":{"denom":"ustars","amount":"1000000"}}}}]}}],"nonce":"1"}"#;
-    let encoded_string = base64_to_url::encode(&json_str);
-
-    assert_eq!(challenge, encoded_string); */
+    let json_str = r#"{"chain_id":"elgafar-1","contract_address":"stars156t98r39hf3yr8n76e24asywy45y4lthwfs5349q0ucp28wqp9lsquujva","messages":[{"execute":{"msgs":[{"staking":{"delegate":{"validator":"starsvaloper1q48vyzzz82kh9sn2zsslna3mhujx70s7yg5jzf","amount":{"denom":"ustars","amount":"1000000"}}}}]}}],"nonce":"1"}"#;
+    let encoded_string = base64_url::encode(&json_str);
+    assert_eq!(challenge, encoded_string);
 
     let credential = PasskeyCredential { 
         id: String::default(),
@@ -134,7 +131,6 @@ fn can_check_passkeys_data_actions() {
         signature: signature.clone(), 
         authenticator_data: authenticator_data.clone(), 
         client_data: ClientData::new(
-            "webauthn.get",
             challenge,
             "http://localhost:5173",
             false,
@@ -174,11 +170,12 @@ fn pass_verification_with_other_keys() {
         signature: signature.clone(), 
         authenticator_data: authenticator_data.clone(), 
         client_data: ClientData::new(
-            "webauthn.get",
             challenge.clone(),
             "http://localhost:5173",
             false,
-            Some(new_cd_keys())
+            Some(
+                ClientDataOtherKeys::new(Some(OTHER_KEY.to_string()))
+            )
         ), 
         user_handle: None
     };
@@ -192,7 +189,6 @@ fn pass_verification_with_other_keys() {
         signature: signature.clone(), 
         authenticator_data: authenticator_data.clone(), 
         client_data: ClientData::new(
-            "webauthn.get",
             challenge,
             "http://localhost:5173",
             false,

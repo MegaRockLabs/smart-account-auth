@@ -1,0 +1,35 @@
+[package]
+name        = "saa-crypto"
+description = "Cryprography related logic of  smart account auth"
+edition     = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+version     = { workspace = true }
+
+
+[dependencies]
+saa-common          = { workspace = true }
+saa-schema          = { workspace = true }
+
+sha2                = { version = "0.10.9", default-features = false } 
+
+# native
+cosmwasm-crypto     = { workspace = true,   optional = true  }
+# ethereum
+tiny-keccak         = { version = "2.0.2",  optional = true,   default-features = false, features = ["keccak"] }
+# cosmos 
+ripemd              = { version = "0.1.3",  optional = true,   default-features = false }
+bech32              = { workspace = true,   optional = true  }
+# secp256r1
+digest              = { version = "0.10.7", optional = true,   default-features = false }
+p256                = { version = "0.13.2" , optional = true,  default-features = false , features = ["ecdsa"] }
+
+
+[features]
+default     =   ["std"]
+std         =   ["saa-common/std",                     "p256?/std"]
+native      =   ["saa-common/native",        "dep:cosmwasm-crypto"]
+secp256r1   =   ["dep:p256",                          "dep:digest"]
+cosmwasm    =   ["dep:ripemd", "saa-schema/cosmwasm", "dep:bech32"]
+ethereum    =   ["dep:tiny-keccak"                                ]

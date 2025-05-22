@@ -1,5 +1,5 @@
-use saa_schema::{saa_type, strum_macros::Display};
 use std::cmp::Ordering;
+use saa_schema::{saa_type, strum_macros::Display};
 use super::timestamp::Timestamp;
 use crate::AuthError;
 

@@ -9,49 +9,16 @@ repository  = { workspace = true }
 
 
 [dependencies]
-bech32                  = { workspace = true }
-saa-common              = { workspace = true }
-saa-schema              = { workspace = true }
-
-
-scale                   = { workspace = true, optional = true  }
-scale-info              = { workspace = true, optional = true  }
-
-borsh                   = { workspace = true, optional = true }
-schemars                = { workspace = true }
-serde                   = { workspace = true }
-
-digest                  = { version = "0.10.7", default-features = false }
-p256                    = { version = "0.13.2" }
+saa-schema  = { workspace = true }
+saa-common  = { workspace = true }
+saa-crypto  = { workspace = true }
 
 
 [features]
-default = [
-    "std"
-]
-std = [
-    "scale?/std",
-    "scale-info?/std",
-    "saa-common/std",
-]
-native = [
-    "saa-common/native",
-]
-solana = [
-    "dep:borsh",
-    "saa-common/solana",
-]
-substrate = [
-    "dep:scale",
-    "dep:scale-info",
-    "saa-common/substrate",
-]
-cosmwasm = [
-    "saa-common/cosmwasm",
-    "wasm"
-]
-cosmwasm_1 = [
-    "saa-common/cosmwasm_1",
-    "wasm",
-]
-wasm  = []
+default      =   ["std"]
+ed25519      =   [     ]
+secp256k1    =   [     ]
+
+std          =   ["saa-crypto/std",     ]
+native       =   ["saa-crypto/native"   ]
+cosmwasm     =   []

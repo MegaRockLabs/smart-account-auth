@@ -1,17 +1,42 @@
 # CHANGELOG
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-Project **TRIES** adhering to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html), however going through the active development stage and can't guarantee it (FOR NOW).
+
+Project **tries** adhering to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html), however due to going through the active development stage there might be small deviations.
+The promise only applies to the main crate `smart-account-auth` (in packages/bundle) and not to other sub-packages.
 
 <!-- next-header -->
 
-## [Unreleased] Rust
+## [Unreleased]
+
+## Added
+- Feature tags for including every single one of the supported credentials separately
+- `ClientData` of passkeys can now contain additional fields on top od the most common `other_keys_can...`
+- Testing folder that depends on external crate `cw-auths` 
+
+## Changed
+- `cosmwasm_1` renamed to `cosmwasm_v1`  
+- `ethereum` feature is changed to include all ethereum related credentials. The previous behaviour can enabled with `eth_personal` separately
+- `PasskeyPayload` now requires the value of `other_keys_can...` to be passed. Previously it was using `Option<bool>` and then proceeding with the default value of the long "do not compare clientDataJSON aga.."
+- Exporting the whole `cosmwasm_std` package when  both `types` are any wasmic VM features are enabled (Vs few selected primtives)
 
 ## Fixed
--- `to_json_string` imports and definitions
+- Overall optimisations, refactoring and including less dependencies when possible
+- `PasskeyCredential` and `Secp256r1` are now in a separate crate and don't include `p256` crate for CosmWasm 2.0
+- `to_json_string` imports and definitions
 
-## [0.25.0] Rust - 2024-12-18 
+## Removed
+- `injective` feature until adding complete support
+
+
+## [Unreleased] Typescript
+
+## Changed
+- stopped converting `PasskeyCredential::credential_data.challenge` from `base64` to `base64-url` 
+
+
+## [0.25.0] - 2024-12-18 
 
 ## Added
 
@@ -46,8 +71,3 @@ Project **TRIES** adhering to
 - macros 
 
 
-## [Unreleased] Typescript
-
-
-## Changed
-- stopped converting `PasskeyCredential::credential_data.challenge` from `base64` to `base64` 

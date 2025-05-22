@@ -114,36 +114,6 @@ fn saa_error_impl(input: DeriveInput, options: Options) -> syn::Result<DeriveInp
 
 
 
-/* #[proc_macro_attribute]
-pub fn saa_derivable(
-    attr: TokenStream,
-    input: TokenStream,
-) -> TokenStream {
-    let attr_args = parse_macro_input!(attr as AttributeArgs);
-    let input_ast = parse_macro_input!(input as DeriveInput);
-    match &input_ast.data {
-        syn::Data::Struct(_) => {
-            quote! {
-                #[derive(
-                    Debug,
-                    Clone,
-                    PartialEq,
-                    ::saa_schema::serde::Serialize,
-                    ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
-                )]
-                #[allow(clippy::derive_partial_eq_without_eq)]
-                #input_ast
-            }
-            .into()
-        }
-        syn::Data::Enum(_) => {
-            strum_enum(&input_ast, &attr_args).into()
-        }
-        syn::Data::Union(_) => panic!("unions are not supported"),
-    }
-}
- */
 #[proc_macro_attribute]
 pub fn saa_derivable(
     attr: TokenStream,
