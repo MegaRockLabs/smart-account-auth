@@ -151,6 +151,14 @@ mod std_mod {
         }
     }
 
+    #[cfg(feature = "eth_typed_data")]
+    impl From<ethers_core::types::transaction::eip712::Eip712Error> for AuthError {
+        fn from(err: ethers_core::types::transaction::eip712::Eip712Error) -> Self {
+            Self::Generic(err.to_string())
+        }
+        
+    }
+
 
     #[cfg(feature = "wasm")] 
     mod wasm {

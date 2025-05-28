@@ -2,7 +2,7 @@ mod tests {
 
     use cosmwasm_std::testing::mock_dependencies;
     use saa_common::{Binary, Verifiable};
-    use smart_account_auth::EthPersonalSign;
+    use smart_account_auth::{EthPersonalSign, EthTypedData};
 
 
     #[test]
@@ -28,4 +28,161 @@ mod tests {
         println!("Res: {:?}", res);
         assert!(res.is_ok())
     }
+
+
+    #[test]
+    fn test_hash_nested_struct_array() {
+        let json = serde_json::json!({
+          "types": {
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ],
+            "OrderComponents": [
+              {
+                "name": "offerer",
+                "type": "address"
+              },
+              {
+                "name": "zone",
+                "type": "address"
+              },
+              {
+                "name": "offer",
+                "type": "OfferItem[]"
+              },
+              {
+                "name": "startTime",
+                "type": "uint256"
+              },
+              {
+                "name": "endTime",
+                "type": "uint256"
+              },
+              {
+                "name": "zoneHash",
+                "type": "bytes32"
+              },
+              {
+                "name": "salt",
+                "type": "uint256"
+              },
+              {
+                "name": "conduitKey",
+                "type": "bytes32"
+              },
+              {
+                "name": "counter",
+                "type": "uint256"
+              }
+            ],
+            "OfferItem": [
+              {
+                "name": "token",
+                "type": "address"
+              }
+            ],
+            "ConsiderationItem": [
+              {
+                "name": "token",
+                "type": "address"
+              },
+              {
+                "name": "identifierOrCriteria",
+                "type": "uint256"
+              },
+              {
+                "name": "startAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "endAmount",
+                "type": "uint256"
+              },
+              {
+                "name": "recipient",
+                "type": "address"
+              }
+            ]
+          },
+          "primaryType": "OrderComponents",
+          "domain": {
+            "name": "Seaport",
+            "version": "1.1",
+            "chainId": "1",
+            "verifyingContract": "0x00000000006c3852cbEf3e08E8dF289169EdE581"
+          },
+          "message": {
+            "offerer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+            "offer": [
+              {
+                "token": "0xA604060890923Ff400e8c6f5290461A83AEDACec"
+              }
+            ],
+            "startTime": "1658645591",
+            "endTime": "1659250386",
+            "zone": "0x004C00500000aD104D7DBd00e3ae0A5C00560C00",
+            "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "salt": "16178208897136618",
+            "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+            "totalOriginalConsiderationItems": "2",
+            "counter": "0"
+          }
+        }
+                );
+
+        let typed_data: EthTypedData = serde_json::from_value(json).unwrap();
+
+        let hash = typed_data.encode_eip712().unwrap();
+        assert_eq!(
+            "0b8aa9f3712df0034bc29fe5b24dd88cfdba02c7f499856ab24632e2969709a8",
+            hex::encode(&hash[..])
+        );
+    }
 }
+
+
+/* #[serde(rename_all = "camelCase")]
+pub struct EIP712Domain {
+    ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    /// The current major version of the signing domain. Signatures from different versions are not
+    /// compatible.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+
+    /// The EIP-155 chain id. The user-agent should refuse signing if it does not match the
+    /// currently active chain.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "crate::types::serde_helpers::deserialize_stringified_numeric_opt"
+    )]
+    pub chain_id: Option<U256>,
+
+    /// The address of the contract that will verify the signature.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verifying_contract: Option<Address>,
+
+    /// A disambiguating salt for the protocol. This can be used as a domain separator of last
+    /// resort.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub salt: Option<[u8; 32]>,
+}
+ */

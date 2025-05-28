@@ -66,6 +66,7 @@ impl Verifiable for EthPersonalSign {
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
+        
     
         let hash = saa_crypto::hashes::keccak256(&key_data[1..]);
 

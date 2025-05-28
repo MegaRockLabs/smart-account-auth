@@ -4,6 +4,8 @@ use saa_common::{Binary, String, CredentialId};
 pub use super::caller::Caller;
 #[cfg(feature = "eth_personal")]
 pub use saa_auth::eth::EthPersonalSign;
+#[cfg(feature = "eth_typed_data")]
+pub use saa_auth::eth::EthTypedData;
 #[cfg(feature = "cosmos")]
 pub use saa_auth::cosmos::CosmosArbitrary;
 #[cfg(feature = "passkeys")]

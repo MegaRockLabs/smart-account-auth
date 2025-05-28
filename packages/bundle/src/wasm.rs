@@ -2,11 +2,11 @@ use crate::credential::{Credential, CredentialInfo, CredentialName};
 use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
 #[cfg(feature= "wasm")]
 use saa_crypto::{pubkey_to_address, pubkey_to_canonical};
-
+#[cfg(feature = "replay")]
+use saa_common::{ensure, wasm::Env, ReplayError};
 
 
 impl Credential {
-
     pub fn is_cosmos_derivable(&self) -> bool {
         #[allow(unused_mut)]
         let mut ok = self.hrp().is_some();
@@ -16,7 +16,6 @@ impl Credential {
         }
         ok
     }
-
     pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
         let id = self.id();
         let name = self.name();
@@ -35,13 +34,11 @@ impl Credential {
             }
         })
     }
-
 }
 
 
-impl CredentialInfo {
-    
 
+impl CredentialInfo {
     pub fn cosmos_address(&self, api: &dyn Api, id: CredentialId) -> Result<Addr, crate::AuthError> {
         let name = self.name.clone();
         if name == CredentialName::Native {
@@ -54,12 +51,6 @@ impl CredentialInfo {
         })
     }
 }
-
-
-
-
-
-
 
 
 
@@ -77,9 +68,6 @@ pub fn convert_validate(
 
 
 
-
-
-
 #[cfg(feature = "replay")]
 impl crate::CredentialData {
     pub fn checked_replay(
@@ -87,15 +75,12 @@ impl crate::CredentialData {
         env: &Env,
         nonce: u64,
     ) -> Result<(), AuthError> {
-        
         let credentials : Vec<&crate::credential::Credential> = self.credentials
             .iter().filter(|c| 
                 c.name() != crate::credential::CredentialName::Native 
             )
             .collect();
-
         if credentials.is_empty() { return Ok(()) }
-     
         credentials
             .into_iter()
             .try_for_each(|c| convert_validate(c.message(), env, nonce))?;
@@ -105,9 +90,6 @@ impl crate::CredentialData {
 }
 
 
-
-#[cfg(feature = "replay")]
-use {saa_common::{ensure, ReplayError, wasm::Env}};
 
 
 #[cfg(feature = "replay")]
@@ -128,5 +110,3 @@ impl<M : serde::de::DeserializeOwned> crate::msgs::MsgDataToSign<M> {
         Into::<crate::msgs::MsgDataToVerify>::into(self).validate(env, nonce)
     }
 }
-
-
