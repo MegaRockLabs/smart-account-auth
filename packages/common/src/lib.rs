@@ -1,4 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(all(not(feature = "wasm"), not(feature = "native"), not(feature = "substrate"), not(feature = "solana")))]
+compile_error!("at least one of the supported envieronments must be enabled: cosmwasm, cosmwasm_v1, secretwasm, native, substrate, or solana");
+
 mod traits;
 mod macros;
 mod env;

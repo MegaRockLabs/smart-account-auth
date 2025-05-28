@@ -36,9 +36,11 @@ ethers-core         = { workspace = true, optional = true }
 default     = [
     "std", 
     "replay",
+    "cosmwasm",
 ]
 solana      = [
     "dep:borsh", 
+    "dep:serde-json-wasm",
     "saa-schema/solana"
 ]
 cosmwasm    = [
@@ -59,6 +61,7 @@ substrate   = [
     "dep:ink", 
     "dep:scale",
     "dep:scale-info",
+    "dep:serde-json-wasm",
     "saa-schema/substrate",
 ]
 std         = [
@@ -70,6 +73,7 @@ std         = [
 ]
 native     = [
     "dep:cosmwasm-crypto",
+    "dep:serde-json-wasm",
 ]
 session    = []
 wasm       = [
