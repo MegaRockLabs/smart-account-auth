@@ -17,13 +17,12 @@ pub use credential::*;
 
 
 pub mod msgs {
+    pub use super::messages::SignedPayload;
     pub use saa_common::types::msgs::{SignedDataMsg, AuthPayload};
     #[cfg(feature = "replay")]
     pub use super::messages::replay::{MsgDataToSign, MsgDataToVerify};
     #[cfg(feature = "session")]
-    pub use {super::messages::actions::{
-        Action, AllowedActions, ActionDerivation, AllQueryDerivation
-    }};
+    pub use super::messages::actions::{Action, ActionDerivation, AllQueryDerivation, AllowedActions};
 }
 
 #[cfg(feature = "replay")]

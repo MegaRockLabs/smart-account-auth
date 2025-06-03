@@ -3,12 +3,12 @@
 /// or how to modify it
 #[saa_schema::saa_type]
 pub struct AuthPayload {
-    /// Human readable prefix to use to derive an address
-    pub hrp             :   Option<String>,
-    /// Other fields reserved for future use
-    pub extension       :   Option<crate::Binary>,
     /// Which credential to use if multiple are available
     pub credential_id   :   Option<crate::CredentialId>,
+    /// Human readable prefix to use to derive an address
+    pub hrp             :   Option<String>,
+    /// Additional arguments to pass depending on a credential in question
+    pub extension       :   Option<crate::Binary>,
 }
 
 

@@ -57,6 +57,9 @@ mod std_mod {
 
         #[error("Error converting binary to {0}")]
         Convertion(String),
+
+        #[error("Signed too many messages. Expected: {0}; Received: {1}")]
+        ManyMessages(u8, u8),
     }
 
 
