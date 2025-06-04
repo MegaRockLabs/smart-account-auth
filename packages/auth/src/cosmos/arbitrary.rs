@@ -25,7 +25,6 @@ impl CosmosArbitrary {
     #[cfg(feature = "cosmwasm")]
     fn get_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
         #[cfg(feature = "cosmos_arb_addr")]
-        println!("CosmosArbitrary: Using address directly: {}", self.address);
         return Ok(api.addr_validate(&self.address)?);
         #[cfg(not(feature = "cosmos_arb_addr"))]
         if let Some(ref hrp) = self.hrp {
@@ -81,7 +80,6 @@ impl Verifiable for CosmosArbitrary {
             #[cfg(feature = "cosmwasm")]
             deps.api
         )?;
-        println!("Got address: {}", address);
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256k1_verify(
             &self.message_digest(address.as_str()),

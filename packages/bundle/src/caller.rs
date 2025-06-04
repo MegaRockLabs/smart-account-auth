@@ -5,6 +5,12 @@ use saa_common::{AuthError, CredentialId, CredentialInfo, CredentialName, Verifi
 pub struct Caller(pub CredentialId);
 
 
+impl From<&str> for Caller {
+    fn from(addr: &str) -> Self {
+        Caller(addr.to_string())
+    }
+}
+
 
 impl Verifiable for Caller {
 
@@ -41,6 +47,5 @@ impl Verifiable for Caller {
         })
     }
 }
-
 
 

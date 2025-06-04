@@ -10,11 +10,6 @@ impl From<Caller> for Credential {
     }
 }
 
-impl From<&str> for Caller {
-    fn from(s: &str) -> Self {
-        Caller(CredentialId::from(s.to_string()))
-    }
-}
 
 impl From<&str> for Credential {
     fn from(s: &str) -> Self {

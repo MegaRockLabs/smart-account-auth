@@ -21,6 +21,7 @@ use saa_schema::saa_type;
 
 
 
+
 #[saa_type]
 pub enum Credential {
     Native(Caller),
