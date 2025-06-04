@@ -31,10 +31,12 @@ alloy = { version = "1.0.6", optional = true, features = [
 [features]
 default             =   ["std"]
 std                 =   ["saa-crypto/std",     "hex?/std"]
-eth_personal        =   ["saa-crypto/ethereum", "dep:hex"]
+eth_personal        =   ["saa-crypto/ethereum", "saa-common/eth_personal", "dep:hex"]
 eth_typed_data      =   [
-	"saa-crypto/ethereum", "dep:hex", "dep:serde", "dep:ethabi", "dep:serde_json", "dep:alloy", "dep:ethers-core", "saa-common/eth_typed_data"]
+	"saa-crypto/ethereum", "saa-common/eth_typed_data", "dep:hex", "dep:serde", "dep:ethabi", "dep:serde_json", "dep:alloy", "dep:ethers-core", "saa-common/eth_typed_data"]
 native              =   ["saa-crypto/native"   ] 
 cosmwasm            =   ["saa-crypto/cosmwasm"]
-cosmos              =   []
+
+cosmos_arb_addr     =   ["cosmos_arb"]
+cosmos_arb          =   ["saa-common/cosmos_arb"]
 

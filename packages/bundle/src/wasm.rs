@@ -1,11 +1,7 @@
-use crate::credential::{Credential, CredentialInfo, CredentialName};
-use saa_common::{wasm::{Addr, Api}, AuthError, CredentialId};
-#[cfg(feature= "wasm")]
-use saa_crypto::{pubkey_to_address, pubkey_to_canonical};
 #[cfg(feature = "replay")]
-use saa_common::{ensure, wasm::Env, ReplayError};
+use saa_common::{ensure, wasm::Env, ReplayError, AuthError};
 
-
+/* 
 impl Credential {
     pub fn is_cosmos_derivable(&self) -> bool {
         #[allow(unused_mut)]
@@ -36,22 +32,7 @@ impl Credential {
     }
 }
 
-
-
-impl CredentialInfo {
-    pub fn cosmos_address(&self, api: &dyn Api, id: CredentialId) -> Result<Addr, crate::AuthError> {
-        let name = self.name.clone();
-        if name == CredentialName::Native {
-            let addr = api.addr_validate(&id)?;
-            return Ok(addr)
-        }
-        Ok(match &self.hrp {
-            Some(hrp) => api.addr_validate(&pubkey_to_address(id.as_bytes(), &hrp)?)?,
-            None => api.addr_humanize(&pubkey_to_canonical(id.as_bytes()))?,
-        })
-    }
-}
-
+ */
 
 
 #[cfg(feature = "replay")]
@@ -108,5 +89,12 @@ impl crate::msgs::MsgDataToVerify {
 impl<M : serde::de::DeserializeOwned> crate::msgs::MsgDataToSign<M> {
     pub fn validate(&self, env: &Env, nonce: u64) -> Result<(), ReplayError> {
         Into::<crate::msgs::MsgDataToVerify>::into(self).validate(env, nonce)
+    }
+}
+
+
+impl From<&saa_common::wasm::MessageInfo> for crate::Caller {
+    fn from(info: &saa_common::wasm::MessageInfo) -> Self {
+        crate::Caller(info.sender.to_string())
     }
 }

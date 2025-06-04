@@ -1,7 +1,7 @@
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
 use {super::utils::{get_recovery_param, preamble_msg_eth}, saa_common::ensure};
-use saa_common::{CredentialId, AuthError, Binary, String, ToString, Verifiable };
+use saa_common::{CredentialId, CredentialName, CredentialInfo, AuthError, Binary, String, ToString, Verifiable };
 
 
 #[saa_schema::saa_type]
@@ -36,47 +36,38 @@ impl Verifiable for EthPersonalSign {
         Ok(())
     }
 
-
-    #[cfg(feature = "native")] 
-    fn verify(&self) -> Result<(), AuthError> {
+    #[cfg(any(feature = "native", feature = "cosmwasm"))]
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
         let signature = &self.signature.to_vec();
+        #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let key_data = saa_crypto::secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
-        let hash = saa_crypto::hashes::keccak256(&key_data[1..]);
-
-        let addr_bytes = hex::decode(&self.signer[2..])
-        .map_err(|e| AuthError::generic(e.to_string()))?;
-    
-        ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
-        
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> {
-        
-        let signature = &self.signature.to_vec();
-        
-        let key_data = api.secp256k1_recover_pubkey(
+        #[cfg(feature = "cosmwasm")]
+        let key_data = deps.api.secp256k1_recover_pubkey(
             &preamble_msg_eth(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
-        
-    
         let hash = saa_crypto::hashes::keccak256(&key_data[1..]);
 
         let addr_bytes = hex::decode(&self.signer[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
         
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
-
-        Ok(())
+        Ok(CredentialInfo {
+            hrp: None,
+            address: None,
+            extension: None,
+            name: CredentialName::EthPersonalSign,
+        })
     }
+
 
 
 }

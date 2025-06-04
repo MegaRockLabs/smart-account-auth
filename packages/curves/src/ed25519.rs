@@ -1,7 +1,6 @@
 use saa_schema::saa_type;
 use saa_common::{
-    CredentialId, 
-    AuthError, Binary, ToString, Verifiable, ensure
+    ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable
 };
 
 
@@ -29,29 +28,29 @@ impl Verifiable for Ed25519 {
         Ok(())
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        let success = saa_crypto::ed25519_verify(
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
+        let res = saa_crypto::ed25519_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> 
-        where Self: Clone
-    {
-        let success = api.ed25519_verify(
+        #[cfg(feature = "cosmwasm")]
+        let res = deps.api.ed25519_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        Ok(CredentialInfo {
+            extension: None,
+            address: None,
+            hrp: None,
+            name: CredentialName::Ed25519,
+        })
     }
 
 }

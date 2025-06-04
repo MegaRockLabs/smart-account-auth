@@ -1,6 +1,5 @@
 
 use cosmwasm_std::Uint128;
-use cw_auths::{session_action, session_query};
 use saa_schema::saa_type;
 
 
@@ -34,50 +33,3 @@ pub enum CosmosMsg {
     Simple {}
 }
 
-
-
-#[session_action]
-pub enum ExecuteMsg {
-
-    Execute { 
-        msgs: Vec<CosmosMsg> 
-    },
-
-    #[strum(to_string = "{{ \"mint_token\": {{ \"minter\": \"{minter}\" }} }}")]
-    MintToken {
-        minter: String,
-        msg: Option<CosmosMsg>
-    },
-
-    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{id}\",\"to\":\"{to}\"}}}}")]
-    TransferToken {
-        id: String,
-        to: String,
-    },
-
-
-    #[strum(to_string = "freeeeeze")]
-    Freeze {},
-
-    
-    Purge {},
-}
-
-
-
-#[session_query(ExecuteMsg)]
-pub enum QueryMsg {
-
-    #[returns(Vec<Coin>)]
-    GetBalance {},
-
-    #[returns(String)]
-    REAllyLongAnnoyingQuery(String),
-
-
-    #[returns(Option<String>)]
-    StrumQuery {
-        #[strum(to_string = "{{ \"get_balance\": {{ \"address\": \"{address}\" }} }}")]
-        address: String,
-    },
-}

@@ -1,5 +1,5 @@
 
-use saa_common::String;
+use saa_common::{types::passkey::ClientDataOtherKeys, String};
 use saa_schema::saa_type;
 
 
@@ -30,26 +30,6 @@ pub struct ClientData {
 
 
 
-#[saa_type(no_deny)]
-#[non_exhaustive]
-pub struct ClientDataOtherKeys {
-    pub other_keys_can_be_added_here :  Option<String>,
-}
-
-
-
-#[saa_type(no_deny)]
-pub struct PasskeyPayload {
-    /// client data other keys
-    pub other_keys :  Option<ClientDataOtherKeys>,
-    // reserved for future use
-    pub origin: Option<String>
-}
-
-
-
-
-
 impl ClientData {
     pub fn new(
         challenge: impl ToString, 
@@ -67,13 +47,3 @@ impl ClientData {
     }
 }
 
-
-impl ClientDataOtherKeys {
-    pub fn new(
-        other_keys_can_be_added_here: Option<String>
-    ) -> Self {
-        Self {
-            other_keys_can_be_added_here
-        }
-    }
-}

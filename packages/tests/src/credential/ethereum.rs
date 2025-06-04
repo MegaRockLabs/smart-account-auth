@@ -24,7 +24,7 @@ mod tests {
             signature: signature.clone(),
             message,
         };
-        let res = cred.verify_cosmwasm(deps.as_ref().api);
+        let res = cred.verify(deps.as_ref());
         println!("Res: {:?}", res);
         assert!(res.is_ok())
     }

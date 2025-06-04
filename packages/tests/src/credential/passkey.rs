@@ -46,7 +46,7 @@ fn can_check_passkeys_simple() {
         user_handle: None
     };
 
-    let res = credential.verify_cosmwasm(deps.api);
+    let res = credential.verify(deps);
     //println!("Res: {:?}", res);
     assert!(res.is_ok());
 
@@ -87,7 +87,7 @@ fn can_check_passkeys_data_string() {
         ), 
         user_handle: None
     };
-    let res = credential.verify_cosmwasm(deps.api);
+    let res = credential.verify(deps);
     assert!(res.is_ok());
 }
 
@@ -138,7 +138,7 @@ fn can_check_passkeys_data_actions() {
         ), 
         user_handle: None
     };
-    let res = credential.verify_cosmwasm(deps.api);
+    let res = credential.verify(deps);
     assert!(res.is_ok());
 }
 
@@ -179,7 +179,7 @@ fn pass_verification_with_other_keys() {
         ), 
         user_handle: None
     };
-    let res = credential.verify_cosmwasm(deps.api);
+    let res = credential.verify(deps);
     assert!(res.is_ok());
 
 
@@ -196,7 +196,7 @@ fn pass_verification_with_other_keys() {
         ), 
         user_handle: None
     };
-    let res = credential.verify_cosmwasm(deps.api);
+    let res = credential.verify(deps);
     assert!(res.is_err());
 
 }

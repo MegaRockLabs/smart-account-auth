@@ -3,8 +3,9 @@ mod passkey;
 
 use std::str::FromStr;
 
+
 use crate::utils::{get_cosmos_arbitrary, get_eth_personal, get_passkey};
-use cw_auths::saa_types::{Caller, Ed25519, Credential, CredentialName};
+use smart_account_auth::{Caller, Ed25519, Credential, CredentialName};
 use strum::IntoDiscriminant; 
 use saa_common::Binary;
 

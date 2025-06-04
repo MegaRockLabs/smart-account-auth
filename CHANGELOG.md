@@ -13,13 +13,21 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 ## Added
 - Feature tags for including every single one of the supported credentials separately
 - `ClientData` of passkeys can now contain additional fields on top od the most common `other_keys_can...`
-- Testing folder that depends on external crate `cw-auths` 
+- a separate testing golder
+- `InfoExtension` and `PayloadExtension` as a wrapper for current and all future supported extension tyoes 
+- [Feature] `cosmos_arb_addr` feature tag for a Cosmos Arbitrary with a passed address type instead of deriving it from prefix 
 
 ## Changed
-- `cosmwasm_1` renamed to `cosmwasm_v1`  
-- `ethereum` feature is changed to include all ethereum related credentials. The previous behaviour can enabled with `eth_personal` separately
+- `Verifiable` interface now has only one (mutually exclusive) `verify` method without VMs suffixes (like _cosmwasm)
+- `Verifiable` now return a `CredentialInfo` object instead
+- `CredentialInfo` now has an optional `address` for credentials that have them [`Caller`, `CosmosArbirary`]
+- `CredentialInfo` now has `InfoExtension` as the type of `extensions` field instead of `Binary`
+- `AuthPayload` now has `PayloadExtension` as the type of `extensions` field instead of `Binary`
 - `PasskeyPayload` now requires the value of `other_keys_can...` to be passed. Previously it was using `Option<bool>` and then proceeding with the default value of the long "do not compare clientDataJSON aga.."
 - Exporting the whole `cosmwasm_std` package when  both `types` are any wasmic VM features are enabled (Vs few selected primtives)
+- [Feature] `cosmos` renamed to `cosmos_arb`
+- [Feature] `cosmwasm_1` renamed to `cosmwasm_v1`  
+- [Feature] `ethereum` feature is changed to include all ethereum related credentials. The previous behaviour can enabled with `eth_personal` separately
 
 ## Fixed
 - Overall optimisations, refactoring and including less dependencies when possible

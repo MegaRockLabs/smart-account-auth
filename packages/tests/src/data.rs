@@ -1,8 +1,6 @@
 use crate::utils::{default_cred_count, cred_data_non_native};
 use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr};
-use cw_auths::saa_types::{
-    traits::{Verifiable, CredentialsWrapper}, Caller, Credential, CredentialData
-};
+use smart_account_auth::{Verifiable, CredentialsWrapper, Caller, Credential, CredentialData};
 
 
 
@@ -11,18 +9,16 @@ use cw_auths::saa_types::{
 #[test]
 fn data_is_verifyable() {
     let mock = mock_dependencies();
-    let api = mock.as_ref().api;
-
     let data = cred_data_non_native();
     // Verify the credentials individually
     for cred in data.credentials.iter() {
         //assert!(cred.verify().is_ok(), "Native verify code of Credential failed");
-        assert!(cred.verify_cosmwasm(api).is_ok(), "Cosmwasm verify code of Credential failed");
+        assert!(cred.verify(mock.as_ref()).is_ok(), "Cosmwasm verify code of Credential failed");
     }
 
     // Verify the whole wrapper data
     //assert!(data.verify().is_ok(), "Native verify code of Credential Data failed");
-    assert!(data.verify_cosmwasm(api).is_ok(), "Cosmwasm verify code of Credential Data failed");
+    assert!(data.verify(mock.as_ref()).is_ok(), "Cosmwasm verify code of Credential Data failed");
 }
 
 
