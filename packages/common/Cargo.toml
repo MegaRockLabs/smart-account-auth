@@ -5,7 +5,7 @@ edition     = { workspace = true }
 authors     = { workspace = true }
 license     = { workspace = true }
 repository  = { workspace = true }
-version     = "0.25.1"
+version     = { workspace = true }
 
 
 [dependencies]
@@ -85,4 +85,11 @@ types      = [
     "dep:schemars",
     "saa-schema/cosmwasm",
 ]
-eth_typed_data = ["dep:ethers-core"]
+
+ed25519         =  []
+secp256k1       =  []
+secp256r1       =  []
+passkeys        =  []
+cosmos_arb      =  []
+eth_personal    =  []
+eth_typed_data  =  ["dep:ethers-core"]

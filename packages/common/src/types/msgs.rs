@@ -1,3 +1,5 @@
+use crate::PayloadExtension;
+
 
 /// Payload message used for telling which credential to use
 /// or how to modify it
@@ -8,7 +10,7 @@ pub struct AuthPayload {
     /// Human readable prefix to use to derive an address
     pub hrp             :   Option<String>,
     /// Additional arguments to pass depending on a credential in question
-    pub extension       :   Option<crate::Binary>,
+    pub extension       :   Option<PayloadExtension>,
 }
 
 

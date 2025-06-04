@@ -11,7 +11,7 @@ mod data;
 
 
 pub use saa_schema::{saa_type, saa_derivable};
-pub use saa_common::{AuthError, StorageError, CredentialId, ensure};
+pub use saa_common::{AuthError, StorageError, ensure};
 pub use data::CredentialData;
 pub use credential::*;
 
@@ -38,7 +38,7 @@ pub use {
 pub mod types {
     pub use saa_common::types::*;
     #[cfg(feature = "passkeys")]
-    pub use saa_passkeys::passkey::{ClientData, ClientDataOtherKeys, PasskeyInfo, PasskeyPayload};
+    pub use saa_passkeys::passkey::{ClientData, ClientDataOtherKeys, PasskeyExtension, PasskeyPayload};
     #[cfg(feature = "eth_typed_data")]
     pub use saa_auth::eth::{Message, Types, EIP712Domain};
     #[cfg(feature = "session")]
@@ -51,7 +51,7 @@ pub use saa_common::wasm as cosmwasm_std;
 #[cfg(feature = "utils")]
 pub mod utils {
     pub use saa_crypto::hashes;
-    #[cfg(feature = "cosmos")]
+    #[cfg(feature = "cosmos_arb")]
     pub use saa_auth::cosmos::utils as cosmos;
     #[cfg(feature = "ethereum")]
     pub use saa_auth::eth::utils as eth;

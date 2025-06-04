@@ -13,7 +13,6 @@ saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 
 sha2                = { version = "0.10.9", default-features = false } 
-
 # native
 cosmwasm-crypto     = { workspace = true,   optional = true  }
 # ethereum

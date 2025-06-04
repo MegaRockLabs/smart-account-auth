@@ -5,11 +5,7 @@ use ripemd::Ripemd160;
 use tiny_keccak::{Hasher, Keccak};
 
 
-pub fn sha256(msg: &[u8]) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(msg);
-    hasher.finalize().to_vec()
-}
+
 
 # [cfg(feature = "cosmwasm")]
 pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
@@ -25,4 +21,10 @@ pub fn keccak256(bytes: &[u8]) -> [u8; 32] {
     hasher.update(bytes);
     hasher.finalize(&mut output);
     output
+}
+
+pub fn sha256(bytes: &[u8]) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hasher.finalize()[0..32].try_into().unwrap()
 }

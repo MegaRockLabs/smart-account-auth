@@ -1986,8 +1986,8 @@ dependencies = [
  "cw-auth-protos",
  "cw-storage-plus 1.2.0",
  "cw-storage-plus 2.0.0",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "smart-account-auth 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-schema 0.25.1",
+ "smart-account-auth 0.25.0",
  "strum 0.27.1",
  "thiserror 2.0.12",
 ]
@@ -1999,8 +1999,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e1f652537c396919107a310113e3d4bdfb9cf74fd6805c8db0a09702df3d86f"
 dependencies = [
  "cw-auth-types",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "smart-account-auth 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-schema 0.25.1",
+ "smart-account-auth 0.25.0",
 ]
 
 [[package]]
@@ -4922,21 +4922,6 @@ checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 [[package]]
 name = "saa-auth"
 version = "0.25.0"
-dependencies = [
- "alloy",
- "ethabi",
- "ethers-core",
- "hex",
- "saa-common 0.25.1",
- "saa-crypto",
- "saa-schema 0.25.1",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "saa-auth"
-version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b047a36ffbe6005fb9aac21bebb9ccf8b70d43b9a1460c7318e86c48e5a9498"
 dependencies = [
@@ -4945,11 +4930,26 @@ dependencies = [
  "hex",
  "parity-scale-codec",
  "saa-common 0.25.0",
- "saa-curves 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-curves 0.25.0",
+ "saa-schema 0.25.1",
  "scale-info",
  "serde",
  "sha2 0.10.9",
+]
+
+[[package]]
+name = "saa-auth"
+version = "0.26.0"
+dependencies = [
+ "alloy",
+ "ethabi",
+ "ethers-core",
+ "hex",
+ "saa-common 0.26.0",
+ "saa-crypto",
+ "saa-schema 0.26.0",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -4968,7 +4968,7 @@ dependencies = [
  "ink",
  "parity-scale-codec",
  "ripemd",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-schema 0.25.1",
  "scale-info",
  "schemars",
  "serde",
@@ -4980,7 +4980,7 @@ dependencies = [
 
 [[package]]
 name = "saa-common"
-version = "0.25.1"
+version = "0.26.0"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -4992,7 +4992,7 @@ dependencies = [
  "getrandom 0.2.15",
  "ink",
  "parity-scale-codec",
- "saa-schema 0.25.1",
+ "saa-schema 0.26.0",
  "scale-info",
  "schemars",
  "secret-cosmwasm-std",
@@ -5003,26 +5003,17 @@ dependencies = [
 
 [[package]]
 name = "saa-crypto"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bech32 0.11.0",
  "cosmwasm-crypto 2.2.2",
  "digest 0.10.7",
  "p256",
  "ripemd",
- "saa-common 0.25.1",
- "saa-schema 0.25.1",
+ "saa-common 0.26.0",
+ "saa-schema 0.26.0",
  "sha2 0.10.9",
  "tiny-keccak",
-]
-
-[[package]]
-name = "saa-curves"
-version = "0.25.0"
-dependencies = [
- "saa-common 0.25.1",
- "saa-crypto",
- "saa-schema 0.25.1",
 ]
 
 [[package]]
@@ -5036,29 +5027,29 @@ dependencies = [
  "p256",
  "parity-scale-codec",
  "saa-common 0.25.0",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-schema 0.25.1",
  "scale-info",
  "schemars",
  "serde",
 ]
 
 [[package]]
-name = "saa-passkeys"
-version = "0.25.0"
+name = "saa-curves"
+version = "0.26.0"
 dependencies = [
- "saa-common 0.25.1",
+ "saa-common 0.26.0",
  "saa-crypto",
- "saa-schema 0.25.1",
- "serde",
+ "saa-schema 0.26.0",
 ]
 
 [[package]]
-name = "saa-proto-core"
-version = "0.25.3"
+name = "saa-passkeys"
+version = "0.26.0"
 dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
+ "saa-common 0.26.0",
+ "saa-crypto",
+ "saa-schema 0.26.0",
+ "serde",
 ]
 
 [[package]]
@@ -5073,8 +5064,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "saa-proto-core"
+version = "0.26.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "saa-proto-solana"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5083,16 +5083,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-substrate"
-version = "0.25.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "saa-proto-wasm"
-version = "0.25.2"
+version = "0.26.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5111,15 +5102,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "saa-proto-wasm"
+version = "0.26.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "saa-schema"
 version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2679b7258a82e3dafdaf2284b03742629f40e9d63b76b8de54802484c2611d9"
 dependencies = [
- "borsh",
  "cosmwasm-schema 1.5.11",
  "parity-scale-codec",
  "saa-proto-core 0.25.3",
- "saa-proto-solana",
- "saa-proto-substrate",
  "saa-proto-wasm 0.25.2",
  "scale-info",
  "schemars",
@@ -5131,14 +5130,15 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2679b7258a82e3dafdaf2284b03742629f40e9d63b76b8de54802484c2611d9"
+version = "0.26.0"
 dependencies = [
+ "borsh",
  "cosmwasm-schema 1.5.11",
  "parity-scale-codec",
- "saa-proto-core 0.25.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "saa-proto-wasm 0.25.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-proto-core 0.26.0",
+ "saa-proto-solana",
+ "saa-proto-substrate",
+ "saa-proto-wasm 0.26.0",
  "scale-info",
  "schemars",
  "serde",
@@ -5149,19 +5149,19 @@ dependencies = [
 
 [[package]]
 name = "saa-tests"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "base64-url",
  "cosmwasm-schema 1.5.11",
  "cosmwasm-std 2.2.2",
  "cw-auths",
  "hex",
- "saa-common 0.25.1",
- "saa-schema 0.25.1",
+ "saa-common 0.26.0",
+ "saa-schema 0.26.0",
  "schemars",
  "serde",
  "serde_json",
- "smart-account-auth 0.25.0",
+ "smart-account-auth 0.26.0",
  "strum 0.27.1",
  "strum_macros 0.27.1",
 ]
@@ -5747,37 +5747,37 @@ dependencies = [
 [[package]]
 name = "smart-account-auth"
 version = "0.25.0"
-dependencies = [
- "saa-auth 0.25.0",
- "saa-common 0.25.1",
- "saa-crypto",
- "saa-curves 0.25.0",
- "saa-passkeys",
- "saa-schema 0.25.1",
- "serde",
- "serde_json",
- "strum 0.27.1",
-]
-
-[[package]]
-name = "smart-account-auth"
-version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce0506eb75fb0fa0eb807aa3e0a52b4b36e41d361ab1fa8df96320623b07d3a5"
 dependencies = [
  "cosmwasm-schema 1.5.11",
  "enum_dispatch",
  "parity-scale-codec",
- "saa-auth 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-auth 0.25.0",
  "saa-common 0.25.0",
- "saa-curves 0.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "saa-schema 0.25.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "saa-curves 0.25.0",
+ "saa-schema 0.25.1",
  "scale-info",
  "schemars",
  "serde",
  "serde_json",
  "strum 0.27.1",
  "strum_macros 0.27.1",
+]
+
+[[package]]
+name = "smart-account-auth"
+version = "0.26.0"
+dependencies = [
+ "saa-auth 0.26.0",
+ "saa-common 0.26.0",
+ "saa-crypto",
+ "saa-curves 0.26.0",
+ "saa-passkeys",
+ "saa-schema 0.26.0",
+ "serde",
+ "serde_json",
+ "strum 0.27.1",
 ]
 
 [[package]]

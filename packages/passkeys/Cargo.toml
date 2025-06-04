@@ -8,17 +8,17 @@ license     = { workspace = true }
 repository  = { workspace = true }
 
 [dependencies]
-serde               = { workspace = true, optional = true}
+serde               = { workspace = true, optional = true }
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 saa-crypto          = { workspace = true }
 
 [features]
 default             =   ["std"]
-passkeys            =   ["dep:serde"]
-secp256r1           =   [     ]
+secp256r1           =   ["saa-common/secp256r1"]
+passkeys            =   ["saa-common/passkeys", "dep:serde"]
 
-cosmwasm            =   [      ]
 no_api_r1           =   ["saa-crypto/secp256r1"]
 native              =   ["saa-crypto/native"] 
 std                 =   ["saa-crypto/std"]
+cosmwasm            =   [      ]

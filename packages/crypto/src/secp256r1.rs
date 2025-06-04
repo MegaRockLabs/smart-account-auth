@@ -1,3 +1,5 @@
+// Copied from `cosmwasm_crypto` [here](https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto)
+
 use saa_common::AuthError;
 
 use digest::{
@@ -5,7 +7,6 @@ use digest::{
     consts::U32, generic_array::GenericArray,
 };
 
-// Copied from `cosmwasm_crypto` [here](https://github.com/CosmWasm/cosmwasm/tree/main/packages/crypto)
 #[derive(Clone, Default)]
 pub struct Identity256 {
     array: GenericArray<u8, U32>,
@@ -54,8 +55,6 @@ fn check_pubkey(data: &[u8]) -> Result<(), AuthError> {
     }
 }
 
-/// taken from https://github.com/CosmWasm/cosmwasm/blob/main/packages/crypto/src/secp256r1.rs
-/// to be used directly when ported to cosmwasm 2.0
 pub fn secp256r1_verify(
     message_hash: &[u8],
     signature: &[u8],

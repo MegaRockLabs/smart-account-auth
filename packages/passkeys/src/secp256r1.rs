@@ -1,4 +1,4 @@
-use saa_common::{AuthError,  Binary,  ToString, Verifiable, ensure};
+use saa_common::{ensure, AuthError, Binary, CredentialInfo, CredentialName, ToString, Verifiable};
 
 
 #[saa_schema::saa_type]
@@ -25,39 +25,34 @@ impl Verifiable for Secp256r1 {
         Ok(())
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
+    #[allow(unused_variables)]    
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        let res = true;
+        #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(
-        &self,
-        #[allow(unused_variables)]
-        api : &dyn saa_common::wasm::Api
-    ) -> Result<(), AuthError> {
-        use saa_crypto::hashes::sha256;
-        #[cfg(feature = "no_api_r1")]
-        let res = saa_crypto::secp256r1_verify(
-            &sha256(&self.message), 
-            &self.signature, 
-            &self.pubkey
-        )?;
-        #[cfg(not(feature = "no_api_r1"))]
-        let res = api.secp256r1_verify(
-            &sha256(&self.message), 
+        #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
+        let res = deps.api.secp256r1_verify(
+            &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
         ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
+        Ok(CredentialInfo {
+            extension: None,
+            address: None,
+            hrp: None,
+            name: CredentialName::Secp256r1,
+        })
     }
+
+
 }
 

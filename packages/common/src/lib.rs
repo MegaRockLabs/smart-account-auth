@@ -15,4 +15,4 @@ pub use types::uints::Uint64;
 pub use types::exp::Expiration;
 pub use traits::Verifiable;
 
-pub type CredentialId = String;
+pub use types::cred::*;

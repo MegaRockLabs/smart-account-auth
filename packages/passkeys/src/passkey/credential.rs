@@ -1,8 +1,7 @@
-use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 use saa_schema::saa_type;
+use saa_common::{ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, Verifiable};
 
 use super::client_data::ClientData;
-
 // expand later after adding implementations for other platforms
 
 
@@ -27,23 +26,6 @@ pub struct PasskeyCredential {
 
 
 
-#[saa_type]
-pub struct PasskeyInfo {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Origin of the client where the passkey was created
-    pub origin: String,
-    /// Secpk256r1 Public key used for verification 
-    pub pubkey: Binary,
-    // Flag to allow cross origin requests
-    #[cfg_attr(feature = "cosmwasm", serde(rename = "crossOrigin"))]
-    pub cross_origin: bool,
-    /// Optional user handle reserved for future use
-    pub user_handle: Option<String>,
-}
-
-
-
 
 
 impl PasskeyCredential {
@@ -55,8 +37,9 @@ impl PasskeyCredential {
         Ok(binary.to_vec())
     }
 
+    #[allow(unused)]
     #[cfg(any(feature = "cosmwasm", feature = "native"))]
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
+    fn message_digest(&self) -> Result<[u8; 32], AuthError> {
         let client_data_hash = saa_crypto::sha256(&saa_common::to_json_binary(&self.client_data)?);
         let final_digest = saa_crypto::sha256(
             &[self.authenticator_data.as_slice(), client_data_hash.as_slice()].concat()
@@ -64,6 +47,7 @@ impl PasskeyCredential {
         Ok(final_digest)
     }
 }
+
 
 impl Verifiable for PasskeyCredential {
 
@@ -81,38 +65,33 @@ impl Verifiable for PasskeyCredential {
         Ok(())
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
+
+    #[allow(unused_variables)]
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        let res = true;
+        #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::generic("Passkey Signature verification failed"));
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(
-        &self,  
-        #[allow(unused_variables)]    
-        api : &dyn saa_common::wasm::Api
-    ) -> Result<(), AuthError> {
-        #[cfg(feature = "no_api_r1")]
-        let res = saa_crypto::secp256r1_verify(
-            &self.message_digest()?,
-            &self.signature,
-            self.pubkey.as_ref().unwrap()
-        )?;
-        #[cfg(not(feature = "no_api_r1"))]
-        let res = api.secp256r1_verify(
+        #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
+        let res = deps.api.secp256r1_verify(
             &self.message_digest()?,
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature("Passkey Signature verification failed".to_string()));
-        Ok(())
+        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        Ok(CredentialInfo {
+            extension: None,
+            address: None,
+            hrp: None,
+            name: CredentialName::Passkey,
+        })
     }
 
 }

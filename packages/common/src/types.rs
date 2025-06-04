@@ -1,3 +1,5 @@
+pub mod passkey; 
+pub mod cred;
 pub mod msgs;
 pub mod errors;
 

@@ -3,7 +3,7 @@ name                = "saa-schema"
 description         = "Macros and serialization utlities for various blockchain based virtual machines"
 edition             = { workspace = true }
 authors             = { workspace = true }
-version             = "0.25.1"
+version             = { workspace = true }
 
 license             = { workspace = true }
 repository          = { workspace = true }

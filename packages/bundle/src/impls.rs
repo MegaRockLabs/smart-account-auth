@@ -17,7 +17,7 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
     }
 }
 
-#[cfg(feature = "cosmos")]
+#[cfg(feature = "cosmos_arb")]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
     fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
@@ -65,7 +65,7 @@ impl Deref for Credential {
             Credential::Native(c) => c,
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c,
-            #[cfg(feature = "cosmos")]
+            #[cfg(feature = "cosmos_arb")]
             Credential::CosmosArbitrary(c) => c,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c,
@@ -92,7 +92,7 @@ impl Credential {
             Credential::Native(_) => Vec::new(),
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c.message.to_vec(),
-            #[cfg(feature = "cosmos")]
+            #[cfg(feature = "cosmos_arb")]
             Credential::CosmosArbitrary(c) => c.message.to_vec(),
             #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c.message.to_vec(),
@@ -109,7 +109,7 @@ impl Credential {
         #[cfg(all(feature = "passkeys", feature = "wasm"))]
         if let Credential::Passkey(c) = self {
             use saa_passkeys::passkey::*;
-            return Ok(Some(saa_common::to_json_binary(&PasskeyInfo {
+            return Ok(Some(saa_common::to_json_binary(&PasskeyExtension {
                 origin: c.client_data.origin.clone(),
                 cross_origin: c.client_data.cross_origin.clone(),
                 pubkey: c.pubkey.clone().unwrap_or_default(),
@@ -120,13 +120,14 @@ impl Credential {
         Ok(None)
     }
 
-    pub fn info(&self) -> CredentialInfo {
+   /*  pub fn info(&self) -> CredentialInfo {
         CredentialInfo {
             name: self.name(),
             hrp: self.hrp(),
-            extension: self.extension().ok().flatten()
+            extension: self.extension().ok().flatten(),
+            address: todo!(),
         }
-    }
+    } */
 
     
 }
@@ -165,7 +166,7 @@ impl Verifiable for CredentialData {
         let (min_len, max_len) = if using_caller {
             let count = creds
                 .iter()
-                .filter(|c| c.discriminant() == CredentialName::Native)
+                .filter(|c| c.name() == CredentialName::Native)
                 .count();
             ensure!(count == 1, AuthError::generic("Native caller is set but wasn't passed by environment"));
             (0, 256)
@@ -189,17 +190,30 @@ impl Verifiable for CredentialData {
     }
 
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        self.credentials.iter().try_for_each(|c| c.verify())
+    #[cfg(any(feature = "native", feature = "wasm"))] 
+    fn verify(&self,
+        #[cfg(feature = "wasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        let verified = self.credentials.iter()
+            .map(|c| c.verify(
+                #[cfg(feature = "wasm")]
+                deps
+            ))
+            .collect::<Result<Vec<CredentialInfo>, AuthError>>()?;
+
+        Ok(match self.primary_index {
+            Some(index) => verified[index as usize].clone(),
+            None => 
+                verified
+                .iter()
+                .find(|c| c.address.is_some())
+                .or(verified.first())
+                .cloned()
+                .unwrap()
+            
+        })
     }
-
-
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self,  api : &dyn saa_common::wasm::Api) -> Result<(), AuthError>  {
-        self.credentials.iter().try_for_each(|c| c.verify_cosmwasm(api))
-    }
-
 }
 
 
