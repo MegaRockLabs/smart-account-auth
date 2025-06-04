@@ -1,7 +1,11 @@
+use std::borrow::Cow;
+
 use saa_schema::saa_type;
 use saa_common::{
-    ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable
+    ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable
 };
+
+use CredentialName::Ed25519 as Name;
 
 
 #[saa_type]
@@ -18,12 +22,16 @@ impl Verifiable for Ed25519 {
         self.pubkey.to_string()
     }
 
+    fn message(&self) -> Cow<[u8]> {
+        Cow::Borrowed(self.message.as_slice())
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(
             self.signature.len() > 0 &&
                 self.message.len() > 0 && 
                 self.pubkey.len() > 0,
-            AuthError::MissingData("Empty credential data".to_string())
+            CredentialError::MissingData(Name)
         );
         Ok(())
     }
@@ -44,12 +52,12 @@ impl Verifiable for Ed25519 {
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        ensure!(res, AuthError::Signature(Name, self.id()));
         Ok(CredentialInfo {
             extension: None,
             address: None,
             hrp: None,
-            name: CredentialName::Ed25519,
+            name: Name,
         })
     }
 

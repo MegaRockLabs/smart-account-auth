@@ -2,6 +2,8 @@
 mod std_mod {
     use saa_schema::saa_error;
 
+    use crate::CredentialName;
+
     #[cfg(feature = "session")]
     #[saa_error]
     pub enum SessionError {
@@ -46,8 +48,8 @@ mod std_mod {
     #[cfg(feature = "replay")]
     #[saa_error]
     pub enum ReplayError {
-        #[error("{0} is invalid as nonce. Expected: {1}")]
-        DifferentNonce(u64, u64),
+        #[error("Invalid nonce. Expected: '{0}'")]
+        InvalidNonce(u64),
 
         #[error("The provided credential was meant for a different chain")]
         ChainIdMismatch,
@@ -55,11 +57,17 @@ mod std_mod {
         #[error("The provided credential was meant for a different contract address")]
         ContractMismatch,
 
-        #[error("Error converting binary to {0}")]
-        Convertion(String),
+        #[error("Error converting from binary to {0}")]
+        FromBin(String),
+
+        #[error("Error serializing to binary from: {0}")]
+        ToBin(String),
 
         #[error("Signed too many messages. Expected: {0}; Received: {1}")]
         ManyMessages(u8, u8),
+
+        #[error("Invalid signed envelope. Check that chain_id`s, contract_address`s, nonce`s amd messages` match")]
+        InvalidEnvelope
     }
 
 
@@ -72,8 +80,8 @@ mod std_mod {
         #[error("Error writing {0} to storage: {1}")]
         Write(String, String),
 
-        #[error("The given credential already exists on this account")]
-        AlreadyExists,
+        #[error("The given credential already exists on this account. Failed ID: {0}")]
+        AlreadyExists(String),
 
         #[error("The given credential was not found on this account")]
         NotFound, 
@@ -86,16 +94,39 @@ mod std_mod {
         Generic(String)
     }
 
+    #[saa_error]
+    pub enum CredentialError {
+        #[error("Not provided or partially missing")]
+        NoCredentials,
+
+        #[error("Too many credentials provided: {0}. Maximum allowed is 255")]
+        TooManyCredentials(usize),
+
+        #[error("Invalid primary index: {0}. There are only {1} credentials. (Max index is {1}-1)")]
+        IndexOutOfBounds(usize, usize),
+
+        #[error("Client requested to use a native address that called the environment as a credential, but it hasn't been set")]
+        NoNativeCaller,
+
+        #[error("One of the main properties of the credential '{0}' are missing")]
+        MissingData(CredentialName),
+
+        #[error("Error while processing the credential '{0}', One of the properties is invalid")]
+        IncorrectData(CredentialName),
+
+        #[error("The credential '{0}' is not valid. Error in property '{1}': {2}")]
+        InvalidProperty(CredentialName, String, String),
+
+        #[error("Passed only (native) credentials that aren't validated by the environment. Need to supply at least one verifyable credential")]
+        OnlyCustomNatives
+    }
 
 
 
     #[saa_error]
     pub enum AuthError {
 
-        #[error("No credentials provided or credentials are partially missing")]
-        NoCredentials,
-
-        #[error("{0}")]
+        #[error("Missing {0}")]
         MissingData(String),
 
         #[error("Invalid length of {0}.  Expected: {1};  Received: {2}")]
@@ -116,8 +147,8 @@ mod std_mod {
         #[error("Unauthorized: {0}")]
         Unauthorized(String),
 
-        #[error("{0}")]
-        Signature(String),
+        #[error("Signature verification error for {0} with id of '{1}'")]
+        Signature(CredentialName, String),
 
         #[error("{0}")]
         Recovery(String),
@@ -128,11 +159,16 @@ mod std_mod {
         #[error("{0}")]
         Crypto(String),
 
+
+
         #[error("Error converting binary to {0}")]
         Convertation(String),
         
         #[error("Semver parsing error: {0}")]
         SemVer(String),
+
+        #[error("Credential Error: {0}")]
+        Credential(#[from] CredentialError),
         
         #[cfg(feature = "replay")]
         #[error("Replay Protection Error: {0}")]

@@ -1,4 +1,4 @@
-use crate::utils::{default_cred_count, cred_data_non_native};
+use crate::utils::{cred_data_non_native, default_cred_count, ALICE_ADDR};
 use cosmwasm_std::{testing::{message_info, mock_dependencies}, Addr};
 use smart_account_auth::{Verifiable, CredentialsWrapper, Caller, Credential, CredentialData};
 
@@ -35,16 +35,17 @@ fn with_caller_works() {
     let mut no_caller_data = cred_data_non_native();
     assert_eq!(creds_count, no_caller_data.credentials.len());
     
-    assert!(no_caller_data.validate().is_ok(), "Base Credential data should be valid");
+    // Alice is a dummy address that isn't used
+    assert!(no_caller_data.validate(ALICE_ADDR).is_ok(), "Base Credential data should be valid");
 
     no_caller_data.use_native = Some(true);
     assert_eq!(creds_count, no_caller_data.credentials.len());
-    assert!(no_caller_data.validate().is_err(), "With caller is set but address hasn't been passed");
+    assert!(no_caller_data.validate(ALICE_ADDR).is_err(), "With caller is set but address hasn't been passed");
 
     
     let data = no_caller_data.with_native("alice");
     assert_eq!(creds_count + 1, data.credentials.len());
-    assert!(data.validate().is_ok());
+    assert!(data.validate(ALICE_ADDR).is_ok());
 
     // Try to call again. Should overwrite the previous one; // NOTE: works MessageInfo same as with String
     let data = data.with_native(&message_info(&Addr::unchecked("alice"), &[]));
@@ -62,11 +63,8 @@ fn only_caller_credential() {
 
     let native : &str = "alice";
 
-    let data = CredentialData {
-        use_native: Some(true),
-        credentials: vec![],
-        primary_index: None,
-    }.with_native(native);
+    let data = CredentialData::new(vec![], Some(true))
+                                .with_native(native);
 
     assert_eq!(data.credentials.len(), 1);
     assert_eq!(data.primary_index(), None);
@@ -75,5 +73,5 @@ fn only_caller_credential() {
     let caller = Caller::from(native);
     let native : Credential = caller.into();
 
-    assert_eq!(data.primary(), native);
+    assert_eq!(*data.primary(), native);
 }

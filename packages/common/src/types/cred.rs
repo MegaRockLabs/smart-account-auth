@@ -61,3 +61,16 @@ pub struct CredentialInfo {
 
 pub type CredentialRecord = (CredentialId, CredentialInfo);
 
+
+
+#[cfg(feature = "wasm")]
+impl From<crate::wasm::Addr> for CredentialInfo {
+    fn from(addr: crate::wasm::Addr) -> Self {
+        CredentialInfo {
+            name: CredentialName::Native,
+            hrp: addr.as_str().split("1").next().map(|s| s.to_string()),
+            extension: None,
+            address: Some(addr),
+        }
+    }
+}

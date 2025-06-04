@@ -1,4 +1,6 @@
-use saa_common::{AuthError, CredentialId, CredentialInfo, CredentialName, Verifiable};
+use saa_common::{AuthError, CredentialError, CredentialId, CredentialInfo, CredentialName, Verifiable};
+
+use CredentialName::Native;
 
 
 #[saa_schema::saa_type]
@@ -18,11 +20,12 @@ impl Verifiable for Caller {
         self.0.clone()
     }
 
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Owned(vec![])
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
-        saa_common::ensure!(
-            self.0.len() > 3,
-            AuthError::MissingData("Missing calling address".to_string())
-        );
+        saa_common::ensure!(self.0.len() > 3, CredentialError::MissingData(Native));
         Ok(())
     }
     
@@ -42,8 +45,8 @@ impl Verifiable for Caller {
         Ok(CredentialInfo {
             hrp,
             address: Some(address),
-            name: CredentialName::Native,
             extension: None,
+            name: Native,
         })
     }
 }

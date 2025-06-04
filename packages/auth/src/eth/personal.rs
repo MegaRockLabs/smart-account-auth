@@ -19,6 +19,10 @@ impl Verifiable for EthPersonalSign {
         self.signer.to_string()
     }
 
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Borrowed(self.message.as_slice())
+    }
+
 
     fn validate(&self) -> Result<(), AuthError> {
         if !self.signer.starts_with("0x") {

@@ -1,27 +1,44 @@
-#[cfg(feature = "utils")]
+use saa_common::{AuthError, CredentialId, Vec, Verifiable};
 use strum::IntoDiscriminant;
-use saa_common::{Vec, CredentialId, Verifiable};
+use crate::traits::Identifiable;
 
-pub trait CredentialsWrapper : Clone + Verifiable {
 
-    #[cfg(feature = "utils")]
-    type Credential  : Verifiable + Clone + IntoDiscriminant<Discriminant : ToString>;
-    #[cfg(not(feature = "utils"))]
-    type Credential  : Verifiable + Clone;
+
+pub trait CredentialsWrapper : Clone {
+
+    type Credential  : Identifiable + Verifiable + Clone;
 
     fn credentials(&self) -> &Vec<Self::Credential>;
 
-    
-    fn primary_index(&self) -> Option<u8> {
+     fn primary_index(&self) -> Option<usize> {
         None
     }
 
-    fn primary(&self) -> Self::Credential {
+    fn validate(&self, sender: impl AsRef<str> )-> Result<(), AuthError>;
+
+    
+
+    #[cfg(all(any(feature = "native", feature = "wasm"), feature = "replay"))]
+    fn verify<M>(&self,
+        #[cfg(feature = "wasm")]
+        deps: saa_common::wasm::Deps, env: &saa_common::wasm::Env, info: &saa_common::wasm::MessageInfo,
+        messages: Vec<M>,
+    ) -> Result<crate::data::VerifiedData, AuthError>
+    where M: serde::Serialize + Clone;
+
+    #[cfg(all(any(feature = "native", feature = "wasm"), not(feature = "replay")))]
+    fn verify(&self,
+        #[cfg(feature = "wasm")]
+        deps: saa_common::wasm::Deps, env: &saa_common::wasm::Env, info: &saa_common::wasm::MessageInfo,
+    ) -> Result<crate::data::VerifiedData, AuthError>;
+
+   
+    fn primary(&self) -> &Self::Credential {
         let creds = self.credentials();
         if let Some(index) = self.primary_index() {
-            return creds[index as usize].clone();
+            return &creds[index];
         } else {
-            return creds[0].clone();
+            return &creds[0];
         } 
     }
 
@@ -29,33 +46,7 @@ pub trait CredentialsWrapper : Clone + Verifiable {
         self.primary().id()
     }
 
-    #[cfg(feature = "utils")]
-    fn secondaries(&self) -> Vec<Self::Credential> {
-        use saa_common::vec;
-
-        let creds = self.credentials();
-
-        if self.primary_index().is_some() {
-            creds
-                .iter()
-                .enumerate()
-                .filter(|(i, _)| *i != self.primary_index().unwrap() as usize)
-                .map(|(_, c)| c.clone())
-                .collect()
-
-        } else {
-            match creds.len() {
-                // no ids at all
-                0 => return vec![],
-                // only primary id
-                1 => return vec![],
-                // skop primary and take the rest
-                _ => creds.iter().skip(1)
-                    .map(|c| c.clone()).collect()
-            }
-        }
-    }
-
+    
     #[cfg(feature = "utils")]
     fn count(&self) -> usize {
         self.credentials().len()
@@ -69,4 +60,32 @@ pub trait CredentialsWrapper : Clone + Verifiable {
             .collect()
     }
 
+    #[cfg(feature = "utils")]
+    fn secondaries(&self) -> Vec<Self::Credential> {
+        use saa_common::vec;
+        let creds = self.credentials();
+        if creds.len() <= 1 { return vec![] };
+        let primary_id = self.primary_id();
+        creds
+            .into_iter()
+            .filter(|c| c.id() != primary_id)
+            .cloned()
+            .collect::<Vec<_>>()
+    }
+
+
+    fn cred_index(
+        &self, 
+        id: &CredentialId,
+        name: <Self::Credential as IntoDiscriminant>::Discriminant
+    ) -> Option<usize> 
+    where
+        <Self::Credential as IntoDiscriminant>::Discriminant: PartialEq,
+    {
+        self.credentials().iter()
+            .position(|c| c.discriminant() == name && id == &c.id())
+    }
+
+
+    
 }

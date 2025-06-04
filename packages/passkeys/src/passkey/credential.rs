@@ -1,10 +1,10 @@
+use std::borrow::Cow;
+
 use saa_schema::saa_type;
-use saa_common::{ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, String, Verifiable};
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, String, Verifiable};
 
 use super::client_data::ClientData;
-// expand later after adding implementations for other platforms
-
-
+use CredentialName::Passkey as Name;
 
 
 #[saa_type]
@@ -30,12 +30,6 @@ pub struct PasskeyCredential {
 
 impl PasskeyCredential {
     
-    pub fn base64_message_bytes(&self) -> Result<Vec<u8>, AuthError> {
-        let base64_str = super::utils::url_to_base64(&self.client_data.challenge);
-        let binary = Binary::from_base64(&base64_str)
-            .map_err(|_| AuthError::PasskeyChallenge)?;
-        Ok(binary.to_vec())
-    }
 
     #[allow(unused)]
     #[cfg(any(feature = "cosmwasm", feature = "native"))]
@@ -55,13 +49,27 @@ impl Verifiable for PasskeyCredential {
         self.id.clone()
     }
 
+    fn message(&self) -> Cow<[u8]> {
+        match Binary::from_base64(&super::utils::url_to_base64(&self.client_data.challenge)) {
+            Ok(bytes) => Cow::Owned(bytes.to_vec()),
+            Err(_) => Cow::Borrowed(&[])
+        }
+            
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
-        ensure!(self.authenticator_data.len() >= 37, AuthError::generic("Invalid authenticator data"));
-        ensure!(self.signature.len() > 0, AuthError::generic("Empty signature"));
-        ensure!(self.client_data.challenge.len() > 0, AuthError::generic("Empty challenge"));
-        ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
-        ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
-        self.base64_message_bytes()?;
+        ensure!(
+            self.signature.len() > 0 &&
+            self.authenticator_data.len() > 0 &&
+            self.client_data.challenge.len() > 0 &&
+            self.message().len() > 0, CredentialError::MissingData(Name)
+        );
+        ensure!(self.authenticator_data.len() >= 37, CredentialError::InvalidProperty(
+            Name, "authenticator_data".to_string(), "must be at least 37 bytes long".to_string()
+        ));
+        ensure!(self.client_data.ty == "webauthn.get", CredentialError::InvalidProperty(
+            Name, "client_data.type".to_string(), "must be 'webauthn.get'".to_string()
+        ));
         Ok(())
     }
 
@@ -85,13 +93,8 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(CredentialInfo {
-            extension: None,
-            address: None,
-            hrp: None,
-            name: CredentialName::Passkey,
-        })
+        ensure!(res, AuthError::Signature(Name, self.id()));
+        Ok(CredentialInfo { extension: None, address: None, hrp: None, name: Name })
     }
 
 }

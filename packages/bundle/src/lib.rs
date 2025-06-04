@@ -1,19 +1,29 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#[cfg(feature = "traits")]
+
+
 mod wrapper;
-#[cfg(feature = "wasm")]
-mod wasm;
 mod caller;
-mod credential;
 mod messages;
 mod impls;
-mod data;
+mod traits;
+
+// declare and use *
+mod_use!(data);
+mod_use!(credential);
+// conditional declare and use *
+cfg_mod_pub!("utils", utils);
+cfg_mod_pub!("types", types);
+// declared public if enabled and private otherwise
+cfg_mod_use!("wasm", wasm);
 
 
+
+pub use traits::*;
 pub use saa_schema::{saa_type, saa_derivable};
-pub use saa_common::{AuthError, StorageError, ensure};
-pub use data::CredentialData;
-pub use credential::*;
+pub use saa_common::types::errors;
+pub use errors::AuthError;
+
+use saa_common::{cfg_mod_pub, cfg_mod_use, mod_use};
 
 
 pub mod msgs {
@@ -25,41 +35,13 @@ pub mod msgs {
     pub use super::messages::actions::{Action, ActionDerivation, AllQueryDerivation, AllowedActions};
 }
 
-#[cfg(feature = "replay")]
-pub use saa_common::ReplayError;
+
 #[cfg(feature = "native")]
 pub use saa_crypto as crypto;
+
+
 #[cfg(feature = "session")]
 pub use { 
     saa_common::{Expiration, SessionError},
     messages::sessions::{SessionInfo, Session}
 };
-#[cfg(feature = "types")]
-pub mod types {
-    pub use saa_common::types::*;
-    #[cfg(feature = "passkeys")]
-    pub use saa_passkeys::passkey::{ClientData, ClientDataOtherKeys, PasskeyExtension, PasskeyPayload};
-    #[cfg(feature = "eth_typed_data")]
-    pub use saa_auth::eth::{Message, Types, EIP712Domain};
-    #[cfg(feature = "session")]
-    pub use super::messages::actions::{ActionDerivation, AllQueryDerivation};
-}
-#[cfg(all(feature = "wasm", feature = "types"))]
-pub use saa_common::wasm as cosmwasm_std;
-
-
-#[cfg(feature = "utils")]
-pub mod utils {
-    pub use saa_crypto::hashes;
-    #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
-    pub use saa_auth::cosmos::utils as cosmos;
-    #[cfg(feature = "ethereum")]
-    pub use saa_auth::eth::utils as eth;
-    #[cfg(feature = "passkeys")]
-    pub use saa_passkeys::passkey::utils as passkey;
-}
-
-#[cfg(feature = "traits")]
-pub use {wrapper::CredentialsWrapper, saa_common::Verifiable};
-#[cfg(all(feature = "traits", feature = "session"))]
-pub use messages::actions::DerivableMsg;

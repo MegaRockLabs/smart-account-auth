@@ -1,9 +1,12 @@
 
 #[cfg(feature = "cosmwasm")]
 use saa_common::wasm::{Addr, Deps, Api};
-use saa_common::{AuthError, Binary, String, ToString, Verifiable, 
-    CredentialId, CredentialName, CredentialInfo
+use saa_common::{
+    ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, 
+    String, ToString, Verifiable
 };
+
+use CredentialName::CosmosArbitrary as CosmosName;
 
 
 #[saa_schema::saa_type]
@@ -61,13 +64,15 @@ impl Verifiable for CosmosArbitrary {
         self.pubkey.to_string()
     }
 
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Borrowed(self.message.as_slice())
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
-        if !(self.signature.len() > 0 &&
+        ensure!(self.signature.len() > 0 &&
             self.message.to_string().len() > 0 && 
-            self.pubkey.len() > 0
-        ) {
-            return Err(AuthError::MissingData("Missing credential data".to_string()));
-        }
+            self.pubkey.len() > 0,  CredentialError::MissingData(CosmosName)
+        );
         Ok(())
     }
     
@@ -92,13 +97,13 @@ impl Verifiable for CosmosArbitrary {
             &self.signature, 
             &self.pubkey
         )?;
-        saa_common::ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        saa_common::ensure!(res, AuthError::Signature(CosmosName, self.id()));
         let hrp = address.as_str().split('1').next().map(|s| s.to_string());
         Ok(CredentialInfo {
             hrp,
             address: Some(address),
             extension: None,
-            name: CredentialName::CosmosArbitrary,
+            name: CosmosName,
         })
     }
 

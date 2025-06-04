@@ -17,12 +17,10 @@ use strum::IntoDiscriminant;
 
 pub use crate::caller::Caller;
 pub use saa_common::{CredentialId, CredentialName, CredentialInfo, CredentialRecord};
-use saa_schema::saa_type;
 
 
 
-
-#[saa_type]
+#[saa_schema::saa_type]
 pub enum Credential {
     Native(Caller),
     #[cfg(feature = "eth_personal")]
@@ -38,6 +36,8 @@ pub enum Credential {
     #[cfg(feature = "ed25519")]
     Ed25519(Ed25519),
 }
+
+
 
 impl IntoDiscriminant for Credential {
     type Discriminant = CredentialName;
@@ -101,8 +101,8 @@ pub fn build_credential(
 
         #[cfg(feature = "passkeys")]
         CredentialName::Passkey => {
-            use saa_passkeys::passkey::{
-                ClientData, PasskeyExtension, PasskeyPayload, 
+            use saa_common::types::cred::{PayloadExtension, InfoExtension};
+            use saa_passkeys::passkey::{ClientData, PasskeyExtension, PasskeyPayload, 
                 utils::base64_to_url
             };
             let stored_info = if let Some(ext) = info.extension {
@@ -119,7 +119,7 @@ pub fn build_credential(
             let (origin, other_keys) = match payload {
                 Some(payload) => {
                     match payload {
-                        saa_common::types::cred::PayloadExtension::Passkey(passkey_payload) => {
+                        PayloadExtension::Passkey(passkey_payload) => {
                             (passkey_payload.origin, passkey_payload.other_keys)
                         },
                         _ => {

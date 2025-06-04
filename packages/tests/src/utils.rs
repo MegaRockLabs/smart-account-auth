@@ -73,30 +73,16 @@ pub fn default_cred_count() -> usize {
 
 
 pub fn credential_data() -> CredentialData {
-    CredentialData {
-        credentials: all_credentials(),
-        use_native: Some(true),
-        primary_index: None,
-    }
+    CredentialData::new(all_credentials(), Some(true))
 }
 
 pub fn cred_data_only_native(caller : &str) -> CredentialData {
-    CredentialData {
-        credentials: vec![],
-        use_native: Some(true),
-        primary_index: None,
-    }.with_native(caller)
+    CredentialData::new(vec![], Some(true)).with_native(caller)
 }
 
 
-
-
 pub fn cred_data_non_native() -> CredentialData {
-    CredentialData {
-        credentials: all_credentials(),
-        use_native: None,
-        primary_index: None,
-    }
+    CredentialData::new(all_credentials(), None)
 }
 
 

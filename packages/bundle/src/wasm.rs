@@ -1,38 +1,13 @@
+#[cfg(feature = "types")]
+pub use saa_common::wasm as cosmwasm_std;
 #[cfg(feature = "replay")]
-use saa_common::{ensure, wasm::Env, ReplayError, AuthError};
+use {
+    saa_common::{ensure, wasm::Env, ReplayError},
+    crate::msgs::MsgDataToSign,
+};
+
 
 /* 
-impl Credential {
-    pub fn is_cosmos_derivable(&self) -> bool {
-        #[allow(unused_mut)]
-        let mut ok = self.hrp().is_some();
-        #[cfg(feature = "cosmos")]
-        {
-            ok = ok && self.name() == CredentialName::CosmosArbitrary;
-        }
-        ok
-    }
-    pub fn cosmos_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        let id = self.id();
-        let name = self.name();
-        if name == CredentialName::Native {
-            let addr = api.addr_validate(&id)?;
-            return Ok(addr)
-        }
-        Ok(match self.hrp() {
-            Some(hrp) => Addr::unchecked(
-                pubkey_to_address(id.as_bytes(), &hrp)?
-            ),
-            None => {
-                let canon = pubkey_to_canonical(id.as_bytes());
-                let addr = api.addr_humanize(&canon)?;
-                addr
-            }
-        })
-    }
-}
-
- */
 
 
 #[cfg(feature = "replay")]
@@ -73,20 +48,64 @@ impl crate::CredentialData {
 
 
 
+
+
+#[cfg(feature = "wasm")]
+impl<M : Serialize> MsgDataToSign<M> {
+    pub fn new_binary(
+        &self,
+        env: &saa_common::wasm::Env,
+        nonce: Uint64,
+        messages: Vec<M>
+    ) -> Result<saa_common::Binary, saa_common::ReplayError> {
+        use saa_common::to_json_binary;
+        let chain_id = env.block.chain_id.clone();
+        let contract_address = env.contract.address.to_string();
+        ensure!(chain_id == self.chain_id, ReplayError::ChainIdMismatch);
+        ensure!(contract_address == self.contract_address, ReplayError::ContractMismatch);
+        ensure!(nonce == self.nonce, ReplayError::InvalidNonce(nonce.u64()));
+        to_json_binary(&MsgDataToSign{
+            chain_id: env.block.chain_id.clone(),
+            contract_address: env.contract.address.to_string(),
+            messages,
+            nonce,
+        }).map_err(|_| ReplayError::ToBin("MsgDataToSign".to_string()))
+    }
+    
+}
+ */
+
+
+#[cfg(feature = "replay")]
+impl<M : serde::Serialize> MsgDataToSign<M> {
+    pub fn new_binary(
+        env: &saa_common::wasm::Env,
+        nonce: saa_common::Uint64,
+        messages: Vec<M>
+    ) -> Result<saa_common::Binary, saa_common::ReplayError> {
+        saa_common::to_json_binary(&Self{
+            chain_id: env.block.chain_id.clone(),
+            contract_address: env.contract.address.to_string(),
+            messages,
+            nonce,
+        }).map_err(|_| ReplayError::ToBin("MsgDataToSign".to_string()))
+    }
+}
+
 #[cfg(feature = "replay")]
 impl crate::msgs::MsgDataToVerify {
     pub fn validate(&self, env: &Env, expected: u64 ) -> Result<(), ReplayError> {
         ensure!(self.chain_id == env.block.chain_id, ReplayError::ChainIdMismatch);
         ensure!(self.contract_address == env.contract.address.to_string(), ReplayError::ContractMismatch);
         let signed = self.nonce.u64();
-        ensure!(signed == expected, ReplayError::DifferentNonce(signed, expected));
+        ensure!(signed == expected, ReplayError::InvalidNonce(expected));
         Ok(())
     }
 }
 
 
 #[cfg(feature = "replay")]
-impl<M : serde::de::DeserializeOwned> crate::msgs::MsgDataToSign<M> {
+impl<M : serde::de::DeserializeOwned + serde::Serialize> crate::msgs::MsgDataToSign<M> {
     pub fn validate(&self, env: &Env, nonce: u64) -> Result<(), ReplayError> {
         Into::<crate::msgs::MsgDataToVerify>::into(self).validate(env, nonce)
     }

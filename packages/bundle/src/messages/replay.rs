@@ -1,9 +1,10 @@
 use saa_common::Uint64;
 use saa_schema::saa_type;
+use serde::Serialize;
 
 
 #[saa_type]
-pub struct MsgDataToSign<M = String> {
+pub struct MsgDataToSign<M : Serialize = String> {
     pub chain_id: String,
     pub contract_address: String,
     pub messages: Vec<M>,
@@ -20,7 +21,7 @@ pub struct MsgDataToVerify {
 }
 
 
-impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
+impl<M : Serialize> Into<MsgDataToVerify> for &MsgDataToSign<M> {
     fn into(self) -> MsgDataToVerify {
         MsgDataToVerify {
             chain_id: self.chain_id.clone(),
@@ -29,4 +30,6 @@ impl<M> Into<MsgDataToVerify> for &MsgDataToSign<M> {
         }
     }
 }
+
+
 

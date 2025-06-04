@@ -1,8 +1,9 @@
+use saa_schema::saa_type;
 use saa_common::{
-    ensure, AuthError, Binary, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable
+ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, Verifiable
 };
 
-use saa_schema::saa_type;
+use CredentialName::Secp256k1 as Name;
 
 
 #[saa_type]
@@ -20,11 +21,15 @@ impl Verifiable for Secp256k1 {
         self.pubkey.to_base64()
     }
 
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Borrowed(&self.message)
+    }
+
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(self.signature.len() > 0 &&
                 self.message.len() > 0 && 
                 self.pubkey.len() > 0,
-            AuthError::MissingData("Empty credential data".to_string())
+            CredentialError::MissingData(CredentialName::Secp256k1)
         );
         Ok(())
     }
@@ -45,12 +50,12 @@ impl Verifiable for Secp256k1 {
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
+        ensure!(res, AuthError::Signature(Name, self.id()));
         Ok(CredentialInfo {
             extension: None,
             address: None,
             hrp: self.hrp.clone(),
-            name: CredentialName::Secp256k1,
+            name: Name,
         })
     }
 }
