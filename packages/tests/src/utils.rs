@@ -3,8 +3,7 @@
 use cosmwasm_std::{testing::mock_env, Addr, Env};
 use saa_common::Binary;
 use smart_account_auth::{ 
-    Credential, CredentialData, CredentialInfo, CredentialName, SessionInfo, 
-    CosmosArbitrary, EthPersonalSign, PasskeyCredential,
+    Credential, CredentialData, CosmosArbitrary, EthPersonalSign, PasskeyCredential,
     types::ClientData, 
 };
 
@@ -35,23 +34,13 @@ pub fn get_eth_personal() -> EthPersonalSign {
 }
 
     
-#[cfg(not(feature = "cosmos_arb_addr"))]
-pub fn get_cosmos_arbitrary() -> CosmosArbitrary {
-    CosmosArbitrary {
-        pubkey: Binary::from_base64("A2LjUH7Q0gi7+Wi0/MnXMZqN8slsz7iHMfTWp8xUXspH").unwrap(),
-        message: Binary::from_base64(SIGN_MESSAGE_BASE64).unwrap(),
-        signature: Binary::from_base64("jfoaUrJHF17xrapXWfu2KPDd2jcDI/02Rbv9PI1PWx5ugxHGVv99V1Scu7FZVKYVqrL9tCt4sX3hFX/7ul4dcg==").unwrap(),
-        hrp: Some("stars".to_string()),
-    }
-}
 
-#[cfg(feature = "cosmos_arb_addr")]
 pub fn get_cosmos_arbitrary() -> CosmosArbitrary {
     CosmosArbitrary {
         pubkey: Binary::from_base64("A2LjUH7Q0gi7+Wi0/MnXMZqN8slsz7iHMfTWp8xUXspH").unwrap(),
         message: Binary::from_base64(SIGN_MESSAGE_BASE64).unwrap(),
         signature: Binary::from_base64("jfoaUrJHF17xrapXWfu2KPDd2jcDI/02Rbv9PI1PWx5ugxHGVv99V1Scu7FZVKYVqrL9tCt4sX3hFX/7ul4dcg==").unwrap(),
-        address: "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn".to_string(),
+        address: "stars1v85m4sxnndwmswtd8jrz3cd2m8u8eegqdxyluz".to_string(),
     }
 }
 
@@ -120,15 +109,3 @@ pub fn get_mock_env() -> Env {
 }
 
 
-pub fn session_info() -> SessionInfo {
-    SessionInfo {
-        expiration: None,
-        granter: None,
-        grantee: (BOB_ADDR.to_string(), CredentialInfo {
-            name: CredentialName::Native,
-            hrp: None,
-            extension: None,
-            address: Some(Addr::unchecked(BOB_ADDR)),
-        }),
-    }
-}

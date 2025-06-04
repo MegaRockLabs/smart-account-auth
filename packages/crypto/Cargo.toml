@@ -29,6 +29,9 @@ p256                = { version = "0.13.2" , optional = true,  default-features 
 default     =   ["std"]
 std         =   ["saa-common/std",                     "p256?/std"]
 native      =   ["saa-common/native",        "dep:cosmwasm-crypto"]
-secp256r1   =   ["dep:p256",                          "dep:digest"]
-cosmwasm    =   ["dep:ripemd", "saa-schema/cosmwasm", "dep:bech32"]
-ethereum    =   ["dep:tiny-keccak"                                ]
+
+secp256r1   =   ["dep:p256",                             "dep:digest"]
+cosmos_arb  =   ["dep:bech32", "saa-common/cosmos_arb",  "dep:ripemd"]
+
+cosmwasm    =   ["saa-schema/cosmwasm"]
+ethereum    =   ["dep:tiny-keccak"    ]

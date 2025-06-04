@@ -1,4 +1,4 @@
 #[cfg(any(feature = "eth_personal", feature = "eth_typed_data"))]
 pub mod eth;
-#[cfg(feature = "cosmos_arb")]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 pub mod cosmos;

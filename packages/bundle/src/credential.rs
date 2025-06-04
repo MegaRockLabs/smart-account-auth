@@ -3,7 +3,7 @@
 pub use saa_auth::eth::EthPersonalSign;
 #[cfg(feature = "eth_typed_data")]
 pub use saa_auth::eth::EthTypedData;
-#[cfg(feature = "cosmos_arb")]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 pub use saa_auth::cosmos::CosmosArbitrary;
 #[cfg(feature = "passkeys")]
 pub use saa_passkeys::passkey::PasskeyCredential;
@@ -26,7 +26,7 @@ pub enum Credential {
     Native(Caller),
     #[cfg(feature = "eth_personal")]
     EthPersonalSign(EthPersonalSign),
-    #[cfg(feature = "cosmos_arb")]
+    #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
     CosmosArbitrary(CosmosArbitrary),
     #[cfg(feature = "passkeys")]
     Passkey(PasskeyCredential),
@@ -45,7 +45,7 @@ impl IntoDiscriminant for Credential {
             Credential::Native(_) => CredentialName::Native,
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(_) => CredentialName::EthPersonalSign,
-            #[cfg(feature = "cosmos_arb")]
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
             Credential::CosmosArbitrary(_) => CredentialName::CosmosArbitrary,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(_) => CredentialName::Passkey,
@@ -85,7 +85,7 @@ pub fn build_credential(
             }
         ),
 
-        #[cfg(feature = "cosmos_arb")]
+        #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
         CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(CosmosArbitrary {
             pubkey: saa_common::Binary::from_base64(&id)?,
             message,

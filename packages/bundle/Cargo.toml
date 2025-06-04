@@ -57,11 +57,11 @@ passkeys        =  ["saa-passkeys/passkeys"   ]
 eth_personal    =  ["saa-auth/eth_personal"   ]
 eth_typed_data  =  ["saa-auth/eth_typed_data" ]
 cosmos_arb      =  ["saa-auth/cosmos_arb"     ]
-cosmos_arb_addr =  ["saa-auth/cosmos_arb_addr", "cosmos_arb"]
+cosmos_arb_addr =  ["saa-auth/cosmos_arb_addr"]
 
 
 # ---- Grouped  ----    
-majors        =   ["cosmos_arb", "eth_personal", "passkeys", "ed25519"]
+majors        =   ["cosmos_arb_addr", "eth_personal", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
-default       =   ["std", "majors", "replay"]
+default       =   ["std", "majors", "replay", "traits"]

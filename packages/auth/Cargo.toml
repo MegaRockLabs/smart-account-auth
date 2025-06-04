@@ -37,6 +37,6 @@ eth_typed_data      =   [
 native              =   ["saa-crypto/native"   ] 
 cosmwasm            =   ["saa-crypto/cosmwasm"]
 
-cosmos_arb_addr     =   ["cosmos_arb"]
-cosmos_arb          =   ["saa-common/cosmos_arb"]
+cosmos_arb          =   ["saa-crypto/cosmos_arb"]
+cosmos_arb_addr     =   ["saa-common/cosmos_arb"]
 

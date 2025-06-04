@@ -7,4 +7,9 @@ pub fn preamble_msg_arb_036(signer: &str, data: &str) -> String {
     )
 }
 
-pub use saa_crypto::{prefix_from_address, pubkey_to_address, pubkey_to_canonical};
+pub fn prefix_from_address(address: &str) -> String {
+    address.split("1").next().unwrap().to_string()
+}
+
+#[cfg(not(feature = "cosmos_arb_addr"))]
+pub use saa_crypto::{pubkey_to_address, pubkey_to_canonical};

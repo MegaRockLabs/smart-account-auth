@@ -1,14 +1,13 @@
-use {saa_common::Vec, sha2::{Digest, Sha256}};
-# [cfg(feature = "cosmwasm")]
+use sha2::{Digest, Sha256};
+# [cfg(feature = "cosmos_arb")]
 use ripemd::Ripemd160;
 #[cfg(feature = "ethereum")]
 use tiny_keccak::{Hasher, Keccak};
 
 
 
-
-# [cfg(feature = "cosmwasm")]
-pub fn ripemd160(bytes: &[u8]) -> Vec<u8> {
+# [cfg(feature = "cosmos_arb")]
+pub fn ripemd160(bytes: &[u8]) -> saa_common::Vec<u8> {
     let mut hasher = Ripemd160::new();
     hasher.update(bytes);
     hasher.finalize().to_vec()

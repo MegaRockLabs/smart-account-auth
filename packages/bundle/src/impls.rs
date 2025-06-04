@@ -10,6 +10,19 @@ impl From<Caller> for Credential {
     }
 }
 
+impl From<&str> for Caller {
+    fn from(s: &str) -> Self {
+        Caller(CredentialId::from(s.to_string()))
+    }
+}
+
+impl From<&str> for Credential {
+    fn from(s: &str) -> Self {
+        Caller::from(s).into()
+    }
+}
+
+
 #[cfg(feature = "eth_personal")]
 impl From<saa_auth::eth::EthPersonalSign> for Credential {
     fn from(c: saa_auth::eth::EthPersonalSign) -> Self {
@@ -17,7 +30,7 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
     }
 }
 
-#[cfg(feature = "cosmos_arb")]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
     fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
@@ -65,7 +78,7 @@ impl Deref for Credential {
             Credential::Native(c) => c,
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c,
-            #[cfg(feature = "cosmos_arb")]
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
             Credential::CosmosArbitrary(c) => c,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c,
@@ -92,7 +105,7 @@ impl Credential {
             Credential::Native(_) => Vec::new(),
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c.message.to_vec(),
-            #[cfg(feature = "cosmos_arb")]
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
             Credential::CosmosArbitrary(c) => c.message.to_vec(),
             #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c.message.to_vec(),

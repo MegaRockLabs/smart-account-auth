@@ -4,9 +4,6 @@ use bech32::{hrp::Hrp, Bech32};
 
 
 
-pub fn prefix_from_address(address: &str) -> String {
-    address.split("1").next().unwrap().to_string()
-}
 
 
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> saa_common::wasm::CanonicalAddr {

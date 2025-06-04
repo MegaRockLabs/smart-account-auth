@@ -32,9 +32,9 @@ base64                  = { version = "0.22.1", default-features = false, featur
 semver                  = { version = "1.0.26", default-features = false }
 thiserror               = { version = "2.0.12", default-features = false }
 
-smart-account-auth      = { version = "0.26.0", path = "packages/bundle" }
-saa-auth                = { version = "0.26.0", path = "packages/auth" }
+smart-account-auth      = { version = "0.26.0", path = "packages/bundle", default-features = false }
 saa-common              = { version = "0.26.0", path = "packages/common", default-features = false }
+saa-auth                = { version = "0.26.0", path = "packages/auth" }
 saa-schema              = { version = "0.26.0", path = "packages/schema" }
 saa-curves              = { version = "0.26.0", path = "packages/curves" }
 saa-passkeys            = { version = "0.26.0", path = "packages/passkeys" }

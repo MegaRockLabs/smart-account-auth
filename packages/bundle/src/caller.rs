@@ -5,12 +5,6 @@ use saa_common::{AuthError, CredentialId, CredentialInfo, CredentialName, Verifi
 pub struct Caller(pub CredentialId);
 
 
-impl From<&str> for Caller {
-    fn from(addr: &str) -> Self {
-        Caller(addr.to_string())
-    }
-}
-
 
 impl Verifiable for Caller {
 
@@ -33,7 +27,7 @@ impl Verifiable for Caller {
         #[cfg(feature = "wasm")]
         let address = deps.api.addr_validate(self.0.as_str())?;
         #[cfg(feature = "wasm")]
-        let hrp = Some(saa_crypto::prefix_from_address(address.as_str()));
+        let hrp = address.as_str().split("1").next().map(|s| s.to_string());
         #[cfg(not(feature = "wasm"))]
         let address = self.0.clone();
         #[cfg(not(feature = "wasm"))]
@@ -47,5 +41,6 @@ impl Verifiable for Caller {
         })
     }
 }
+
 
 

@@ -51,7 +51,7 @@ pub use saa_common::wasm as cosmwasm_std;
 #[cfg(feature = "utils")]
 pub mod utils {
     pub use saa_crypto::hashes;
-    #[cfg(feature = "cosmos_arb")]
+    #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
     pub use saa_auth::cosmos::utils as cosmos;
     #[cfg(feature = "ethereum")]
     pub use saa_auth::eth::utils as eth;

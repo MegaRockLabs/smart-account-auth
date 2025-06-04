@@ -185,12 +185,14 @@ mod std_mod {
             }
         }
 
-         impl From<bech32::primitives::hrp::Error> for AuthError {
+        #[cfg(feature = "cosmos_arb")]
+        impl From<bech32::primitives::hrp::Error> for AuthError {
             fn from(err: bech32::primitives::hrp::Error) -> Self {
                 Self::Crypto(err.to_string())
             }
         }
 
+        #[cfg(feature = "cosmos_arb")]
         impl From<bech32::EncodeError> for AuthError {
             fn from(err: bech32::EncodeError) -> Self {
                 Self::Crypto(err.to_string())
