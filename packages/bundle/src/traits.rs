@@ -2,13 +2,14 @@
 use crate::data::VerifiedData;
 #[cfg(feature = "session")]
 pub use crate::messages::actions::DerivableMsg;
-#[cfg(feature = "wasm")]
-use saa_common::wasm::{Env, MessageInfo, Deps};
-
-
-
+#[cfg(feature = "replay")]
+pub use saa_crypto::ReplayProtection;
 pub use saa_common::{Verifiable, Identifiable};
 pub use super::wrapper::CredentialsWrapper;
+
+
+#[cfg(feature = "wasm")]
+use saa_common::wasm::{Env, MessageInfo, Deps};
 use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
 use saa_common::AuthError;
 

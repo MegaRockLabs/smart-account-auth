@@ -27,12 +27,11 @@ use saa_common::{cfg_mod_pub, cfg_mod_use, mod_use};
 
 
 pub mod msgs {
-    pub use super::messages::SignedPayload;
-    pub use saa_common::types::msgs::{SignedDataMsg, AuthPayload};
-    #[cfg(feature = "replay")]
-    pub use super::messages::replay::{MsgDataToSign, MsgDataToVerify};
     #[cfg(feature = "session")]
     pub use super::messages::actions::{Action, ActionDerivation, AllQueryDerivation, AllowedActions};
+    #[cfg(feature = "replay")]
+    pub use saa_common::types::signed::{MsgDataToSign, MsgDataToVerify};
+    pub use saa_common::types::signed::{SignedDataMsg, AuthPayload};
 }
 
 

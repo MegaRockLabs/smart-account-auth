@@ -1,4 +1,4 @@
-#[cfg(feature = "types")]
+/* #[cfg(feature = "types")]
 pub use saa_common::wasm as cosmwasm_std;
 #[cfg(feature = "replay")]
 use {
@@ -111,6 +111,9 @@ impl<M : serde::de::DeserializeOwned + serde::Serialize> crate::msgs::MsgDataToS
     }
 }
 
+
+} 
+*/
 
 impl From<&saa_common::wasm::MessageInfo> for crate::Caller {
     fn from(info: &saa_common::wasm::MessageInfo) -> Self {

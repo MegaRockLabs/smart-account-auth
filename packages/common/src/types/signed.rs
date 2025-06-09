@@ -40,5 +40,47 @@ pub struct MsgDataToSign<M: Serialize = String> {
 }
 
 
+
+
+#[saa_type(no_deny)]
+pub struct MsgDataToVerify {
+    pub chain_id: String,
+    pub contract_address: String,
+    pub nonce: crate::Uint64,
+}
+
+
+
+impl<M : Serialize> Into<MsgDataToVerify> for &MsgDataToSign<M> {
+    fn into(self) -> MsgDataToVerify {
+        MsgDataToVerify {
+            chain_id: self.chain_id.clone(),
+            contract_address: self.contract_address.clone(),
+            nonce: self.nonce.clone(),
+        }
+    }
+}
+
+
+
+
 #[cfg(feature = "wasm")]
-impl crate::wasm::CustomMsg for SignedDataMsg {}
+mod wasm {
+
+    impl<M : serde::Serialize> super::MsgDataToSign<M> {
+        pub fn new_binary(
+            env: &crate::wasm::Env,
+            nonce: crate::Uint64,
+            messages: Vec<M>
+        ) -> Result<crate::Binary, crate::ReplayError> {
+            crate::to_json_binary(&Self{
+                chain_id: env.block.chain_id.clone(),
+                contract_address: env.contract.address.to_string(),
+                messages,
+                nonce,
+            }).map_err(|_| crate::ReplayError::ToBin("MsgDataToSign".to_string()))
+        }
+    }
+
+    impl crate::wasm::CustomMsg for super::SignedDataMsg {}
+}

@@ -1,6 +1,6 @@
 pub mod exts;
 pub mod cred;
-pub mod msgs;
+pub mod signed;
 pub mod errors;
 
 // Apache license in both but giving the credits to the original authors

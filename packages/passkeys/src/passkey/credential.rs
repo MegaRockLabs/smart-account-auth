@@ -1,8 +1,6 @@
-use std::borrow::Cow;
-
 use saa_schema::saa_type;
-use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, String, 
-    Verifiable, Identifiable
+use saa_crypto::{sha256, ReplayProtection};
+use saa_common::{ensure, to_json_binary, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, Identifiable, String, Verifiable
 };
 
 use super::client_data::ClientData;
@@ -41,7 +39,7 @@ impl Identifiable for PasskeyCredential {
 
 
 
-impl PasskeyCredential {
+/* impl PasskeyCredential {
     
 
     #[allow(unused)]
@@ -54,16 +52,18 @@ impl PasskeyCredential {
         Ok(final_digest)
     }
 }
+ */
+
 
 
 impl Verifiable for PasskeyCredential {
 
-    fn message(&self) -> Cow<[u8]> {
+    // transfroming from base64 url to regular base64 so that we can deserialize using `from_json` etc.
+    fn message(&self) -> std::borrow::Cow<[u8]> {
         match Binary::from_base64(&super::utils::url_to_base64(&self.client_data.challenge)) {
-            Ok(bytes) => Cow::Owned(bytes.to_vec()),
-            Err(_) => Cow::Borrowed(&[])
+            Ok(bytes) => std::borrow::Cow::Owned(bytes.to_vec()),
+            Err(_) => std::borrow::Cow::Borrowed(&[])
         }
-            
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -92,13 +92,13 @@ impl Verifiable for PasskeyCredential {
         let res = true;
         #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
-            &self.message_digest()?,
+            &self.message_digest(),
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
         #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
         let res = deps.api.secp256r1_verify(
-            &self.message_digest()?,
+            &self.message_digest(),
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
@@ -110,5 +110,13 @@ impl Verifiable for PasskeyCredential {
 
 
 
-#[cfg(feature = "replay")]
-impl saa_crypto::ReplayProtection for PasskeyCredential {}
+impl ReplayProtection for PasskeyCredential {
+
+    fn message_digest(&self) -> Vec<u8> {
+        let client_data_hash = sha256(&to_json_binary(&self.client_data).unwrap());
+        let final_digest = sha256(
+            &[self.authenticator_data.as_slice(), client_data_hash.as_slice()].concat()
+        );
+        final_digest.to_vec()
+    }
+}

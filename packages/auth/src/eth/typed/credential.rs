@@ -181,7 +181,6 @@ impl Verifiable for EthTypedData {
 
         ensure!(addr_bytes == key_hash[12..], AuthError::RecoveryMismatch);
 
-
         let options = self.cache_options.clone().unwrap_or_default(); 
         let save_types = options.types.unwrap_or(false);
 
@@ -201,3 +200,54 @@ impl Verifiable for EthTypedData {
 
 }
 
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for EthTypedData {
+    fn hash_message(&self, bytes: &[u8]) -> Vec<u8> {
+        keccak256(bytes).to_vec()
+    }
+
+    fn message_digest(&self) -> Vec<u8> {
+        if let Ok(values) = self.compute_domain_values() {
+            return self.encode_eip712(&values.domain_digest)
+                .unwrap_or_default()
+                .to_vec();
+        }
+        vec![]
+    }
+
+    #[cfg(feature = "cosmwasm")]
+    fn check_replay<M: serde::Serialize>(
+        &self,
+        env:  &saa_common::wasm::Env,
+        _messages: Option<Vec<M>>,
+        nonce: u64,
+    ) -> Result<(), saa_common::ReplayError> {
+        use saa_common::ReplayError;
+        let (id, addr) = if let Some(cache) = &self.cache {
+            (cache.chain_id, cache.contract_addr)
+        } else {
+            match self.domain.as_ref() {
+                Some(domain) => {
+                    (
+                        Some(crate::eth::utils::encode_u64(domain.chain_id.u64())), 
+                        Some(crate::eth::utils::encode_address(&domain.verifying_contract))
+                    )
+                },
+                None => return Err(ReplayError::MissingData("domain or cache in EthTypedData".to_string()))
+            }
+        };
+        match self.message.get("nonce").and_then(|v| v.as_u64()) {
+            Some(n) => ensure!(n == nonce, ReplayError::InvalidNonce(nonce)),
+            _ => return Err(ReplayError::MissingData("nonce in EthTypedData message".to_string()))
+        }
+        let env_id = keccak256(env.block.chain_id.as_ref());
+        ensure!(id.map(|id|id == env_id).unwrap_or_default(), ReplayError::ChainIdMismatch);
+        
+        let env_addr = keccak256(env.contract.address.as_bytes());
+        ensure!(addr.map(|addr| addr == env_addr).unwrap_or_default(), ReplayError::ContractMismatch);
+
+        Ok(())
+    }
+
+}

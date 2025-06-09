@@ -67,7 +67,10 @@ mod std_mod {
         ManyMessages(u8, u8),
 
         #[error("Invalid signed envelope. Check that chain_id`s, contract_address`s, nonce`s amd messages` match")]
-        InvalidEnvelope
+        InvalidEnvelope,
+
+        #[error("The data for the replay protection is missing or invalid. Item: {0}")]
+        MissingData(String),
     }
 
 
