@@ -15,6 +15,7 @@ saa-crypto          = { workspace = true }
 
 [features]
 default             =   ["std"]
+replay              =   []
 secp256r1           =   ["saa-common/secp256r1"]
 passkeys            =   ["saa-common/passkeys", "dep:serde"]
 

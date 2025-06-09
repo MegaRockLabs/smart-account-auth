@@ -1,4 +1,4 @@
-pub mod passkey; 
+pub mod exts;
 pub mod cred;
 pub mod msgs;
 pub mod errors;
@@ -38,4 +38,11 @@ pub mod timestamp {
     pub use super::ts::Timestamp;
     #[cfg(feature = "wasm")]
     pub use crate::wasm::Timestamp;
+}
+
+
+#[derive(serde::Deserialize)]
+pub struct ContractVersion {
+    pub contract: String,
+    pub version: String,
 }

@@ -1,6 +1,7 @@
 use saa_schema::saa_type;
 use saa_common::{
-ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, Verifiable
+ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, 
+    Verifiable, Identifiable
 };
 
 use CredentialName::Secp256k1 as Name;
@@ -15,11 +16,17 @@ pub struct Secp256k1 {
 }
 
 
-impl Verifiable for Secp256k1 {
-
+impl Identifiable for Secp256k1 {
     fn id(&self) -> CredentialId {
         self.pubkey.to_base64()
     }
+    fn name(&self) -> CredentialName {
+        Name
+    }
+}
+
+
+impl Verifiable for Secp256k1 {
 
     fn message(&self) -> std::borrow::Cow<[u8]> {
         std::borrow::Cow::Borrowed(&self.message)
@@ -59,3 +66,7 @@ impl Verifiable for Secp256k1 {
         })
     }
 }
+
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Secp256k1 {}

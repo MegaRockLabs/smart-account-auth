@@ -8,35 +8,34 @@ license     = { workspace = true }
 repository  = { workspace = true }
 
 [dependencies]
-ethers-core		    = { workspace = true,  optional = true }
-ethabi              = { version = "18.0.0", optional = true, default-features = false }
 hex                 = { version = "0.4.3", optional = true, default-features = false }
-serde_json          = { workspace = true, optional = true }
-serde               = { workspace = true,  optional = true }
+ethers-core		    = { workspace = true,  optional = true }
+serde_json          = { workspace = true,  optional = true }
+serde               = { workspace = true }
+schemars            = { workspace = true }
 
 saa-crypto          = { workspace = true }
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 
-alloy = { version = "1.0.6", optional = true, features = [
-	"contract",
-	"dyn-abi",
-	"eip712",
-	"providers",
-	"signers",
-	"sol-types",
-]}
 
 
 [features]
-default             =   ["std"]
-std                 =   ["saa-crypto/std",     "hex?/std"]
-eth_personal        =   ["saa-crypto/ethereum", "saa-common/eth_personal", "dep:hex"]
-eth_typed_data      =   [
-	"saa-crypto/ethereum", "saa-common/eth_typed_data", "dep:hex", "dep:serde", "dep:ethabi", "dep:serde_json", "dep:alloy", "dep:ethers-core", "saa-common/eth_typed_data"]
-native              =   ["saa-crypto/native"   ] 
-cosmwasm            =   ["saa-crypto/cosmwasm"]
+default             	=   ["std"]
+std                 	=   ["saa-crypto/std", "hex?/std"]
+replay                  =   []
 
-cosmos_arb          =   ["saa-crypto/cosmos_arb"]
-cosmos_arb_addr     =   ["saa-common/cosmos_arb"]
+native              	=   ["saa-crypto/native"  ] 
+cosmwasm            	=   ["saa-crypto/cosmwasm"]
+
+eth_personal        	=   ["saa-crypto/ethereum", "saa-common/eth_personal", "dep:hex"]
+
+eth_typed_data      	=   ["saa-crypto/ethereum", "saa-common/eth_typed_data", "dep:ethers-core", "dep:serde_json", "dep:hex"]
+#eth_typed_data_cache    =   ["eth_typed_data"]  
+eth_typed_data_replay   =   ["eth_typed_data"]  
+
+cosmos_arb          	=   ["saa-crypto/cosmos_arb"]
+cosmos_arb_cache     	=   ["saa-common/cosmos_arb"]
+
+
 

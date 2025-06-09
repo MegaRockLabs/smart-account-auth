@@ -29,8 +29,6 @@ strum               = { workspace = true }
 serde-json-wasm     = { workspace = true, optional = true }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
-# For Error support
-ethers-core         = { workspace = true, optional = true }
 
 [features]
 default     = [
@@ -85,11 +83,10 @@ types      = [
     "dep:schemars",
     "saa-schema/cosmwasm",
 ]
-
 ed25519         =  []
 secp256k1       =  []
 secp256r1       =  []
 passkeys        =  []
 eth_personal    =  []
-eth_typed_data  =  ["dep:ethers-core"]
+eth_typed_data  =  []
 cosmos_arb      =  ["dep:bech32"]

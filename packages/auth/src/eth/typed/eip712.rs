@@ -1,113 +1,129 @@
-// use saa_schema::saa_type;
-// use saa_common::{Binary, Uint64};
-// use saa_crypto::hashes::keccak256;
-// use ethabi::{encode, ethereum_types::{H160, U256}, Token};
-// use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use saa_common::Uint64;
+use saa_schema::saa_type;
+use serde_json::Value;
+
+use crate::eth::utils::{encode_address, encode_u64, hash_eth_typed_data, preamble_hash_eth_typed};
+use ethers_core::types::transaction::eip712::Eip712DomainType as CoreDomainType;
+
+
+#[saa_type]
+pub struct Eip712DomainType {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub r#type: String,
+}
+
+impl Into<CoreDomainType> for Eip712DomainType {
+    fn into(self) -> CoreDomainType {
+        CoreDomainType {
+            name: self.name,
+            r#type: self.r#type,
+        }
+    }
+}
+
+pub type Eip712Types = BTreeMap<String, Vec<Eip712DomainType>>;
+
+pub type Eip712Message  =  BTreeMap<String, Value>;
 
 
 
 
-// #[saa_type(no_deny)]
-// pub struct Eip712DomainType {
-//     pub name: String,
-//     #[serde(rename = "type")]
-//     pub r#type: String,
-// }
-
-
-// /// Taken from [ethers-rs](https://github.com/gakonst/ethers-rs/blob/6e2ff0ef8af8c0ee3c21b7e1960f8c025bcd5588/ethers-core/src/types/transaction/eip712.rs#L107)
-// /// Eip712 Domain attributes used in determining the domain separator;
-// /// Unused fields are left out of the struct type.
-// ///
-// /// Protocol designers only need to include the fields that make sense for their signing domain.
-// /// Unused fields are left out of the struct type.
-// #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-// pub struct EIP712Domain {
-//     ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
-//     #[serde(default, skip_serializing_if = "Option::is_none")]
-//     pub name: Option<String>,
-
-//     /// The current major version of the signing domain. Signatures from different versions are not
-//     /// compatible.
-//     #[serde(default, skip_serializing_if = "Option::is_none")]
-//     pub version: Option<String>,
-
-//     /// The EIP-155 chain id. The user-agent should refuse signing if it does not match the
-//     /// currently active chain.
-//     #[serde(default, skip_serializing_if = "Option::is_none")]
-//     pub chain_id: Option<Uint64>,
-
-//     /// The address of the contract that will verify the signature.
-//     #[serde(default, skip_serializing_if = "Option::is_none")]
-//     pub verifying_contract: Option<String>,
-
-//     /// A disambiguating salt for the protocol. This can be used as a domain separator of last
-//     /// resort.
-//     #[serde(default, skip_serializing_if = "Option::is_none")]
-//     pub salt: Option<Binary>,
-// }
+#[saa_type]
+pub struct Eip712Domain {
+    ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
+    pub name: String,
+    /// The current major version of the signing domain. Signatures from different versions are not compatible.
+    pub version: String,
+    /// The EIP-155 chain id. The user-agent should refuse signing if it does not match the currently active chain.
+    #[serde(rename = "chainId")]
+    pub chain_id: Uint64,
+    /// The address of the contract that will verify the signature.
+    #[serde(rename = "verifyingContract")]
+    pub verifying_contract: String,
+    /// A disambiguating salt for the protocol. This can be used as a domain separator of last resort.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub salt: Option<[u8; 32]>,
+}
 
 
 
+#[saa_type]
+pub struct Eip712DomainValues {
+    pub chain_id         :  [u8; 32],
+    pub contract_addr    :  [u8; 32],
+    pub domain_digest    :  [u8; 32],
+    pub preamble_digest  :  Vec<u8>,
+    pub use_salt         :  bool,
+}
 
 
-// impl EIP712Domain {
+impl Eip712DomainValues {
+    pub fn to_cached(&self, options: super::EthTypedSaveOptions) -> super::EthTypedCache {
+        super::EthTypedCache {
+            
+            use_salt: self.use_salt,
 
-//     pub fn separator(&self) -> [u8; 32] {
-//         // full name is `EIP712Domain(string name,string version,uint256 chainId,address
-//         // verifyingContract,bytes32 salt)`
-//         let mut ty = "EIP712Domain(".to_string();
+            preamble_digest: self.preamble_digest.clone(),
 
-//         let mut tokens = Vec::new();
-//         let mut needs_comma = false;
-//         if let Some(ref name) = self.name {
-//             ty += "string name";
-//             tokens.push(Token::Uint(U256::from(keccak256(name.as_bytes()))));
-//             needs_comma = true;
-//         }
+            chain_id: if options.chain_id.unwrap_or_default() { 
+                Some(self.chain_id) } else { None },
 
-//         if let Some(ref version) = self.version {
-//             if needs_comma {
-//                 ty.push(',');
-//             }
-//             ty += "string version";
-//             tokens.push(Token::Uint(U256::from(keccak256(version.as_bytes()))));
-//             needs_comma = true;
-//         }
+            contract_addr: if options.contract_addr.unwrap_or_default() { 
+                Some(self.contract_addr) 
+            } else { None },
 
-//         if let Some(chain_id) = self.chain_id {
-//             if needs_comma {
-//                 ty.push(',');
-//             }
-//             ty += "uint256 chainId";
-//             tokens.push(Token::Uint(U256::from(chain_id.u64())));
-//             needs_comma = true;
-//         }
+            domain_digest: if options.domain_digest.unwrap_or_default() { 
+                Some(self.domain_digest) 
+            } else { None },
+        }
+    }
+    
+}
 
-//         if let Some(ref verifying_contract) = self.verifying_contract {
-//             if needs_comma {
-//                 ty.push(',');
-//             }
-//             ty += "address verifyingContract";
-//             let bytes : [u8; 20] = verifying_contract.as_bytes()
-//                 .try_into()
-//                 .expect("verifying_contract should be 20 bytes long");
-//             tokens.push(Token::Address(H160::from(bytes)));
-//             needs_comma = true;
-//         }
 
-//         if let Some(ref salt) = self.salt {
-//             if needs_comma {
-//                 ty.push(',');
-//             }
-//             ty += "bytes32 salt";
-//             tokens.push(Token::Uint(U256::from(salt.as_slice())));
-//         }
+impl Eip712Domain {
 
-//         ty.push(')');
+    pub(crate) fn compute_values(
+        &self,
+        cache: Option<super::EthTypedCache>
+    ) -> Eip712DomainValues {
+        let cache = cache.unwrap_or_default();
+        let (use_salt, preamble_digest) = if cache.preamble_digest.is_empty() {
+            let use_salt = self.salt.is_some();
+            (use_salt, preamble_hash_eth_typed(&self.name, &self.version, use_salt))
+        } else {
+            let new_use_salt = self.salt.is_some();
+            if cache.use_salt != new_use_salt {
+                (new_use_salt, preamble_hash_eth_typed(&self.name, &self.version, new_use_salt))
+            } else {
+                (cache.use_salt, cache.preamble_digest)
+            }
+        };
 
-//         tokens.insert(0, Token::Uint(U256::from(keccak256(ty.as_bytes()))));
+        let chain_id = cache.chain_id.unwrap_or(encode_u64(self.chain_id.u64()));
+        let contract_addr = cache.contract_addr.unwrap_or_else(|| {
+            encode_address(&self.verifying_contract)
+        });
 
-//         keccak256(&encode(tokens.as_slice()))
-//     }
-// }
+        let domain_digest = hash_eth_typed_data(
+            &preamble_digest,
+            &chain_id,
+            &contract_addr,
+            self.salt
+        );
+        
+        Eip712DomainValues {
+            chain_id,
+            contract_addr,
+            preamble_digest,
+            domain_digest,
+            use_salt,
+        }
+
+    }
+
+}
+
+

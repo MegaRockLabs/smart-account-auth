@@ -21,7 +21,7 @@ mod tests {
 
         let cred = EthPersonalSign {
             signer : address.to_string(),
-            signature: signature.clone(),
+            signature,
             message,
         };
         let res = cred.verify(deps.as_ref());
@@ -141,17 +141,96 @@ mod tests {
             "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
             "totalOriginalConsiderationItems": "2",
             "counter": "0"
-          }
+          },
+          "signature": "",
+          "signer": ""
         }
                 );
 
         let typed_data: EthTypedData = serde_json::from_value(json).unwrap();
-
-        let hash = typed_data.encode_eip712().unwrap();
+        let values = typed_data.compute_domain_values().unwrap();
+        let hash = typed_data.encode_eip712(&values.domain_digest).unwrap();
         assert_eq!(
             "0b8aa9f3712df0034bc29fe5b24dd88cfdba02c7f499856ab24632e2969709a8",
             hex::encode(&hash[..])
         );
+    }
+
+
+    #[test]
+    fn test_manual_replay_envelope() {
+        let json = serde_json::json!({
+          "types": {
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ],
+            "Envelope": [
+              {
+                "name": "chain_id",
+                "type": "string"
+              },
+              {
+                "name": "contract_address",
+                "type": "string"
+              },
+              {
+                "name": "messages",
+                "type": "string[]"
+              },
+              {
+                "name": "nonce",
+                "type": "string"
+              }
+            ],
+          },
+          "primaryType": "Envelope",
+          "domain": {
+            "name": "Token-Bound Accounts",
+            "version": "1.1",
+            "chainId": "1",
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "message": {
+            "chain_id": "constantine-3",
+            "contract_address": "archway16qy02mwau05fn289h6mqm6qv4haqa6s2quwnjch0zch6a2yjr97qqv5ulg",
+            "messages": ["Create TBA account"],
+            "nonce": "0",
+          },
+          "signer": "0xac03048da6065e584d52007e22c69174cdf2b91a",
+          "signature": "gJvZFFHWWy4RHirV50D1BfLZMZbJo+Oye5uKVFmLNnl0/kQEFOY8kngyEq3fuiMjYBgh1K7h5GrmyxqAZOmAYhs="
+        });
+        
+
+        let deps = mock_dependencies();
+        let cred: EthTypedData = serde_json::from_value(json).unwrap();
+
+        let values = cred.compute_domain_values().unwrap();
+        let hash = cred.encode_eip712(&values.domain_digest).unwrap();
+        assert_eq!("11361aeafc7ea4ebb964e1213d59eba872c2488e5d737ed41a754d6a94b6b918", hex::encode(&hash[..]));
+
+ 
+        let res = cred.verify(deps.as_ref());
+        println!("Res: {:?}", res);
+        assert!(res.is_ok());
+
+        // "ETYa6vx+pOu5ZOEhPVnrqHLCSI5dc37UGnVNapS2uRg=";// 
+
+
     }
 }
 

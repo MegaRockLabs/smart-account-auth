@@ -1,10 +1,12 @@
 use std::borrow::Cow;
 
 use saa_schema::saa_type;
-use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, String, Verifiable};
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, String, 
+    Verifiable, Identifiable
+};
 
 use super::client_data::ClientData;
-use CredentialName::Passkey as Name;
+use CredentialName::Passkey as PasskeyName;
 
 
 #[saa_type]
@@ -26,6 +28,17 @@ pub struct PasskeyCredential {
 
 
 
+impl Identifiable for PasskeyCredential {
+
+    fn id(&self) -> saa_common::CredentialId {
+        self.id.clone()
+    }
+
+    fn name(&self) -> saa_common::CredentialName {
+        PasskeyName
+    }
+}
+
 
 
 impl PasskeyCredential {
@@ -45,10 +58,6 @@ impl PasskeyCredential {
 
 impl Verifiable for PasskeyCredential {
 
-    fn id(&self) -> CredentialId {
-        self.id.clone()
-    }
-
     fn message(&self) -> Cow<[u8]> {
         match Binary::from_base64(&super::utils::url_to_base64(&self.client_data.challenge)) {
             Ok(bytes) => Cow::Owned(bytes.to_vec()),
@@ -62,13 +71,13 @@ impl Verifiable for PasskeyCredential {
             self.signature.len() > 0 &&
             self.authenticator_data.len() > 0 &&
             self.client_data.challenge.len() > 0 &&
-            self.message().len() > 0, CredentialError::MissingData(Name)
+            self.message().len() > 0, CredentialError::MissingData(PasskeyName)
         );
         ensure!(self.authenticator_data.len() >= 37, CredentialError::InvalidProperty(
-            Name, "authenticator_data".to_string(), "must be at least 37 bytes long".to_string()
+            PasskeyName, "authenticator_data".to_string(), "must be at least 37 bytes long".to_string()
         ));
         ensure!(self.client_data.ty == "webauthn.get", CredentialError::InvalidProperty(
-            Name, "client_data.type".to_string(), "must be 'webauthn.get'".to_string()
+            PasskeyName, "client_data.type".to_string(), "must be 'webauthn.get'".to_string()
         ));
         Ok(())
     }
@@ -93,9 +102,13 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature(Name, self.id()));
-        Ok(CredentialInfo { extension: None, address: None, hrp: None, name: Name })
+        ensure!(res, AuthError::Signature(PasskeyName, self.id()));
+        Ok(CredentialInfo { extension: None, address: None, hrp: None, name: PasskeyName })
     }
 
 }
 
+
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for PasskeyCredential {}

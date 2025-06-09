@@ -1,7 +1,10 @@
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
-use {super::utils::{get_recovery_param, preamble_msg_eth}, saa_common::ensure};
-use saa_common::{CredentialId, CredentialName, CredentialInfo, AuthError, Binary, String, ToString, Verifiable };
+use {super::utils::{get_recovery_param, hash_eth_personal}, saa_common::ensure};
+use saa_common::{
+    CredentialId, CredentialName, CredentialInfo, 
+    AuthError, Binary, String, ToString, Verifiable, Identifiable
+};
 
 
 #[saa_schema::saa_type]
@@ -12,17 +15,23 @@ pub struct EthPersonalSign {
 }
 
 
-impl Verifiable for EthPersonalSign {
-
+impl Identifiable for EthPersonalSign {
     fn id(&self) -> CredentialId {
-        //format!("0x{}", self.signer.to_lowercase())
         self.signer.to_string()
     }
+    
+    fn name(&self) -> CredentialName {
+        CredentialName::EthPersonalSign
+    }
+    
+}
 
+
+impl Verifiable for EthPersonalSign {
+    
     fn message(&self) -> std::borrow::Cow<[u8]> {
         std::borrow::Cow::Borrowed(self.message.as_slice())
     }
-
 
     fn validate(&self) -> Result<(), AuthError> {
         if !self.signer.starts_with("0x") {
@@ -45,16 +54,18 @@ impl Verifiable for EthPersonalSign {
         #[cfg(feature = "cosmwasm")]
         deps: saa_common::wasm::Deps
     ) -> Result<CredentialInfo, AuthError> {
+        use saa_common::CredentialAddress;
+
         let signature = &self.signature.to_vec();
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let key_data = saa_crypto::secp256k1_recover_pubkey(
-            &preamble_msg_eth(&self.message), 
+            &hash_eth_personal(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
         #[cfg(feature = "cosmwasm")]
         let key_data = deps.api.secp256k1_recover_pubkey(
-            &preamble_msg_eth(&self.message), 
+            &hash_eth_personal(&self.message), 
             &signature[..64], 
             get_recovery_param(signature[64])?
         )?;
@@ -66,13 +77,18 @@ impl Verifiable for EthPersonalSign {
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
         Ok(CredentialInfo {
             hrp: None,
-            address: None,
             extension: None,
+            address: Some(CredentialAddress::Evm(self.signer.clone())),
             name: CredentialName::EthPersonalSign,
         })
     }
 
 
-
 }
 
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for EthPersonalSign {
+    fn hash_message(&self, bytes: &[u8]) -> Vec<u8> {
+        hash_eth_personal(&bytes).to_vec()
+    }
+}

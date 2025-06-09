@@ -1,5 +1,7 @@
 use std::borrow::Cow;
-use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, ToString, Verifiable};
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, 
+    Verifiable, Identifiable
+};
 
 
 use CredentialName::Secp256r1 as Name;
@@ -12,12 +14,19 @@ pub struct Secp256r1 {
 }
 
 
-
-impl Verifiable for Secp256r1 {
+impl Identifiable for Secp256r1 {
 
     fn id(&self) -> saa_common::CredentialId {
-        self.pubkey.to_string()
+        self.pubkey.to_base64()
     }
+
+    fn name(&self) -> saa_common::CredentialName {
+        Name
+    }
+}
+
+
+impl Verifiable for Secp256r1 {
 
     fn message(&self) -> Cow<[u8]> {
         Cow::Borrowed(self.message.as_slice())
@@ -63,3 +72,6 @@ impl Verifiable for Secp256r1 {
 
 }
 
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Secp256r1 {}

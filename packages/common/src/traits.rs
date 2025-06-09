@@ -1,20 +1,22 @@
 use core::ops::Deref;
 use std::borrow::Cow;
-use crate::{AuthError, CredentialId, CredentialInfo};
+
+use crate::{AuthError, CredentialId, CredentialInfo, CredentialName};
 
 
-
-
-
-pub trait Verifiable  {
-
+pub trait Identifiable {
     fn id(&self) -> CredentialId;
+    fn name(&self) -> CredentialName;
+}
+
+
+
+pub trait Verifiable : Identifiable  {
 
     fn message(&self) -> Cow<[u8]>;
 
     fn validate(&self) -> Result<(), AuthError>;
 
-    // temp until others are simplemented
     #[cfg(any(feature = "native", feature = "wasm"))]  
     fn verify(&self,
         #[cfg(feature = "wasm")]
@@ -24,19 +26,23 @@ pub trait Verifiable  {
 }
 
 
-
-
-
-impl<T: Deref<Target = dyn Verifiable>> Verifiable for T {
-    
+impl<T: Deref<Target = dyn Identifiable>> Identifiable for T {
     fn id(&self) -> CredentialId {
         self.deref().id()
     }
 
-    fn message(&self) -> Cow<[u8]> {
-        self.deref().message()
+    fn name(&self) -> CredentialName {
+        self.deref().name()
     }
+}
 
+
+impl<T: Deref> Verifiable for T 
+    where 
+        T: Identifiable,
+        T::Target: Identifiable + Verifiable
+{
+    
     fn validate(&self) -> Result<(), AuthError> {
         self.deref().validate()
     }
@@ -51,5 +57,11 @@ impl<T: Deref<Target = dyn Verifiable>> Verifiable for T {
             deps
         )
     }
+    
+    fn message(&self) -> Cow<[u8]> {
+        self.deref().message()
+    }
 }
+
+
 

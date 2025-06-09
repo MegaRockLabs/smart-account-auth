@@ -24,4 +24,4 @@ base64-url          = { version = "3.0.0", default-features = false }
 hex                 = { version = "0.4.3", default-features = false }
 
 [features]
-cosmos_arb_addr = ["smart-account-auth/cosmos_arb_addr"]
+cosmos_arb_cache = ["smart-account-auth/cosmos_arb_cache"]

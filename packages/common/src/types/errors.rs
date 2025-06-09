@@ -118,7 +118,17 @@ mod std_mod {
         InvalidProperty(CredentialName, String, String),
 
         #[error("Passed only (native) credentials that aren't validated by the environment. Need to supply at least one verifyable credential")]
-        OnlyCustomNatives
+        OnlyCustomNatives,
+
+        #[error("The credential '{0}' was expecting an info object with a property '{1}', however it wasn't provided or was empty")]
+        NoInfoProperty(CredentialName, String),
+
+        #[error("The credential '{0}' needs an extended info to be passed. It hasn't been done or there was an error")]
+        NoInfoExt(CredentialName),
+
+        #[cfg(feature = "wasm")]
+        #[error("(Std) Serialization error: {0}")]
+        Std(#[from] crate::wasm::StdError),
     }
 
 
@@ -190,14 +200,6 @@ mod std_mod {
         }
     }
 
-    #[cfg(feature = "eth_typed_data")]
-    impl From<ethers_core::types::transaction::eip712::Eip712Error> for AuthError {
-        fn from(err: ethers_core::types::transaction::eip712::Eip712Error) -> Self {
-            Self::Generic(err.to_string())
-        }
-        
-    }
-
 
     #[cfg(feature = "wasm")] 
     mod wasm {
@@ -217,20 +219,6 @@ mod std_mod {
 
         impl From<crate::wasm::VerificationError> for AuthError {
             fn from(err: crate::wasm::VerificationError) -> Self {
-                Self::Crypto(err.to_string())
-            }
-        }
-
-        #[cfg(feature = "cosmos_arb")]
-        impl From<bech32::primitives::hrp::Error> for AuthError {
-            fn from(err: bech32::primitives::hrp::Error) -> Self {
-                Self::Crypto(err.to_string())
-            }
-        }
-
-        #[cfg(feature = "cosmos_arb")]
-        impl From<bech32::EncodeError> for AuthError {
-            fn from(err: bech32::EncodeError) -> Self {
                 Self::Crypto(err.to_string())
             }
         }

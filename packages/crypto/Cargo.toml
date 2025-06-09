@@ -24,9 +24,12 @@ bech32              = { workspace = true,   optional = true  }
 digest              = { version = "0.10.7", optional = true,   default-features = false }
 p256                = { version = "0.13.2" , optional = true,  default-features = false , features = ["ecdsa"] }
 
+serde               = { workspace = true,   optional = true  }
 
 [features]
 default     =   ["std"]
+replay      =   ["saa-common/replay",                  "dep:serde"]
+
 std         =   ["saa-common/std",                     "p256?/std"]
 native      =   ["saa-common/native",        "dep:cosmwasm-crypto"]
 

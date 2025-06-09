@@ -5,7 +5,6 @@ use std::str::FromStr;
 
 use crate::utils::{get_cosmos_arbitrary, get_eth_personal, get_passkey};
 use smart_account_auth::{Caller, Credential, CredentialName, Ed25519, Identifiable};
-use strum::IntoDiscriminant; 
 use saa_common::Binary;
 
 
@@ -17,7 +16,7 @@ fn name_checker(
     assert!(str == cred.name().to_string() && str == name.to_string());
     let str_name = CredentialName::from_str(str);
     assert!(str_name.is_ok(), "Can't deriving `CredentialName` from {str:?}");
-    assert!(name == cred.discriminant() && name == cred.name() && name == str_name.unwrap())
+    assert!(name == cred.name() && name == cred.name() && name == str_name.unwrap())
 }
 
 

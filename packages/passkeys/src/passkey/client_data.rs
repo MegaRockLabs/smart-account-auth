@@ -1,7 +1,6 @@
-
-use saa_common::{types::passkey::ClientDataOtherKeys, String};
+use super::ClientDataOtherKeys;
 use saa_schema::saa_type;
-
+use saa_common::String;
 
 
 /// The client data object defined by the WebAuthn standard.

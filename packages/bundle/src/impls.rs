@@ -1,7 +1,7 @@
 use core::ops::Deref;
-use saa_common::{ensure, CredentialError};
+use saa_common::{ensure, CredentialError, Identifiable};
 use crate::{credential::CredentialName, Credential, CredentialData, caller::Caller};
-use crate::traits::{CredentialsWrapper, Verifiable, Identifiable};
+use crate::traits::{CredentialsWrapper, Verifiable};
 
 
 impl From<Caller> for Credential {
@@ -25,7 +25,7 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
     }
 }
 
-#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
     fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
@@ -49,31 +49,33 @@ impl From<saa_curves::secp256k1::Secp256k1> for Credential {
 }
 
 #[cfg(feature = "secp256r1")]
-impl From<saa_passkeys::secp256r1::Secp256r1> for Credential {
-    fn from(c: saa_passkeys::secp256r1::Secp256r1) -> Self {
+impl From<saa_passkeys::Secp256r1> for Credential {
+    fn from(c: saa_passkeys::Secp256r1) -> Self {
         Credential::Secp256r1(c)
     }
 }
 
 
 #[cfg(feature = "passkeys")]
-impl From<saa_passkeys::passkey::PasskeyCredential> for Credential {
-    fn from(c: saa_passkeys::passkey::PasskeyCredential) -> Self {
+impl From<saa_passkeys::PasskeyCredential> for Credential {
+    fn from(c: saa_passkeys::PasskeyCredential) -> Self {
         Credential::Passkey(c)
     }
 }
 
 
 
+
 impl Deref for Credential {
     type Target = dyn Verifiable;
-
     fn deref(&self) -> &Self::Target {
         match self {
             Credential::Native(c) => c,
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c,
-            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
+            #[cfg(feature = "eth_typed_data")]
+            Credential::EthTypedData(c) => c,
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
             Credential::CosmosArbitrary(c) => c,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c,
@@ -84,6 +86,17 @@ impl Deref for Credential {
             #[cfg(feature = "ed25519")]
             Credential::Ed25519(c) => c,
         }
+    }
+}
+
+
+impl Identifiable for Credential {
+    fn id(&self) -> String {
+        self.deref().id()
+    }
+
+    fn name(&self) -> CredentialName {
+        self.deref().name()
     }
 }
 
@@ -170,5 +183,4 @@ impl CredentialData {
 
 
 }
-
 

@@ -1,10 +1,10 @@
-use saa_common::{types::passkey::PasskeyExtension, InfoExtension};
-use crate::passkey::PasskeyCredential;
+use crate::{PasskeyCredential, PasskeyInfo};
+use saa_common::InfoExtension;
 
 
-impl Into<PasskeyExtension> for PasskeyCredential {
-    fn into(self) -> PasskeyExtension {
-        PasskeyExtension {
+impl Into<PasskeyInfo> for PasskeyCredential {
+    fn into(self) -> PasskeyInfo {
+        PasskeyInfo {
             origin: self.client_data.origin,
             cross_origin: self.client_data.cross_origin,
             user_handle: self.user_handle,

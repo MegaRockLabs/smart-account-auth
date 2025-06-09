@@ -13,6 +13,7 @@ pub use types::errors::*;
 pub use types::binary::*;
 pub use types::uints::Uint64;
 pub use types::exp::Expiration;
-pub use traits::Verifiable;
+pub use types::exts::{InfoExtension, PayloadExtension};
+pub use traits::{Verifiable, Identifiable};
 
 pub use types::cred::*;

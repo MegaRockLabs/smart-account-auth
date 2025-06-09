@@ -1,12 +1,13 @@
 
-#[allow(unused_imports, unused_variables, unused)]
-use {super::utils::{get_recovery_param, preamble_msg_eth}, saa_common::ensure};
-
 mod eip712;
 mod credential;
 
-
-pub use credential::*;
+pub use saa_common::types::exts::{
+    EthTypedCache, EthTypedSaveOptions, 
+    EthTypedInfo, EthTypedPayload
+};
+pub use eip712::{Eip712Domain, Eip712DomainType, Eip712Types, Eip712Message};
+pub use credential::EthTypedData;
 
 
 /*

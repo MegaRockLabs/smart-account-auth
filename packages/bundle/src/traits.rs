@@ -7,16 +7,14 @@ use saa_common::wasm::{Env, MessageInfo, Deps};
 
 
 
-pub use saa_common::Verifiable;
+pub use saa_common::{Verifiable, Identifiable};
 pub use super::wrapper::CredentialsWrapper;
-use crate::{Credential, CredentialName, CredentialData};
-use saa_common::{AuthError, InfoExtension};
-use strum::IntoDiscriminant;
+use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
+use saa_common::AuthError;
 
 
 
-
-
+/* 
 pub trait Identifiable : Verifiable + strum::IntoDiscriminant<Discriminant : core::fmt::Display> {
 
     fn name(&self) -> <Self as IntoDiscriminant>::Discriminant {
@@ -26,21 +24,24 @@ pub trait Identifiable : Verifiable + strum::IntoDiscriminant<Discriminant : cor
     fn extension(&self) -> Option<saa_common::InfoExtension>;    
 
 }
+ */
 
 
 
-
-impl Identifiable for Credential {
+/* impl Identifiable for Credential {
     
-    fn extension(&self) -> Option<InfoExtension> {
+   /*  fn extension(&self) -> Option<InfoExtension> {
         #[cfg(feature = "passkeys")]
         if let Credential::Passkey(c) = self {
             return Some(c.clone().into())
         }
         None
-    }
+    } */
+
+
 }
 
+ */
 
 
 
@@ -121,7 +122,7 @@ impl crate::CredentialsWrapper for CredentialData {
             })?;
 
         if use_native && !has_natives {
-            addresses.push(sender.clone());
+            addresses.push(CredentialAddress::Bech32(sender.clone()));
             credentials.push((sender.to_string(), sender.clone().into()));
         }
 
@@ -177,7 +178,7 @@ impl crate::CredentialsWrapper for CredentialData {
             )?;
 
         if use_native && !has_natives {
-            addresses.push(sender.clone());
+            addresses.push(CredentialAddress::Bech32(sender.clone()));
             credentials.push((sender.to_string(), sender.clone().into()));
         }
 

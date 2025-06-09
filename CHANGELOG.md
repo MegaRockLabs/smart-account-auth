@@ -15,7 +15,7 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - `ClientData` of passkeys can now contain additional fields on top od the most common `other_keys_can...`
 - a separate testing golder
 - `InfoExtension` and `PayloadExtension` as a wrapper for current and all future supported extension tyoes 
-- [Feature] `cosmos_arb_addr` feature tag for a Cosmos Arbitrary with a passed address type instead of deriving it from prefix 
+- [Feature] `cosmos_arb_cache` feature tag for a Cosmos Arbitrary with a passed address type instead of deriving it from prefix 
 
 ## Changed
 - `Verifiable` interface now has only one (mutually exclusive) `verify` method without VMs suffixes (like _cosmwasm)

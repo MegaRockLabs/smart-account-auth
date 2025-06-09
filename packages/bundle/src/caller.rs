@@ -1,4 +1,7 @@
-use saa_common::{AuthError, CredentialError, CredentialId, CredentialInfo, CredentialName, Verifiable};
+use saa_common::{
+    AuthError, CredentialAddress, CredentialError, CredentialId, CredentialInfo, CredentialName, Identifiable, Verifiable
+};
+
 
 use CredentialName::Native;
 
@@ -14,13 +17,21 @@ impl From<&str> for Caller {
 }
 
 
-impl Verifiable for Caller {
+impl Identifiable for Caller {
 
     fn id(&self) -> CredentialId {
         self.0.clone()
     }
 
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn name(&self) -> CredentialName {
+        Native
+    }
+}
+
+
+impl Verifiable for Caller {
+
+     fn message(&self) -> std::borrow::Cow<[u8]> {
         std::borrow::Cow::Owned(vec![])
     }
 
@@ -44,9 +55,9 @@ impl Verifiable for Caller {
         
         Ok(CredentialInfo {
             hrp,
-            address: Some(address),
             extension: None,
             name: Native,
+            address: Some(CredentialAddress::Bech32(address)),
         })
     }
 }

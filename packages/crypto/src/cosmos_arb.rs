@@ -13,6 +13,11 @@ pub fn pubkey_to_canonical(pubkey: &[u8]) -> saa_common::wasm::CanonicalAddr {
 
 pub fn pubkey_to_address(pubkey: &[u8], hrp: &str) -> Result<String, AuthError> {
     let base32_addr = ripemd160(&sha256(pubkey));
-    let account: String = bech32::encode::<Bech32>(Hrp::parse(hrp)?, &base32_addr)?;
+    let account: String = bech32::encode::<Bech32>(
+            Hrp::parse(hrp)
+             .map_err(|e| AuthError::Crypto(e.to_string()))?,            
+            &base32_addr
+        )
+        .map_err(|e| AuthError::Crypto(e.to_string()))?;
     Ok(account)
 }

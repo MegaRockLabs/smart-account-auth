@@ -1,12 +1,10 @@
-use saa_common::{AuthError, CredentialId, Vec, Verifiable};
-use strum::IntoDiscriminant;
-use crate::traits::Identifiable;
+use saa_common::{AuthError, CredentialId, CredentialName, Identifiable, Vec, Verifiable};
 
 
 
-pub trait CredentialsWrapper : Clone {
+pub trait CredentialsWrapper  {
 
-    type Credential  : Identifiable + Verifiable + Clone;
+    type Credential  : Verifiable + Clone;
 
     fn credentials(&self) -> &Vec<Self::Credential>;
 
@@ -56,7 +54,7 @@ pub trait CredentialsWrapper : Clone {
     fn names(&self) -> Vec<String> {
         self.credentials()
             .iter()
-            .map(|c| c.discriminant().to_string())
+            .map(|c| c.name().to_string())
             .collect()
     }
 
@@ -77,13 +75,10 @@ pub trait CredentialsWrapper : Clone {
     fn cred_index(
         &self, 
         id: &CredentialId,
-        name: <Self::Credential as IntoDiscriminant>::Discriminant
-    ) -> Option<usize> 
-    where
-        <Self::Credential as IntoDiscriminant>::Discriminant: PartialEq,
-    {
+        name: CredentialName
+    ) -> Option<usize> {
         self.credentials().iter()
-            .position(|c| c.discriminant() == name && id == &c.id())
+            .position(|c| c.name() == name && id == &c.id())
     }
 
 

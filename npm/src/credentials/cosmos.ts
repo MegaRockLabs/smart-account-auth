@@ -52,7 +52,7 @@ export const getArb36SignDoc = (
   
 
 
-export const getCosmosArbitraryCredential = async (
+export const getCosmosArbitrary = async (
     signer          :    OfflineAminoSigner | WalletClient | AminoWallet | Keplr,
     chainId         :    string,
     message         :    string | Uint8Array, 

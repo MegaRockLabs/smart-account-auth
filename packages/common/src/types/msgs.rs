@@ -1,9 +1,11 @@
+use saa_schema::saa_type;
+use serde::Serialize;
 use crate::PayloadExtension;
 
 
 /// Payload message used for telling which credential to use
 /// or how to modify it
-#[saa_schema::saa_type]
+#[saa_type]
 pub struct AuthPayload {
     /// Which credential to use if multiple are available
     pub credential_id   :   Option<crate::CredentialId>,
@@ -18,7 +20,7 @@ pub struct AuthPayload {
 /// A wrapper for signed data used for constructing credentials and verifying them
 /// `data` is base64 encoded JSON string that contains the data to be verified.  
 /// When `replay` feature tag is enabled, must be a JSON object corresponding to `MsgDataToSign` struct.
-#[saa_schema::saa_type]
+#[saa_type]
 pub struct SignedDataMsg {
     /// Base64 encoded JSON string of replay envelope, serialized actions messages, both of them or none of them
     pub data        :   crate::Binary,
@@ -28,6 +30,14 @@ pub struct SignedDataMsg {
     pub payload     :   Option<AuthPayload>,
 }
 
+
+#[saa_type]
+pub struct MsgDataToSign<M: Serialize = String> {
+    pub chain_id: String,
+    pub contract_address: String,
+    pub messages: Vec<M>,
+    pub nonce: crate::Uint64,
+}
 
 
 #[cfg(feature = "wasm")]

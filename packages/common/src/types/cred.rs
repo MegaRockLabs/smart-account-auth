@@ -1,6 +1,6 @@
-use saa_schema::{saa_type, strum_macros::{Display, EnumString}};
-use crate::Binary;
+use core::fmt::Display;
 
+use saa_schema::{saa_type, strum_macros::{Display, EnumString}};
 pub type CredentialId = String;
 
 
@@ -13,6 +13,8 @@ pub enum CredentialName {
     CosmosArbitrary,
     #[cfg(feature = "eth_personal")]
     EthPersonalSign,
+    #[cfg(feature = "eth_typed_data")]
+    EthTypedData, 
     #[cfg(feature = "passkeys")]
     Passkey,
     #[cfg(feature = "secp256r1")]
@@ -24,22 +26,14 @@ pub enum CredentialName {
 }
 
 
-#[saa_type(no_deny)]
-#[non_exhaustive]
-pub enum InfoExtension {
-    Passkey(super::passkey::PasskeyExtension),
-    Custom(Binary),
+#[saa_type]
+pub enum CredentialAddress {
+    Evm(String),
+    #[cfg(not(feature = "wasm"))]
+    Bech32(String),
+    #[cfg(feature = "wasm")]
+    Bech32(crate::wasm::Addr),
 }
-
-
-#[saa_type(no_deny)]
-#[non_exhaustive]
-pub enum PayloadExtension {
-    Passkey(super::passkey::PasskeyPayload),
-    Custom(Binary),
-}
-
-
 
 
 #[saa_type]
@@ -49,12 +43,9 @@ pub struct CredentialInfo {
     /// human readable prefix to encode from a public key
     pub hrp: Option<String>,
     /// extension data
-    pub extension: Option<InfoExtension>,
+    pub extension: Option<crate::InfoExtension>,
     /// address derived from credential
-    #[cfg(feature = "wasm")]
-    pub address: Option<crate::wasm::Addr>,
-    #[cfg(not(feature = "wasm"))]
-    pub address: Option<crate::String>,
+    pub address: Option<CredentialAddress>,
 }
 
 
@@ -63,14 +54,28 @@ pub type CredentialRecord = (CredentialId, CredentialInfo);
 
 
 
+impl Display for CredentialAddress {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            CredentialAddress::Evm(addr) => write!(f, "{}", addr),
+            #[cfg(not(feature = "wasm"))]
+            CredentialAddress::Bech32(addr) => write!(f, "{}", addr),
+            #[cfg(feature = "wasm")]
+            CredentialAddress::Bech32(addr) => write!(f, "{}", addr.as_str()),
+        }
+    }
+    
+}
+
+
 #[cfg(feature = "wasm")]
 impl From<crate::wasm::Addr> for CredentialInfo {
     fn from(addr: crate::wasm::Addr) -> Self {
         CredentialInfo {
             name: CredentialName::Native,
-            hrp: addr.as_str().split("1").next().map(|s| s.to_string()),
             extension: None,
-            address: Some(addr),
+            hrp: addr.as_str().split("1").next().map(|s| s.to_string()),
+            address: Some(CredentialAddress::Bech32(addr)),
         }
     }
 }

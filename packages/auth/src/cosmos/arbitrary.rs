@@ -3,7 +3,7 @@
 use saa_common::wasm::{Addr, Deps, Api};
 use saa_common::{
     ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, 
-    String, ToString, Verifiable
+    String, ToString, Verifiable, Identifiable
 };
 
 use CredentialName::CosmosArbitrary as CosmosName;
@@ -14,9 +14,9 @@ pub struct CosmosArbitrary {
     pub pubkey:    Binary,
     pub signature: Binary,
     pub message:   Binary,
-    #[cfg(not(feature = "cosmos_arb_addr"))]
+    #[cfg(not(feature = "cosmos_arb_cache"))]
     pub hrp:       Option<String>,
-    #[cfg(feature = "cosmos_arb_addr")]
+    #[cfg(feature = "cosmos_arb_cache")]
     pub address:   String
 }
 
@@ -27,9 +27,9 @@ impl CosmosArbitrary {
     #[allow(unused_variables)]
     #[cfg(feature = "cosmwasm")]
     fn get_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        #[cfg(feature = "cosmos_arb_addr")]
+        #[cfg(feature = "cosmos_arb_cache")]
         return Ok(api.addr_validate(&self.address)?);
-        #[cfg(not(feature = "cosmos_arb_addr"))]
+        #[cfg(not(feature = "cosmos_arb_cache"))]
         if let Some(ref hrp) = self.hrp {
             Ok(Addr::unchecked(saa_crypto::pubkey_to_address(&self.pubkey, hrp)?))
         } else {
@@ -39,9 +39,9 @@ impl CosmosArbitrary {
 
     #[cfg(not(feature = "cosmwasm"))]
     fn get_address(&self) -> Result<String, AuthError> {
-        #[cfg(feature = "cosmos_arb_addr")]
+        #[cfg(feature = "cosmos_arb_cache")]
         return self.address.clone();
-        #[cfg(not(feature = "cosmos_arb_addr"))]
+        #[cfg(not(feature = "cosmos_arb_cache"))]
         if let Some(ref hrp) = self.hrp {
             saa_crypto::pubkey_to_address(&self.pubkey, hrp)?;
         } else {
@@ -50,20 +50,28 @@ impl CosmosArbitrary {
     }
 
     fn message_digest(&self, addr: &str) -> [u8; 32] {
-        saa_crypto::sha256(super::utils::preamble_msg_arb_036(
-                addr, &self.message.to_string()
+        saa_crypto::sha256(super::utils::wrap_msg_arb_036(
+                addr, 
+                &self.message.to_string()
             ).as_bytes()
         )
     }
 }
 
 
-impl Verifiable for CosmosArbitrary {
-
+impl Identifiable for CosmosArbitrary {
     fn id(&self) -> CredentialId {
         self.pubkey.to_string()
     }
+    
+    fn name(&self) -> CredentialName {
+        CosmosName
+    }
+}
 
+
+impl Verifiable for CosmosArbitrary {
+    
     fn message(&self) -> std::borrow::Cow<[u8]> {
         std::borrow::Cow::Borrowed(self.message.as_slice())
     }
@@ -81,6 +89,8 @@ impl Verifiable for CosmosArbitrary {
         #[cfg(feature = "cosmwasm")]
         deps: Deps
     ) -> Result<CredentialInfo, AuthError> {
+        use saa_common::CredentialAddress;
+
         let address = self.get_address(
             #[cfg(feature = "cosmwasm")]
             deps.api
@@ -101,9 +111,9 @@ impl Verifiable for CosmosArbitrary {
         let hrp = address.as_str().split('1').next().map(|s| s.to_string());
         Ok(CredentialInfo {
             hrp,
-            address: Some(address),
             extension: None,
             name: CosmosName,
+            address: Some(CredentialAddress::Bech32(address)),
         })
     }
 

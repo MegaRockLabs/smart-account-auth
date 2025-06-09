@@ -1,11 +1,10 @@
-use std::borrow::Cow;
 
-use saa_schema::saa_type;
 use saa_common::{
-    ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, ToString, Verifiable
+    ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, 
+    Verifiable, Identifiable
 };
-
 use CredentialName::Ed25519 as Name;
+use saa_schema::saa_type;
 
 
 #[saa_type]
@@ -16,14 +15,24 @@ pub struct Ed25519 {
 }
 
 
-impl Verifiable for Ed25519 {
+impl Identifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_string()
+        self.pubkey.to_base64()
     }
 
-    fn message(&self) -> Cow<[u8]> {
-        Cow::Borrowed(self.message.as_slice())
+    fn name(&self) -> CredentialName {
+        Name
+    }
+
+}
+
+
+impl Verifiable for Ed25519 {
+
+
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Borrowed(self.message.as_slice())
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -62,3 +71,7 @@ impl Verifiable for Ed25519 {
     }
 
 }
+
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Ed25519 {}

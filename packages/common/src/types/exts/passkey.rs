@@ -1,6 +1,8 @@
 use saa_schema::saa_type;
 use crate::Binary;
 
+
+
 #[saa_type(no_deny)]
 #[non_exhaustive]
 pub struct ClientDataOtherKeys {
@@ -19,6 +21,8 @@ impl ClientDataOtherKeys {
 }
 
 
+
+
 #[saa_type(no_deny)]
 pub struct PasskeyPayload {
     /// client data other keys
@@ -29,9 +33,8 @@ pub struct PasskeyPayload {
 
 
 
-
 #[saa_type]
-pub struct PasskeyExtension {
+pub struct PasskeyInfo {
     /// webauthn Authenticator data
     pub authenticator_data: Binary,
     /// Origin of the client where the passkey was created
