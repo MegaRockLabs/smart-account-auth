@@ -4,8 +4,9 @@
 use cosmwasm_std::testing::{message_info, mock_dependencies, MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{Empty, MessageInfo, OwnedDeps};
 use cosmwasm_std::{testing::mock_env, Addr, Env};
+use saa_common::types::exts::Eip712DomainType;
 use saa_common::Binary;
-use smart_account_auth::types::Eip712Domain;
+use smart_account_auth::types::{Eip712Domain, Eip712Message};
 use smart_account_auth::{Eip712Types, EthTypedData};
 use smart_account_auth::{ 
     Credential, CosmosArbitrary, EthPersonalSign, PasskeyCredential,
@@ -28,26 +29,6 @@ pub const ALICE_ADDR : &str = "stars190vqdjtlpcq27xslcveglfmr4ynfwg7gmw86cnun4ac
 pub const BOB_ADDR : &str = "stars1sxmr0k8u6trd5c6eu6trzyapzux7090ykujmsng7pdx0m8k93n5skp3k29";
 pub const EVE_ADDR : &str = "stars1s5nz4hm52x9mkux8ew2v6c2emytxnedgrm03al4a2sl2m0dflg4sfppadm";
 
-
-pub fn get_typed_data() -> EthTypedData {
-    EthTypedData {
-        signer : "0xac03048da6065e584d52007e22c69174cdf2b91a".to_string(),
-        signature: Binary::from_base64("gJvZFFHWWy4RHirV50D1BfLZMZbJo+Oye5uKVFmLNnl0/kQEFOY8kngyEq3fuiMjYBgh1K7h5GrmyxqAZOmAYhs=").unwrap(),
-        types: envelope_types(),
-        domain: Eip712Domain {
-            name: Some("Token-Bound Accounts".to_string()),
-            version: Some("1.1".to_string()),
-            verifying_contract: Some("0x0ef13906b325aba3cb700fe97a6edf86dcfee89a".to_string()),
-            chain_id: None,
-            salt: None
-        },
-        message: serde_json::from_value(serde_json::json!({
-            "message": SIGN_MESSAGE_TEXT,
-        })).unwrap(),
-        primary_type: "Envelope".to_string(),
-        message_property: None
-    }
-}
 
 
 pub fn get_eth_personal() -> EthPersonalSign {
@@ -116,15 +97,20 @@ pub fn alice_info() -> MessageInfo {
 }
 
 
+pub fn domain_attrs() -> Vec<Eip712DomainType> {
+    vec![
+        Eip712DomainType { name: "name".to_string(), r#type: "string".to_string() },
+        Eip712DomainType { name: "version".to_string(), r#type: "string".to_string() },
+        Eip712DomainType { name: "chainId".to_string(), r#type: "uint256".to_string() },
+        Eip712DomainType { name: "verifyingContract".to_string(), r#type: "address".to_string() },
+    ]
+}
+
+
 pub fn envelope_types() -> Eip712Types {
     serde_json::from_value(
         serde_json::json!({
-            "EIP712Domain": [
-                { "name": "name",  "type": "string" },
-                { "name": "version",  "type": "string" },
-                { "name": "chainId",  "type": "uint256" },
-                { "name": "verifyingContract",  "type": "address" }
-            ],
+            "EIP712Domain": domain_attrs(),
             "Envelope": [
                 { "name": "chain_id",  "type": "string" },
                 { "name": "contract_address",  "type": "string" },

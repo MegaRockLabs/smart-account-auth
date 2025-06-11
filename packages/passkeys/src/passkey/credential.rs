@@ -29,7 +29,7 @@ pub struct PasskeyCredential {
 impl Identifiable for PasskeyCredential {
 
     fn id(&self) -> saa_common::CredentialId {
-        self.id.clone()
+        self.id.to_lowercase()
     }
 
     fn name(&self) -> saa_common::CredentialName {

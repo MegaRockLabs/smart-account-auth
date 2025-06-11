@@ -49,7 +49,7 @@ impl EthTypedData {
                     0 => None,
                     1 => msgs.first().and_then(|msg| {
                         let str = msg.to_string();
-                        println!("Arg string: {}", str);
+                        // println!("Arg string: {}", str);
                         let jb = format!("\"{}\"", str).as_bytes().to_vec();
                         to_bin(&msg).ok()
                         .map(|b| if b == jb { str } else { hash_hex(b) })
@@ -104,7 +104,7 @@ impl saa_crypto::ReplayProtection for EthTypedData {
         let address = self.domain.verifying_contract.as_deref().unwrap_or_default();
         ensure!(address.starts_with("0x"), ReplayError::MissingData("verifying_contract".into()));
 
-        println!("Msg string: {}", self.msg_string(messages));
+        // println!("Msg string: {}", self.msg_string(messages));
 
         let replay_hash = keccak256(
             &[
@@ -115,7 +115,6 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             ]
             .concat()
         );
-
 
         ensure!(hex::encode(&replay_hash[12..]) == &address[2..], ReplayError::InvalidEnvelope);
         println!("Expected address: 0x{}", address);

@@ -2,18 +2,19 @@
 pub use crate::messages::actions::DerivableMsg;
 #[cfg(feature = "replay")]
 pub use {saa_crypto::ReplayProtection, super::wrapper::ReplayProtectionWrapper};
+#[cfg(any(feature = "wasm", feature = "native"))]
+use crate::data::VerifiedData;
+
 pub use saa_common::{Verifiable, Identifiable};
 pub use super::wrapper::CredentialsWrapper;
 
+use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
 
-#[cfg(any(feature = "wasm", feature = "native"))]
-use crate::data::VerifiedData;
 #[cfg(feature = "wasm")]
 use saa_common::wasm::{Env, MessageInfo, Deps};
 use saa_common::AuthError;
 
 
-use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
 
 
 
@@ -41,27 +42,8 @@ pub trait Identifiable : Verifiable + strum::IntoDiscriminant<Discriminant : cor
         None
     } */
 
-
 }
 
- */
-
-/*  impl crate::Verifiable for CredentialData {
-    fn message(&self) -> std::borrow::Cow<[u8]> {
-        std::borrow::Cow::Owned(self.credentials.iter().map(|c| c.message()).collect())
-    }
-
-    fn validate(&self) -> Result<(), AuthError> {
-        self.credentials.iter().try_for_each(|c| c.validate())
-    }
-
-    fn verify(&self,
-        #[cfg(feature = "wasm")]
-        deps: Deps
-    ) -> Result<crate::data::CredentialInfo, AuthError> {
-        self.primary().verify(deps)
-    }
-}
  */
 
 
@@ -114,13 +96,10 @@ impl crate::CredentialsWrapper for CredentialData {
 
         // can be set by both client or verifying environment
 
-        // each non-native credential must have message to be equal to this envelope
-        //let binary_envelope  = crate::msgs::MsgDataToSign::new_binary(env, nonce.clone(), messages)?;
-                
         // ID + Parsed Info
-        let mut credentials = Vec::with_capacity(self.credentials.len() + 1);
+        let mut credentials = Vec::with_capacity(self.credentials.len());
         // Parsed Addresses
-        let mut addresses  = Vec::with_capacity(self.credentials.len() + 1);
+        let mut addresses  = Vec::with_capacity(self.credentials.len());
 
         self.credentials
             .iter()
@@ -148,7 +127,7 @@ impl crate::CredentialsWrapper for CredentialData {
                 if let Some(address) = info.address.clone() {
                     addresses.push(address);
                 }
-                credentials.push((c.id(), info));
+                credentials.push((c.id().to_lowercase(), info));
                 Ok::<(), AuthError>(())
             })?;
 
@@ -165,7 +144,7 @@ impl crate::CredentialsWrapper for CredentialData {
             addresses,
             has_natives,
             has_extensions,
-            primary_id: self.primary_id(),
+            primary_id: self.primary_id().to_lowercase(),
             override_primary: self.override_primary.unwrap_or_default(),
             nonce: nonce + 1,
         })
@@ -176,7 +155,7 @@ impl crate::CredentialsWrapper for CredentialData {
     fn verify(&self,
         #[cfg(feature = "wasm")]
         deps: Deps, _env: &Env, info: &MessageInfo,
-    ) -> Result<crate::data::VerifiedData, AuthError> {
+    ) -> Result<VerifiedData, AuthError> {
         #[cfg(feature = "wasm")]
         let sender = info.sender.clone();
         let pre_val = self.pre_validate.unwrap_or_default();
@@ -203,7 +182,7 @@ impl crate::CredentialsWrapper for CredentialData {
                 if let Some(address) = info.address.clone() {
                     addresses.push(address);
                 }
-                credentials.push((c.id(), info));
+                credentials.push((c.id().to_lowercase(), info));
                 Ok::<(), AuthError>(())
                 }
             )?;
@@ -220,7 +199,7 @@ impl crate::CredentialsWrapper for CredentialData {
             addresses,
             has_natives,
             has_extensions,
-            primary_id: self.primary_id(),
+            primary_id: self.primary_id().to_lowercase(),
             override_primary: self.override_primary.unwrap_or_default(),
         })
 

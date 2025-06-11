@@ -1,6 +1,9 @@
 
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
-use {super::utils::{get_recovery_param, hash_eth_personal}, saa_common::ensure};
+use {
+    super::utils::{get_recovery_param, hash_eth_personal}, 
+    saa_common::{ensure, CredentialAddress}
+};
 use saa_common::{
     CredentialId, CredentialName, CredentialInfo, 
     AuthError, Binary, String, ToString, Verifiable, Identifiable
@@ -17,7 +20,7 @@ pub struct EthPersonalSign {
 
 impl Identifiable for EthPersonalSign {
     fn id(&self) -> CredentialId {
-        self.signer.to_string()
+        self.signer.to_lowercase()
     }
     
     fn name(&self) -> CredentialName {
@@ -54,8 +57,7 @@ impl Verifiable for EthPersonalSign {
         #[cfg(feature = "cosmwasm")]
         deps: saa_common::wasm::Deps
     ) -> Result<CredentialInfo, AuthError> {
-        use saa_common::CredentialAddress;
-
+        let address = self.id();
         let signature = &self.signature.to_vec();
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let key_data = saa_crypto::secp256k1_recover_pubkey(
@@ -71,14 +73,14 @@ impl Verifiable for EthPersonalSign {
         )?;
         let hash = saa_crypto::hashes::keccak256(&key_data[1..]);
 
-        let addr_bytes = hex::decode(&self.signer[2..])
+        let addr_bytes = hex::decode(&address[2..])
             .map_err(|e| AuthError::generic(e.to_string()))?;
-        
+
         ensure!(addr_bytes == hash[12..], AuthError::RecoveryMismatch);
         Ok(CredentialInfo {
             hrp: None,
             extension: None,
-            address: Some(CredentialAddress::Evm(self.signer.clone())),
+            address: Some(CredentialAddress::Evm(address)),
             name: CredentialName::EthPersonalSign,
         })
     }

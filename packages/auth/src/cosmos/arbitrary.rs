@@ -61,7 +61,7 @@ impl CosmosArbitrary {
 
 impl Identifiable for CosmosArbitrary {
     fn id(&self) -> CredentialId {
-        self.pubkey.to_string()
+        self.pubkey.to_string().to_lowercase()
     }
     
     fn name(&self) -> CredentialName {

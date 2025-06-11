@@ -145,20 +145,11 @@ mod std_mod {
         #[error("Missing {0}")]
         MissingData(String),
 
-        #[error("Invalid length of {0}.  Expected: {1};  Received: {2}")]
-        InvalidLength(String, u16, u16),
-
         #[error("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here.")]
         RecoveryParam,
         
         #[error("Error recovering from the signature: Addresses do not match")]
         RecoveryMismatch,
-
-        #[error("The signed data is expected to be a replay attach protection envelope")]
-        InvalidSignedData,
-
-        #[error("Passkey challenge must be base64url to base64 encoded string")]
-        PasskeyChallenge,
 
         #[error("Unauthorized: {0}")]
         Unauthorized(String),
@@ -176,24 +167,21 @@ mod std_mod {
         Crypto(String),
 
         #[error("Error converting binary to {0}")]
-        Convertation(String),
-        
-        #[error("Semver parsing error: {0}")]
-        SemVer(String),
+        Convertion(String),
 
-        #[error("Credential Error: {0}")]
+        #[error("Credential: {0}")]
         Credential(#[from] CredentialError),
         
         #[cfg(feature = "replay")]
-        #[error("Replay Protection Error: {0}")]
+        #[error("Replay: {0}")]
         Replay(#[from] ReplayError),
 
         #[cfg(feature = "session")]
-        #[error("Session Error: {0}")]
+        #[error("Session: {0}")]
         Session(#[from] SessionError),
 
         #[cfg(feature = "wasm")]
-        #[error("{0}")]
+        #[error("Storage: {0}")]
         Storage(#[from] StorageError),
     }
 

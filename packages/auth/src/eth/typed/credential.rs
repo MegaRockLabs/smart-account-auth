@@ -21,6 +21,7 @@ use saa_schema::saa_type;
 use saa_common::CredentialError::{InvalidProperty, IncorrectData};
 use CredentialName::EthTypedData as EthTypedName;
 
+
 use crate::eth::utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed};
 
 
@@ -45,21 +46,20 @@ pub struct EthTypedData {
 
 
 
-
-//  local   BTreeMap<String, Vec<Eip712DomainType>>; with local Eip712DomainType
-//  to ext  BTreeMap<String, Vec<eip712::Eip712DomainType>>; with ext eip712::Eip712DomainType
-
 fn types_to_types(
     types: &Eip712Types
 ) -> eip712::Types {
     types
-    .iter()
-    .map(|(k, v)| 
-        (k.clone(), v.iter()
-                    .map(|t| t.clone().into())
-                    .collect()
+        .iter()
+        .map(|(k, v)| 
+            (k.clone(), v.iter()
+                        .map(|t| 
+                            t.clone().into()
+                        )
+                        .collect()
+            )
         )
-    ).collect()
+        .collect()
 }
 
 
@@ -67,17 +67,17 @@ impl EthTypedData {
 
     fn struct_hash(&self) -> Result<[u8; 32], AuthError> {
         let tokens = encode_data(
-            &self.primary_type,
-            &Value::Object(Map::from_iter(self.message.clone())),
-            &types_to_types(&self.types),
-        )
-        .map_err(|e| AuthError::generic(e.to_string()))?;
+                &self.primary_type,
+                &Value::Object(Map::from_iter(self.message.clone())),
+                &types_to_types(&self.types),
+            )
+            .map_err(|e| 
+                AuthError::Crypto(e.to_string())
+            )?;
         Ok(keccak256(&encode(&tokens)))
     }
 
-    pub fn domain_hash(
-        &self,
-    ) -> [u8; 32] {
+    pub fn domain_hash(&self) -> [u8; 32] {
         
         let pre_hash = prehash_eth_typed(
             &self.domain.name.as_deref().unwrap_or_default(), 
@@ -88,10 +88,13 @@ impl EthTypedData {
         let chain_id = encode_u64(self.domain.chain_id
             .as_ref()
             .map(|u|u.u64())
-            .unwrap_or_default());
+            .unwrap_or_default()
+        );
+        
         let address = encode_address(self.domain.verifying_contract
             .as_deref()
-            .unwrap_or_default());
+            .unwrap_or_default()
+        );
         
         hash_eth_typed_data(
             &pre_hash, 
@@ -104,7 +107,6 @@ impl EthTypedData {
 
     pub fn encode_eip712(&self) -> Result<[u8; 32], AuthError> {
         let mut digest_input = [&[0x19, 0x01], &self.domain_hash()[..]].concat().to_vec();
-        //let mut digest_input = [&[0x19, 0x01], &self.domain_hash()[..]].concat().to_vec();
         if self.primary_type != "EIP712Domain" {
             digest_input.extend(&self.struct_hash()?[..])
         }
@@ -113,67 +115,17 @@ impl EthTypedData {
     
 }
 
-/* 
-
-impl Eip712Domain {
-
-    pub(crate) fn compute_values(
-        &self,
-        cache: Option<super::EthTypedCache>
-    ) -> Eip712DomainValues {
-        let cache = cache.unwrap_or_default();
-        let (use_salt, preamble_digest) = if cache.preamble_digest.is_empty() {
-            let use_salt = self.salt.is_some();
-            (use_salt, preamble_hash_eth_typed(&self.name, &self.version, use_salt))
-        } else {
-            let new_use_salt = self.salt.is_some();
-            if cache.use_salt != new_use_salt {
-                (new_use_salt, preamble_hash_eth_typed(&self.name, &self.version, new_use_salt))
-            } else {
-                (cache.use_salt, cache.preamble_digest)
-            }
-        };
-
-        let chain_id = cache.chain_id.unwrap_or(encode_u64(self.chain_id.u64()));
-        let contract_addr = cache.contract_addr.unwrap_or_else(|| {
-            encode_address(&self.verifying_contract)
-        });
-
-        println!("Chain ID: {:?}", chain_id);
-        println!("Chain Id to be: {:?}", self.chain_id.u64().to_be_bytes());
-        println!("Chain ID to le: {:?}", self.chain_id.u64().to_le_bytes());
-        println!("Chain ID to str bytes: {:?}", self.chain_id.to_string().as_bytes());
-
-        let domain_digest = hash_eth_typed_data(
-            &preamble_digest,
-            &self.chain_id.to_string().as_bytes(),
-            &contract_addr,
-           Some([2;32])
-        );
-        
-        Eip712DomainValues {
-            chain_id,
-            contract_addr,
-            preamble_digest,
-            domain_digest,
-            use_salt,
-        }
-
-    }
-    
-} */
-
 
 
 impl Identifiable for EthTypedData {
+
     fn id(&self) -> CredentialId {
-        self.signer.clone()
+        self.signer.to_lowercase()
     }
     
     fn name(&self) -> CredentialName {
         EthTypedName
     }
-    
 }
 
 
@@ -197,7 +149,7 @@ impl Verifiable for EthTypedData {
             InvalidProperty(EthTypedName, "signature".into(), "must be at least 65 bytes".into())
         );
         ensure!(
-            hex::decode(&self.signer[2..]).map_err(|_| AuthError::Convertation("hex address".into()))?
+            hex::decode(&self.signer[2..]).map_err(|_| AuthError::Convertion("hex address".into()))?
             .len() == 20, IncorrectData(EthTypedName)
         );
         ensure!(

@@ -1,7 +1,7 @@
-use crate::utils::{alice_info, base_credentials, get_mock_deps, get_mock_env, get_typed_data, SIGN_MESSAGE_TEXT};
-use saa_common::ReplayError;
-use smart_account_auth::{CredentialData, 
-    ReplayProtection, ReplayProtectionWrapper
+use crate::utils::{alice_info, base_credentials, domain_attrs, get_mock_deps, get_mock_env, SIGN_MESSAGE_TEXT};
+use saa_common::{Binary, ReplayError, Verifiable};
+use serde_json::{from_value, json};
+use smart_account_auth::{types::Eip712Domain, CredentialData, EthTypedData, ReplayProtection, ReplayProtectionWrapper
 };
 
 
@@ -52,11 +52,42 @@ fn replay_attack_check_data() {
 
 #[test]
 fn replay_attack_eth_typed() {
-    let _mock = get_mock_deps();
+    let mock = get_mock_deps();
+    let deps = mock.as_ref();
     let env = get_mock_env();
     let _info = alice_info();
 
-    let cred = get_typed_data();
+    let cred = EthTypedData {
+        signer : "0xac03048da6065e584d52007e22c69174cdf2b91a".to_string(),
+
+        domain: Eip712Domain {
+            name: Some("Token-Bound Accounts".to_string()),
+            version: Some("1.1".to_string()),
+            verifying_contract: Some("0x0ef13906b325aba3cb700fe97a6edf86dcfee89a".to_string()),
+            chain_id: Some(0u64.into()),
+            salt: None
+        },
+
+        types: from_value(json!({
+            "EIP712Domain": domain_attrs(),
+            "Envelope": [
+                { "name": "message",  "type": "string" },
+            ]
+        })).unwrap(),
+        
+        signature: Binary::from_base64(
+            "kfeJTRwU9zdDeX13YUtcL9LTaOsHJlZRXOnC+aHglER/ORs2ggZL8lj6IjoqJeorWXcp9A+dfs9lDkgmrzp3vxw="
+        ).unwrap(),
+
+        message: from_value(json!({
+            "message": SIGN_MESSAGE_TEXT 
+        })).unwrap(),
+
+        primary_type: "Envelope".to_string(),
+
+        message_property: None
+    };
+
     let msgs = vec![SIGN_MESSAGE_TEXT.to_string()];
 
     let res = cred.check_replay(&env, &Some(msgs), 0);
@@ -64,6 +95,10 @@ fn replay_attack_eth_typed() {
 
     let res = cred.check_replay::<String>(&env, &None, 0);
     assert!(res.is_ok(), "Typed data replay attack check failed");
+
+    let ver_res = cred.verify(deps);
+    println!("Typed data replay attack res: {:?}", ver_res);
+    assert!(ver_res.is_ok(), "Typed data verify failed");
 }
 
 

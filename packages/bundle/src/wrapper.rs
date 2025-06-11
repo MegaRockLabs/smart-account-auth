@@ -60,16 +60,14 @@ pub trait CredentialsWrapper  {
     }
 
     #[cfg(feature = "utils")]
-    fn secondaries(&self) -> Vec<Self::Credential> {
+    fn secondaries(&self) -> Vec<&Self::Credential> {
         use saa_common::vec;
-        let creds = self.credentials();
-        if creds.len() <= 1 { return vec![] };
-        let primary_id = self.primary_id();
-        creds
+        if self.count() <= 1 { return vec![] };
+        let primary_id = self.primary_id().to_lowercase();
+        self.credentials()
             .into_iter()
             .filter(|c| c.id() != primary_id)
-            .cloned()
-            .collect::<Vec<_>>()
+            .collect()
     }
 
 

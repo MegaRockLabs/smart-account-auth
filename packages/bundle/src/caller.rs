@@ -20,7 +20,7 @@ impl From<&str> for Caller {
 impl Identifiable for Caller {
 
     fn id(&self) -> CredentialId {
-        self.0.clone()
+        self.0.to_lowercase()
     }
 
     fn name(&self) -> CredentialName {
