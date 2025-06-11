@@ -63,3 +63,14 @@ impl Verifiable for Caller {
 }
 
 
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Caller {
+    fn check_replay<M: serde::Serialize>(
+        &self,
+        _: &saa_common::wasm::Env,
+        _: &Option<Vec<M>>,
+        _: u64,
+    ) -> Result<(), saa_common::ReplayError> {
+        Ok(())
+    }
+}

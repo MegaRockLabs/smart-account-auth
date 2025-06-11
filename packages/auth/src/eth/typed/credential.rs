@@ -1,5 +1,15 @@
-use saa_common::{ensure, types::exts::EthTypedSaveOptions, AuthError, Binary, CredentialId, CredentialName, Identifiable, Verifiable
+use saa_common::{
+    CredentialId, CredentialName, Identifiable, Verifiable,
+    AuthError, Binary,
+    ensure, 
 };
+
+pub use saa_common::types::exts::{
+    EthTypedInfo, EthTypedPayload,
+    Eip712DomainType, Eip712Domain,
+    Eip712Types, Eip712Message, 
+};
+
 
 use serde_json::{Value, Map};
 use ethers_core::{types::transaction::eip712, abi::encode};
@@ -7,12 +17,11 @@ use eip712::encode_data;
 
 use saa_crypto::hashes::keccak256;
 use saa_schema::saa_type;
-use crate::eth::utils::hash_eth_typed_data;
 
-use super::eip712::*; 
-
-use saa_common::CredentialError::{InvalidProperty, IncorrectData, NoInfoProperty};
+use saa_common::CredentialError::{InvalidProperty, IncorrectData};
 use CredentialName::EthTypedData as EthTypedName;
+
+use crate::eth::utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed};
 
 
 #[saa_type]
@@ -23,22 +32,18 @@ pub struct EthTypedData {
 
     pub message       :   Eip712Message,
 
-    pub domain        :   Option<Eip712Domain>,
+    pub domain        :   Eip712Domain,
 
     pub types         :   Eip712Types,
     
     #[serde(rename = "primaryType")]
     pub primary_type  :   String,
 
-    
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cache_options :   Option<EthTypedSaveOptions>,
-
-
-    #[serde(skip_serializing)]
-    pub cache         :   Option<super::EthTypedCache>
-
+    pub message_property   :   Option<String>
 }
+
+
 
 
 //  local   BTreeMap<String, Vec<Eip712DomainType>>; with local Eip712DomainType
@@ -50,7 +55,10 @@ fn types_to_types(
     types
     .iter()
     .map(|(k, v)| 
-        (k.clone(), v.iter().map(|t| t.clone().into()).collect())
+        (k.clone(), v.iter()
+                    .map(|t| t.clone().into())
+                    .collect()
+        )
     ).collect()
 }
 
@@ -67,44 +75,36 @@ impl EthTypedData {
         Ok(keccak256(&encode(&tokens)))
     }
 
-    pub fn compute_domain_values(
-        &self
-    ) -> Result<Eip712DomainValues, AuthError> {
-        let cache = self.cache.clone();
-        if let Some(domain) = &self.domain {
-            return Ok(domain.compute_values(cache));
-        }
+    pub fn domain_hash(
+        &self,
+    ) -> [u8; 32] {
+        
+        let pre_hash = prehash_eth_typed(
+            &self.domain.name.as_deref().unwrap_or_default(), 
+            &self.domain.version.as_deref().unwrap_or_default(), 
+            self.domain.salt.is_some()
+        );
 
-        let cache = cache.ok_or_else(|| IncorrectData(EthTypedName))?;
-        ensure!(!cache.preamble_digest.is_empty(), NoInfoProperty(EthTypedName, "cache.preamble_digest".into()));
-        let chain_id = cache.chain_id.ok_or_else(|| NoInfoProperty(EthTypedName, "cache.chain_id".into()))?;
-        let contract_addr = cache.contract_addr.ok_or_else(|| NoInfoProperty(EthTypedName, "cache.contract_addr".into()))?;
-
-        let domain_digest = match cache.domain_digest {
-            Some(digest) => digest,
-            None => hash_eth_typed_data(
-                cache.preamble_digest.as_slice(),
-                &chain_id,
-                &contract_addr,
-                None
-            )
-        };
-
-        Ok(Eip712DomainValues {
-            chain_id,
-            contract_addr,
-            domain_digest,
-            preamble_digest: cache.preamble_digest,
-            use_salt: cache.use_salt,
-        })
+        let chain_id = encode_u64(self.domain.chain_id
+            .as_ref()
+            .map(|u|u.u64())
+            .unwrap_or_default());
+        let address = encode_address(self.domain.verifying_contract
+            .as_deref()
+            .unwrap_or_default());
+        
+        hash_eth_typed_data(
+            &pre_hash, 
+            &chain_id,
+            &address,
+            self.domain.salt
+        )
     }
 
 
-    pub fn encode_eip712(
-        &self,
-        domain_hash: &[u8]
-    ) -> Result<[u8; 32], AuthError> {
-        let mut digest_input = [&[0x19, 0x01], domain_hash].concat().to_vec();
+    pub fn encode_eip712(&self) -> Result<[u8; 32], AuthError> {
+        let mut digest_input = [&[0x19, 0x01], &self.domain_hash()[..]].concat().to_vec();
+        //let mut digest_input = [&[0x19, 0x01], &self.domain_hash()[..]].concat().to_vec();
         if self.primary_type != "EIP712Domain" {
             digest_input.extend(&self.struct_hash()?[..])
         }
@@ -112,6 +112,56 @@ impl EthTypedData {
     }
     
 }
+
+/* 
+
+impl Eip712Domain {
+
+    pub(crate) fn compute_values(
+        &self,
+        cache: Option<super::EthTypedCache>
+    ) -> Eip712DomainValues {
+        let cache = cache.unwrap_or_default();
+        let (use_salt, preamble_digest) = if cache.preamble_digest.is_empty() {
+            let use_salt = self.salt.is_some();
+            (use_salt, preamble_hash_eth_typed(&self.name, &self.version, use_salt))
+        } else {
+            let new_use_salt = self.salt.is_some();
+            if cache.use_salt != new_use_salt {
+                (new_use_salt, preamble_hash_eth_typed(&self.name, &self.version, new_use_salt))
+            } else {
+                (cache.use_salt, cache.preamble_digest)
+            }
+        };
+
+        let chain_id = cache.chain_id.unwrap_or(encode_u64(self.chain_id.u64()));
+        let contract_addr = cache.contract_addr.unwrap_or_else(|| {
+            encode_address(&self.verifying_contract)
+        });
+
+        println!("Chain ID: {:?}", chain_id);
+        println!("Chain Id to be: {:?}", self.chain_id.u64().to_be_bytes());
+        println!("Chain ID to le: {:?}", self.chain_id.u64().to_le_bytes());
+        println!("Chain ID to str bytes: {:?}", self.chain_id.to_string().as_bytes());
+
+        let domain_digest = hash_eth_typed_data(
+            &preamble_digest,
+            &self.chain_id.to_string().as_bytes(),
+            &contract_addr,
+           Some([2;32])
+        );
+        
+        Eip712DomainValues {
+            chain_id,
+            contract_addr,
+            preamble_digest,
+            domain_digest,
+            use_salt,
+        }
+
+    }
+    
+} */
 
 
 
@@ -150,6 +200,10 @@ impl Verifiable for EthTypedData {
             hex::decode(&self.signer[2..]).map_err(|_| AuthError::Convertation("hex address".into()))?
             .len() == 20, IncorrectData(EthTypedName)
         );
+        ensure!(
+            self.types.contains_key(self.primary_type.as_str()),
+            InvalidProperty(EthTypedName, "primaryType".into(), "must be a valid type in types".into()
+        ));
         Ok(())
     }
 
@@ -159,18 +213,29 @@ impl Verifiable for EthTypedData {
         #[cfg(feature = "cosmwasm")]
         deps: saa_common::wasm::Deps
     ) -> Result<saa_common::CredentialInfo, AuthError> {
-        use saa_common::InfoExtension;
+        use saa_common::{InfoExtension, CredentialInfo};
+        #[cfg(all(feature = "cosmwasm", target_arch = "wasm32"))]
+        {
+            let info = saa_common::wasm::get_contract_info(deps.storage)?;
+            ensure!(
+                self.domain.name.as_deref().unwrap_or_default() == info.contract, 
+                InvalidProperty(EthTypedName, "domain.name".into(), "must match cw2".into())
+            );
+            ensure!(
+                self.domain.version.as_deref().unwrap_or_default() == info.version, 
+                InvalidProperty(EthTypedName, "domain.version".into(), "must match cw2".into())
+            );
+        }
         let signature = &self.signature.to_vec();
-        let values = self.compute_domain_values()?;
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let key_data = saa_crypto::secp256k1_recover_pubkey(
-            &self.encode_eip712(&values.domain_digest)?, 
+            &self.encode_eip712()?, 
             &signature[..64], 
             crate::eth::utils::get_recovery_param(signature[64])?
         )?;
         #[cfg(feature = "cosmwasm")]
         let key_data = deps.api.secp256k1_recover_pubkey(
-            &self.encode_eip712(&values.domain_digest)?, 
+            &self.encode_eip712()?, 
             &signature[..64], 
             crate::eth::utils::get_recovery_param(signature[64])?
         )?;
@@ -181,16 +246,14 @@ impl Verifiable for EthTypedData {
 
         ensure!(addr_bytes == key_hash[12..], AuthError::RecoveryMismatch);
 
-        let options = self.cache_options.clone().unwrap_or_default(); 
-        let save_types = options.types.unwrap_or(false);
+        // let options = self.cache_options.clone().unwrap_or_default(); 
+        // let save_types = options.types.unwrap_or(false);
 
         let info = super::EthTypedInfo {
-            primary_type: if save_types { Some(self.primary_type.clone())} else { None },
-            types: if save_types { Some(saa_common::to_json_binary(&self.types)? ) } else { None },
-            cache: values.to_cached(options)
+            // primary_type: if save_types { Some(self.primary_type.to_string())} else { None },
+            // types: if save_types { Some(to_json_binary(&self.types)? ) } else { None },
         };
-
-        Ok(saa_common::CredentialInfo {
+        Ok(CredentialInfo {
             hrp: None,
             address: None,
             extension: Some(InfoExtension::EthTypedData(info)),
@@ -200,54 +263,3 @@ impl Verifiable for EthTypedData {
 
 }
 
-
-#[cfg(feature = "replay")]
-impl saa_crypto::ReplayProtection for EthTypedData {
-    fn hash_message(&self, bytes: &[u8]) -> Vec<u8> {
-        keccak256(bytes).to_vec()
-    }
-
-    fn message_digest(&self) -> Vec<u8> {
-        if let Ok(values) = self.compute_domain_values() {
-            return self.encode_eip712(&values.domain_digest)
-                .unwrap_or_default()
-                .to_vec();
-        }
-        vec![]
-    }
-
-    #[cfg(feature = "cosmwasm")]
-    fn check_replay<M: serde::Serialize>(
-        &self,
-        env:  &saa_common::wasm::Env,
-        _messages: Option<Vec<M>>,
-        nonce: u64,
-    ) -> Result<(), saa_common::ReplayError> {
-        use saa_common::ReplayError;
-        let (id, addr) = if let Some(cache) = &self.cache {
-            (cache.chain_id, cache.contract_addr)
-        } else {
-            match self.domain.as_ref() {
-                Some(domain) => {
-                    (
-                        Some(crate::eth::utils::encode_u64(domain.chain_id.u64())), 
-                        Some(crate::eth::utils::encode_address(&domain.verifying_contract))
-                    )
-                },
-                None => return Err(ReplayError::MissingData("domain or cache in EthTypedData".to_string()))
-            }
-        };
-        match self.message.get("nonce").and_then(|v| v.as_u64()) {
-            Some(n) => ensure!(n == nonce, ReplayError::InvalidNonce(nonce)),
-            _ => return Err(ReplayError::MissingData("nonce in EthTypedData message".to_string()))
-        }
-        let env_id = keccak256(env.block.chain_id.as_ref());
-        ensure!(id.map(|id|id == env_id).unwrap_or_default(), ReplayError::ChainIdMismatch);
-        
-        let env_addr = keccak256(env.contract.address.as_bytes());
-        ensure!(addr.map(|addr| addr == env_addr).unwrap_or_default(), ReplayError::ContractMismatch);
-
-        Ok(())
-    }
-
-}

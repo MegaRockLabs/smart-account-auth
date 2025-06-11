@@ -12,6 +12,7 @@ pub struct Uint128(#[cfg_attr(feature = "wasm", schemars(with = "String"))] pub(
 
 
 
+
 impl Uint64 {
 
     pub const MAX: Self = Self(u64::MAX);

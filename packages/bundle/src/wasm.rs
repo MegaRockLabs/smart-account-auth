@@ -1,12 +1,15 @@
-/* #[cfg(feature = "types")]
+#[cfg(feature = "types")]
 pub use saa_common::wasm as cosmwasm_std;
-#[cfg(feature = "replay")]
-use {
-    saa_common::{ensure, wasm::Env, ReplayError},
-    crate::msgs::MsgDataToSign,
-};
+
+impl From<&saa_common::wasm::MessageInfo> for crate::Caller {
+    fn from(info: &saa_common::wasm::MessageInfo) -> Self {
+        crate::Caller(info.sender.to_string())
+    }
+}
 
 
+
+/* 
 /* 
 
 
@@ -25,25 +28,6 @@ pub fn convert_validate(
 
 
 #[cfg(feature = "replay")]
-impl crate::CredentialData {
-    pub fn checked_replay(
-        &self, 
-        env: &Env,
-        nonce: u64,
-    ) -> Result<(), AuthError> {
-        let credentials : Vec<&crate::credential::Credential> = self.credentials
-            .iter().filter(|c| 
-                c.name() != crate::credential::CredentialName::Native 
-            )
-            .collect();
-        if credentials.is_empty() { return Ok(()) }
-        credentials
-            .into_iter()
-            .try_for_each(|c| convert_validate(c.message(), env, nonce))?;
-                
-        Ok(())
-    }
-}
 
 
 
@@ -115,8 +99,5 @@ impl<M : serde::de::DeserializeOwned + serde::Serialize> crate::msgs::MsgDataToS
 } 
 */
 
-impl From<&saa_common::wasm::MessageInfo> for crate::Caller {
-    fn from(info: &saa_common::wasm::MessageInfo) -> Self {
-        crate::Caller(info.sender.to_string())
-    }
-}
+
+

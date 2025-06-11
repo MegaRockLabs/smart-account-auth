@@ -148,8 +148,7 @@ mod tests {
                 );
 
         let typed_data: EthTypedData = serde_json::from_value(json).unwrap();
-        let values = typed_data.compute_domain_values().unwrap();
-        let hash = typed_data.encode_eip712(&values.domain_digest).unwrap();
+        let hash = typed_data.encode_eip712().unwrap();
         assert_eq!(
             "0b8aa9f3712df0034bc29fe5b24dd88cfdba02c7f499856ab24632e2969709a8",
             hex::encode(&hash[..])
@@ -219,8 +218,7 @@ mod tests {
         let deps = mock_dependencies();
         let cred: EthTypedData = serde_json::from_value(json).unwrap();
 
-        let values = cred.compute_domain_values().unwrap();
-        let hash = cred.encode_eip712(&values.domain_digest).unwrap();
+        let hash = cred.encode_eip712().unwrap();
         assert_eq!("11361aeafc7ea4ebb964e1213d59eba872c2488e5d737ed41a754d6a94b6b918", hex::encode(&hash[..]));
 
  

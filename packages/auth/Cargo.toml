@@ -35,7 +35,7 @@ eth_typed_data      	=   ["saa-crypto/ethereum", "saa-common/eth_typed_data", "d
 eth_typed_data_replay   =   ["eth_typed_data"]  
 
 cosmos_arb          	=   ["saa-crypto/cosmos_arb"]
-cosmos_arb_cache     	=   ["saa-common/cosmos_arb"]
+cosmos_arb_addr     	=   ["saa-common/cosmos_arb"]
 
 
 

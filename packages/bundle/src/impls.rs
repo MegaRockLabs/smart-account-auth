@@ -1,7 +1,10 @@
+#[cfg(feature = "replay")]
+use super::traits::ReplayProtectionWrapper;
 use core::ops::Deref;
-use saa_common::{ensure, CredentialError, Identifiable};
+
 use crate::{credential::CredentialName, Credential, CredentialData, caller::Caller};
 use crate::traits::{CredentialsWrapper, Verifiable};
+use saa_common::{CredentialError, Identifiable, ensure};
 
 
 impl From<Caller> for Credential {
@@ -25,7 +28,7 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
     }
 }
 
-#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
     fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
@@ -75,7 +78,7 @@ impl Deref for Credential {
             Credential::EthPersonalSign(c) => c,
             #[cfg(feature = "eth_typed_data")]
             Credential::EthTypedData(c) => c,
-            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
             Credential::CosmosArbitrary(c) => c,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c,
@@ -100,6 +103,13 @@ impl Identifiable for Credential {
     }
 }
 
+
+#[cfg(feature = "replay")]
+impl ReplayProtectionWrapper for CredentialData {
+    fn signed_nonce(&self) -> u64 {
+        self.nonce.unwrap_or_default().u64()
+    }
+}
 
 
 impl CredentialData {

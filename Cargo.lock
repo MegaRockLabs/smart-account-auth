@@ -2215,6 +2215,7 @@ dependencies = [
  "cosmwasm-crypto 2.2.2",
  "cosmwasm-std 1.5.11",
  "cosmwasm-std 2.2.2",
+ "ethers-core",
  "getrandom 0.2.16",
  "ink",
  "parity-scale-codec",
@@ -2224,6 +2225,7 @@ dependencies = [
  "secret-cosmwasm-std",
  "serde",
  "serde-json-wasm 1.0.1",
+ "serde_json",
  "strum 0.27.1",
  "thiserror 2.0.12",
 ]

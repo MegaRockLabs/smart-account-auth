@@ -47,7 +47,8 @@ pub fn encode_u64(value: u64) -> [u8; 32] {
 }
 
 
-pub fn preamble_hash_eth_typed(name: &str, version: &str, salt: bool) -> Vec<u8> {
+
+pub fn prehash_eth_typed(name: &str, version: &str, salt: bool) -> Vec<u8> {
     let name_hash = keccak256(name.as_bytes());
     let version_hash = keccak256(version.as_bytes());
     let domain_type = if salt {

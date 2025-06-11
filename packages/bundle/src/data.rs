@@ -1,8 +1,7 @@
-#[cfg(feature = "replay")]
-use saa_common::Uint64;
 use saa_common::{CredentialAddress, CredentialId, CredentialRecord};
 use saa_schema::saa_type;
 use crate::Credential;
+
 
 /// CredentialData is wrapper for dealing with multiple credentials at the same time.
 /// Implements both `Verifiable` and `CredentialWrapper` traits.
@@ -23,10 +22,8 @@ pub struct CredentialData {
     pub override_primary       :  Option<bool>,
     /// A custom nonce value to use for replay attack protection. Meant to be set by verifier, not user. 0 by default.
     #[cfg(feature = "replay")]
-    pub nonce                  :  Option<Uint64>,
+    pub nonce                  :  Option<saa_common::Uint64>,
 }
-
-
 
 
 
@@ -37,10 +34,10 @@ pub struct VerifiedData {
     /// a list of addresses (recognized by the environment) were derived from the credentials
     pub addresses           :    Vec<CredentialAddress>,
     /// an id of a credential that is considered primary in the batch
-    pub verifying_id        :    CredentialId,
+    pub primary_id          :    CredentialId,
     /// in case if we updating an existing state with new credentials, this flag indicates
     /// whether to override the existing primary credential with the primary from this batch
-    pub override_ver        :    bool,
+    pub override_primary    :    bool,
     /// a flag indicating that the batch has credentials native to the environment like `caller` or `info.sender``
     pub has_natives         :    bool,
     /// a flag indicating that there is at least one credential wuth addutional properties to be reused e.g. `Passkeys``

@@ -65,19 +65,30 @@ impl<M : Serialize> Into<MsgDataToVerify> for &MsgDataToSign<M> {
 
 
 #[cfg(feature = "wasm")]
-mod wasm {
+mod wasm_impl {
+    use crate::wasm::{Env, Binary, ensure};
+
+    impl super::MsgDataToVerify {
+        pub fn validate(&self, env: &Env, expected: u64 ) -> Result<(), crate::ReplayError> {
+            ensure!(self.chain_id == env.block.chain_id, crate::ReplayError::ChainIdMismatch);
+            ensure!(self.contract_address == env.contract.address.to_string(), crate::ReplayError::ContractMismatch);
+            let signed = self.nonce.u64();
+            ensure!(signed == expected, crate::ReplayError::InvalidNonce(expected));
+            Ok(())
+        }
+    }
 
     impl<M : serde::Serialize> super::MsgDataToSign<M> {
         pub fn new_binary(
-            env: &crate::wasm::Env,
-            nonce: crate::Uint64,
-            messages: Vec<M>
-        ) -> Result<crate::Binary, crate::ReplayError> {
+            env: &Env,
+            messages: Vec<M>,
+            nonce: u64,
+        ) -> Result<Binary, crate::ReplayError> {
             crate::to_json_binary(&Self{
                 chain_id: env.block.chain_id.clone(),
                 contract_address: env.contract.address.to_string(),
-                messages,
-                nonce,
+                messages: messages,
+                nonce: nonce.into(),
             }).map_err(|_| crate::ReplayError::ToBin("MsgDataToSign".to_string()))
         }
     }

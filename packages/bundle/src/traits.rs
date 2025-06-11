@@ -1,17 +1,19 @@
-#[cfg(any(feature = "wasm", feature = "native"))]
-use crate::data::VerifiedData;
 #[cfg(feature = "session")]
 pub use crate::messages::actions::DerivableMsg;
 #[cfg(feature = "replay")]
-pub use saa_crypto::ReplayProtection;
+pub use {saa_crypto::ReplayProtection, super::wrapper::ReplayProtectionWrapper};
 pub use saa_common::{Verifiable, Identifiable};
 pub use super::wrapper::CredentialsWrapper;
 
 
+#[cfg(any(feature = "wasm", feature = "native"))]
+use crate::data::VerifiedData;
 #[cfg(feature = "wasm")]
 use saa_common::wasm::{Env, MessageInfo, Deps};
-use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
 use saa_common::AuthError;
+
+
+use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
 
 
 
@@ -44,6 +46,23 @@ pub trait Identifiable : Verifiable + strum::IntoDiscriminant<Discriminant : cor
 
  */
 
+/*  impl crate::Verifiable for CredentialData {
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Owned(self.credentials.iter().map(|c| c.message()).collect())
+    }
+
+    fn validate(&self) -> Result<(), AuthError> {
+        self.credentials.iter().try_for_each(|c| c.validate())
+    }
+
+    fn verify(&self,
+        #[cfg(feature = "wasm")]
+        deps: Deps
+    ) -> Result<crate::data::CredentialInfo, AuthError> {
+        self.primary().verify(deps)
+    }
+}
+ */
 
 
 
@@ -66,18 +85,27 @@ impl crate::CredentialsWrapper for CredentialData {
 
 
     #[cfg(all(any(feature = "native", feature = "wasm"), feature = "replay"))]
-    fn verify<M>(&self,
+    fn verify<M : serde::Serialize + core::fmt::Display + Clone>(&self,
         #[cfg(feature = "wasm")]
         deps: Deps, env: &Env, info: &MessageInfo,
-        messages: Vec<M>,
-    ) -> Result<VerifiedData, AuthError>
-    where M: serde::Serialize + Clone {
+        messages: &Option<Vec<M>>,
+    ) -> Result<VerifiedData, AuthError>  {
+    
         #[cfg(feature = "wasm")]
         let sender = info.sender.clone();
         let pre_val = self.pre_validate.unwrap_or_default();
+        let nonce = self.nonce.unwrap_or_default().u64();
 
         // validate the wrapper and each credential individually before-hand
-        if pre_val { self.validate(sender.as_ref())?; }
+        if pre_val { 
+            self.validate(sender.as_ref())?; 
+            self.check_replay(
+                #[cfg(feature = "wasm")]
+                env, 
+                messages, 
+                nonce
+            )?;
+        }
 
         let use_native = self.use_native.unwrap_or_default();
         // flags describing the cred data batch 
@@ -85,10 +113,9 @@ impl crate::CredentialsWrapper for CredentialData {
         let mut has_extensions = false;
 
         // can be set by both client or verifying environment
-        let nonce = self.nonce.unwrap_or(saa_common::Uint64::zero());
 
         // each non-native credential must have message to be equal to this envelope
-        let binary_envelope  = crate::msgs::MsgDataToSign::new_binary(env, nonce.clone(), messages)?;
+        //let binary_envelope  = crate::msgs::MsgDataToSign::new_binary(env, nonce.clone(), messages)?;
                 
         // ID + Parsed Info
         let mut credentials = Vec::with_capacity(self.credentials.len() + 1);
@@ -99,22 +126,25 @@ impl crate::CredentialsWrapper for CredentialData {
             .iter()
             .try_for_each(|c| {
                 // if not pre-validated, validating each one by one
-                if !pre_val { c.validate()?; }
+                if !pre_val { 
 
+                    println!("Validating credential: {}", c.id());
+
+                    c.validate()?; 
+                    c.check_replay(
+                        #[cfg(feature = "wasm")]
+                        env, 
+                        messages, nonce
+                    )?;
+                }
                 // verify siganture and get extracted info like address, name, etc.
                 let info = c.verify(
                     #[cfg(feature = "wasm")]
                     deps
                 )?;
                 has_extensions |= info.extension.is_some();
-                if info.name != CredentialName::Native {
-                    saa_common::ensure!(
-                        c.message() == binary_envelope.as_slice(),  
-                        saa_common::ReplayError::InvalidEnvelope
-                    );
-                } else {
-                    has_natives = true;
-                }
+                has_natives |= info.name == CredentialName::Native;
+
                 if let Some(address) = info.address.clone() {
                     addresses.push(address);
                 }
@@ -135,9 +165,9 @@ impl crate::CredentialsWrapper for CredentialData {
             addresses,
             has_natives,
             has_extensions,
-            verifying_id: self.primary_id(),
-            override_ver: self.override_primary.unwrap_or_default(),
-            nonce: nonce.u64() + 1,
+            primary_id: self.primary_id(),
+            override_primary: self.override_primary.unwrap_or_default(),
+            nonce: nonce + 1,
         })
     }
 
@@ -190,8 +220,8 @@ impl crate::CredentialsWrapper for CredentialData {
             addresses,
             has_natives,
             has_extensions,
-            verifying_id: self.primary_id(),
-            override_ver: self.override_primary.unwrap_or_default(),
+            primary_id: self.primary_id(),
+            override_primary: self.override_primary.unwrap_or_default(),
         })
 
     }

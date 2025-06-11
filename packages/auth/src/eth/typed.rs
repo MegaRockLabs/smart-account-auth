@@ -1,13 +1,9 @@
 
-mod eip712;
+#[cfg(feature = "replay")]
+mod replay;
+// mod eip712;
 mod credential;
-
-pub use saa_common::types::exts::{
-    EthTypedCache, EthTypedSaveOptions, 
-    EthTypedInfo, EthTypedPayload
-};
-pub use eip712::{Eip712Domain, Eip712DomainType, Eip712Types, Eip712Message};
-pub use credential::EthTypedData;
+pub use credential::*;
 
 
 /*

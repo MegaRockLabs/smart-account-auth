@@ -14,9 +14,9 @@ pub struct CosmosArbitrary {
     pub pubkey:    Binary,
     pub signature: Binary,
     pub message:   Binary,
-    #[cfg(not(feature = "cosmos_arb_cache"))]
+    #[cfg(not(feature = "cosmos_arb_addr"))]
     pub hrp:       Option<String>,
-    #[cfg(feature = "cosmos_arb_cache")]
+    #[cfg(feature = "cosmos_arb_addr")]
     pub address:   String
 }
 
@@ -27,9 +27,9 @@ impl CosmosArbitrary {
     #[allow(unused_variables)]
     #[cfg(feature = "cosmwasm")]
     fn get_address(&self, api: &dyn Api) -> Result<Addr, AuthError> {
-        #[cfg(feature = "cosmos_arb_cache")]
+        #[cfg(feature = "cosmos_arb_addr")]
         return Ok(api.addr_validate(&self.address)?);
-        #[cfg(not(feature = "cosmos_arb_cache"))]
+        #[cfg(not(feature = "cosmos_arb_addr"))]
         if let Some(ref hrp) = self.hrp {
             Ok(Addr::unchecked(saa_crypto::pubkey_to_address(&self.pubkey, hrp)?))
         } else {
@@ -39,9 +39,9 @@ impl CosmosArbitrary {
 
     #[cfg(not(feature = "cosmwasm"))]
     fn get_address(&self) -> Result<String, AuthError> {
-        #[cfg(feature = "cosmos_arb_cache")]
+        #[cfg(feature = "cosmos_arb_addr")]
         return self.address.clone();
-        #[cfg(not(feature = "cosmos_arb_cache"))]
+        #[cfg(not(feature = "cosmos_arb_addr"))]
         if let Some(ref hrp) = self.hrp {
             saa_crypto::pubkey_to_address(&self.pubkey, hrp)?;
         } else {
@@ -118,3 +118,6 @@ impl Verifiable for CosmosArbitrary {
     }
 
 }
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for CosmosArbitrary {}

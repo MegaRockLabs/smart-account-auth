@@ -1,6 +1,6 @@
 #![allow(unused)]
 pub use saa_crypto::hashes;
-#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 pub use saa_auth::cosmos::utils as cosmos;
 #[cfg(feature = "ethereum")]
 pub use saa_auth::eth::utils as eth;

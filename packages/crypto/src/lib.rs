@@ -1,7 +1,7 @@
 mod replay;
 pub mod hashes;
 pub use hashes::sha256;
-pub use replay::ReplayProtection;
+pub use replay::*;
 
 use saa_common::cfg_mod_use;
 

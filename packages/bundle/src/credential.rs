@@ -3,7 +3,7 @@
 pub use saa_auth::eth::EthPersonalSign;
 #[cfg(feature = "eth_typed_data")]
 pub use saa_auth::eth::{Eip712Types, EthTypedData};
-#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 pub use saa_auth::cosmos::CosmosArbitrary;
 #[cfg(feature = "passkeys")]
 pub use saa_passkeys::PasskeyCredential;
@@ -25,7 +25,7 @@ pub enum Credential {
     EthPersonalSign(EthPersonalSign),
     #[cfg(feature = "eth_typed_data")]
     EthTypedData(EthTypedData),
-    #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+    #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
     CosmosArbitrary(CosmosArbitrary),
     #[cfg(feature = "passkeys")]
     Passkey(PasskeyCredential),
@@ -37,30 +37,6 @@ pub enum Credential {
     Ed25519(Ed25519),
 }
 
-/* 
-
-impl strum::IntoDiscriminant for Credential {
-    type Discriminant = CredentialName;
-    fn discriminant(&self) -> Self::Discriminant {
-        match self {
-            Credential::Native(_) => CredentialName::Native,
-            #[cfg(feature = "eth_personal")]
-            Credential::EthPersonalSign(_) => CredentialName::EthPersonalSign,
-            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
-            Credential::CosmosArbitrary(_) => CredentialName::CosmosArbitrary,
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(_) => CredentialName::Passkey,
-            #[cfg(feature = "secp256r1")]
-            Credential::Secp256r1(_) => CredentialName::Secp256r1,
-            #[cfg(feature = "secp256k1")]
-            Credential::Secp256k1(_) => CredentialName::Secp256k1,
-            #[cfg(feature = "ed25519")]
-            Credential::Ed25519(_) => CredentialName::Ed25519,
-        }
-    }
-}
-
- */
 
 #[allow(unused, dead_code)]
 #[cfg(feature = "wasm")]
@@ -105,14 +81,14 @@ pub fn build_credential(
             signer: id,
         }),
 
-        #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_cache"))]
+        #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
         CredentialName::CosmosArbitrary => Credential::CosmosArbitrary(CosmosArbitrary {
             pubkey: saa_common::Binary::from_base64(&id)?,
             message,
             signature,
-            #[cfg(not(feature = "cosmos_arb_cache"))]
+            #[cfg(not(feature = "cosmos_arb_addr"))]
             hrp: info.hrp,
-            #[cfg(feature = "cosmos_arb_cache")]
+            #[cfg(feature = "cosmos_arb_addr")]
             address: info.address
                 .ok_or_else(|| saa_common::CredentialError::NoInfoProperty(
                     CredentialName::CosmosArbitrary, "address".into()))?
@@ -166,28 +142,25 @@ pub fn build_credential(
                 domain
             ) = if let Some(PayloadExtension::EthTypedData(pay_ext)) = payload {
                 (
-                    pay_ext.types.or(info_ext.types), 
-                    pay_ext.primary_type.or(info_ext.primary_type),
+                    pay_ext.types,
+                    pay_ext.primary_type,
                     pay_ext.domain
                 )
             } else {
-                (info_ext.types, info_ext.primary_type, None)
+                (None, None, None)
             };
 
-
-            let types = types.map(|bin| from_json::<Eip712Types>(&bin))
-                .transpose()
-                .map_err(|e| saa_common::CredentialError::InvalidProperty(
-                    CredentialName::EthTypedData, "types".into(), e.to_string()
-                ))?
-                .ok_or_else(|| saa_common::CredentialError::NoInfoProperty(
-                    CredentialName::EthTypedData, "types".into()
+ 
+            let types = types
+                .and_then(|bin| from_json::<Eip712Types>(&bin).ok())
+                .ok_or_else(|| saa_common::CredentialError::InvalidProperty(
+                    CredentialName::EthTypedData, "types".into(), "Payload is missing or has invalid Eip712 types".into()
                 ))?;
             
-            let domain = domain.map(|bin| from_json::<Eip712Domain>(&bin))
-                .transpose()
-                .map_err(|e| saa_common::CredentialError::InvalidProperty(
-                    CredentialName::EthTypedData, "domain".into(), e.to_string()
+            let domain = domain
+                .and_then(|bin| from_json::<Eip712Domain>(&bin).ok())
+                .ok_or_else(|| saa_common::CredentialError::InvalidProperty(
+                    CredentialName::EthTypedData, "domain".into(), "Payload is missing or has invalid Eip712 domain".into()
                 ))?;
 
             Credential::EthTypedData(EthTypedData {
@@ -204,8 +177,7 @@ pub fn build_credential(
                     .map_err(|e| saa_common::CredentialError::InvalidProperty(
                         CredentialName::EthTypedData, "message".into(), e.to_string()
                     ))?,
-                cache_options: None,
-                cache: Some(info_ext.cache),
+                message_property: None
             })
         },
 

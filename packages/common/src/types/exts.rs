@@ -2,7 +2,7 @@ use saa_schema::saa_type;
 use crate::cfg_mod_use;
 
 cfg_mod_use!("passkeys", passkey);
-cfg_mod_use!("eth_typed_data", eth_typed);
+cfg_mod_use!("eth_typed_data", eip712);
 
 
 #[saa_type(no_deny)]
@@ -13,7 +13,7 @@ pub enum InfoExtension {
     Passkey(passkey::PasskeyInfo),
 
     #[cfg(feature = "eth_typed_data")]
-    EthTypedData(eth_typed::EthTypedInfo),
+    EthTypedData(eip712::EthTypedInfo),
 
     Custom(crate::Binary),
 }
@@ -28,7 +28,7 @@ pub enum PayloadExtension {
     Passkey(passkey::PasskeyPayload),
 
     #[cfg(feature = "eth_typed_data")]
-    EthTypedData(eth_typed::EthTypedPayload),
+    EthTypedData(eip712::EthTypedPayload),
 
     Custom(crate::Binary),
 }

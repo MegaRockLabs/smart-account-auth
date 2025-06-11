@@ -45,7 +45,6 @@ mod std_mod {
     }
 
 
-    #[cfg(feature = "replay")]
     #[saa_error]
     pub enum ReplayError {
         #[error("Invalid nonce. Expected: '{0}'")]
@@ -71,6 +70,7 @@ mod std_mod {
 
         #[error("The data for the replay protection is missing or invalid. Item: {0}")]
         MissingData(String),
+
     }
 
 
@@ -101,6 +101,9 @@ mod std_mod {
     pub enum CredentialError {
         #[error("Not provided or partially missing")]
         NoCredentials,
+
+        #[error("At least one credential must be kept for authorization checks")]
+        NoneLeft,
 
         #[error("Too many credentials provided: {0}. Maximum allowed is 255")]
         TooManyCredentials(usize),
@@ -171,8 +174,6 @@ mod std_mod {
 
         #[error("{0}")]
         Crypto(String),
-
-
 
         #[error("Error converting binary to {0}")]
         Convertation(String),

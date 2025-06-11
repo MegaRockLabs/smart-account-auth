@@ -46,7 +46,7 @@ std          =   ["saa-crypto/std",         "saa-auth?/std",      "saa-passkeys?
 native       =   ["saa-crypto/native",      "saa-auth?/native",   "saa-passkeys?/native",   "saa-curves?/native"          ]
 cosmwasm_v1  =   ["saa-common/cosmwasm_v1", "saa-passkeys?/no_api_r1",  "wasm"]
 secretwasm   =   ["saa-common/secretwasm",  "saa-passkeys?/no_api_r1",  "wasm"]
-wasm         =   ["saa-crypto/cosmwasm", "saa-schema/cosmwasm",    "saa-auth?/cosmwasm", "saa-passkeys?/cosmwasm", "saa-curves?/cosmwasm",  "std"]
+wasm         =   ["saa-crypto/cosmwasm",    "saa-auth?/cosmwasm", "saa-passkeys?/cosmwasm", "saa-curves?/cosmwasm",  "std"]
 
 
 # ---- Credentials ----
@@ -55,18 +55,18 @@ secp256k1               =   ["saa-curves/secp256k1"          ]
 secp256r1               =   ["saa-passkeys/secp256r1"        ]
 passkeys                =   ["saa-passkeys/passkeys"         ]
 eth_personal            =   ["saa-auth/eth_personal"         ]
-
 eth_typed_data          =   ["saa-auth/eth_typed_data"       ]
+
 #eth_typed_data_cache    =   ["saa-auth/eth_typed_data_cache" ]
 #eth_typed_data_replay   =   ["saa-auth/eth_typed_data_replay"]
 
-cosmos_arb              =   ["saa-auth/cosmos_arb"           ]
-cosmos_arb_cache        =   ["saa-auth/cosmos_arb_cache"     ]
+cosmos_arb               =   ["saa-auth/cosmos_arb"           ]
+cosmos_arb_addr          =   ["saa-auth/cosmos_arb_addr"      ]
 
 
 
 # ---- Grouped  ----    
-majors        =   ["cosmos_arb_cache", "eth_personal", "passkeys", "ed25519"]
+majors        =   ["cosmos_arb_addr", "eth_personal", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
 default       =   ["std", "majors", "replay", "traits"]

@@ -18,6 +18,13 @@ mod bin;
 mod uint;
 
 
+#[derive(serde::Deserialize)]
+pub struct ContractVersion {
+    pub contract: String,
+    pub version: String,
+}
+
+
 
 pub mod binary {
     #[cfg(not(feature = "wasm"))]
@@ -26,12 +33,6 @@ pub mod binary {
     pub use crate::wasm::{Binary, to_json_binary, from_json, to_json_string};
 }
 
-pub mod uints {
-    #[cfg(not(feature = "wasm"))]
-    pub use super::uint::{Uint128, Uint64};
-    #[cfg(feature = "wasm")]
-    pub use crate::wasm::{Uint128, Uint64};
-}
 
 pub mod timestamp {
     #[cfg(not(feature = "wasm"))]
@@ -41,8 +42,10 @@ pub mod timestamp {
 }
 
 
-#[derive(serde::Deserialize)]
-pub struct ContractVersion {
-    pub contract: String,
-    pub version: String,
+
+pub mod uints {
+    #[cfg(not(feature = "wasm"))]
+    pub use super::uint::{Uint128, Uint64};
+    #[cfg(feature = "wasm")]
+    pub use crate::wasm::{Uint128, Uint64};
 }

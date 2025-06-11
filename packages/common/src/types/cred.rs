@@ -3,7 +3,6 @@ use core::fmt::Display;
 use saa_schema::{saa_type, strum_macros::{Display, EnumString}};
 pub type CredentialId = String;
 
-
 #[saa_type]
 #[derive(Display, EnumString)]
 #[strum(serialize_all = "snake_case")]
@@ -34,6 +33,7 @@ pub enum CredentialAddress {
     #[cfg(feature = "wasm")]
     Bech32(crate::wasm::Addr),
 }
+
 
 
 #[saa_type]

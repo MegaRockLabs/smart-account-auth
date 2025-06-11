@@ -20,9 +20,10 @@ pub trait CredentialsWrapper  {
     fn verify<M>(&self,
         #[cfg(feature = "wasm")]
         deps: saa_common::wasm::Deps, env: &saa_common::wasm::Env, info: &saa_common::wasm::MessageInfo,
-        messages: Vec<M>,
+        messages: &Option<Vec<M>>,
     ) -> Result<crate::data::VerifiedData, AuthError>
-    where M: serde::Serialize + Clone;
+    where M: serde::Serialize + core::fmt::Display + Clone;
+
 
     #[cfg(all(any(feature = "native", feature = "wasm"), not(feature = "replay")))]
     fn verify(&self,
@@ -78,9 +79,46 @@ pub trait CredentialsWrapper  {
         name: CredentialName
     ) -> Option<usize> {
         self.credentials().iter()
-            .position(|c| c.name() == name && id == &c.id())
+            .position(|c| c.name() == name && *id == c.id())
     }
 
 
     
 }
+
+
+
+#[cfg(feature = "replay")]
+use saa_crypto::ReplayProtection;
+
+
+#[cfg(feature = "replay")]
+pub trait ReplayProtectionWrapper : CredentialsWrapper 
+    where Self::Credential: ReplayProtection
+{
+
+    fn signed_nonce(&self) -> u64;
+
+
+    #[cfg(any(feature = "native", feature = "wasm"))]
+    fn check_replay<M: serde::Serialize + core::fmt::Display + Clone>(
+        &self,
+        #[cfg(feature = "wasm")]
+        env: &saa_common::wasm::Env,
+        messages: &Option<Vec<M>>,
+        nonce: u64,
+    ) -> Result<(), saa_common::ReplayError> {
+        use saa_common::{ensure, ReplayError};
+        #[cfg(not(feature = "wasm"))]
+        ensure!(messages.is_some(), ReplayError::MissingData("Messages".into()));
+        ensure!(self.signed_nonce() == nonce, ReplayError::InvalidNonce(nonce));    
+        self
+            .credentials()
+            .iter()
+            .filter(|c| c.name() != CredentialName::Native)
+            .try_for_each(|c| c.check_replay(env, messages, nonce))
+                
+    }
+    
+}
+
