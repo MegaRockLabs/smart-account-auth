@@ -1,6 +1,6 @@
 
 use cosmwasm_std::Uint128;
-use saa_schema::saa_type;
+use saa_schema::{saa_derivable, saa_type};
 
 
 #[saa_type]
@@ -33,3 +33,29 @@ pub enum CosmosMsg {
     Simple {}
 }
 
+
+
+#[saa_derivable]
+pub enum ExecuteMsg {
+    #[strum(to_string = "{{ \"execute\": {{ \"msgs\": {msgs:?} }} }}")]
+    Execute { 
+        msgs: Vec<CosmosMsg> 
+    },
+
+    #[strum(to_string = "{{ \"mint_token\": {{ \"minter\": \"{minter}\" }} }}")]
+    MintToken {
+        minter: String,
+        msg: Option<CosmosMsg>
+    },
+
+    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{id}\",\"to\":\"{to}\"}}}}")]
+    TransferToken {
+        id: String,
+        to: String,
+    },
+
+    #[strum(to_string = "freeeeeze")]
+    Freeze {},
+
+    Purge {},
+}

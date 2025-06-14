@@ -9,11 +9,12 @@ mod env;
 
 pub mod types;
 pub use env::*;
+pub use types::cred::*;
 pub use types::errors::*;
 pub use types::binary::*;
 pub use types::uints::Uint64;
 pub use types::exp::Expiration;
-pub use types::exts::{InfoExtension, PayloadExtension};
 pub use traits::{Verifiable, Identifiable};
-
-pub use types::cred::*;
+pub use types::exts::{InfoExtension, PayloadExtension};
+#[cfg(feature = "replay")]
+pub use types::signed::{MsgDataToSign, MsgDataToVerify};

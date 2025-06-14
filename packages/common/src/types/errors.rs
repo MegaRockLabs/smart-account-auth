@@ -54,7 +54,7 @@ mod std_mod {
         ChainIdMismatch,
 
         #[error("The provided credential was meant for a different contract address")]
-        ContractMismatch,
+        AddressMismatch,
 
         #[error("Error converting from binary to {0}")]
         FromBin(String),

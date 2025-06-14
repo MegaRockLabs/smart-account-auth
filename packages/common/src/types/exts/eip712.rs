@@ -49,20 +49,12 @@ pub struct EthTypedCache {
 }
 
 
-#[saa_type]
-pub struct EthTypedSaveOptions {
-    pub chain_id         :  Option<bool>,
-    pub contract_addr    :  Option<bool>,
-    pub domain_digest    :  Option<bool>,
-    pub types            :  Option<bool>,
-}
-
 
 #[saa_type]
 pub struct EthTypedInfo {
-    // pub primary_type    :  Option<String>,
-    // pub types           :  Option<Binary>,
-    // pub cache           :  EthTypedCache,
+    pub addr_hash   :  Option<String>,
+    pub pre_hash    :  Vec<u8>,
+    pub salt_used   :  bool,
 }
 
 

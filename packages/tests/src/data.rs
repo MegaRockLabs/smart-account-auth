@@ -1,6 +1,6 @@
-use crate::utils::{alice_info, base_credentials, get_mock_deps, get_mock_env, ALICE_ADDR, SIGN_MESSAGE_TEXT};
+use crate::utils::{alice_info, base_credentials, get_mock_deps, get_mock_env, ALICE_ADDR, SIGN_MESSAGE_TEXT, SIGN_NONCE};
 use saa_common::{CredentialAddress, CredentialName};
-use smart_account_auth::{Verifiable, CredentialsWrapper, Caller, Credential, CredentialData};
+use smart_account_auth::{CheckOption, ReplayParams, Caller, Credential, CredentialData, CredentialsWrapper, Verifiable};
 
 
 
@@ -13,7 +13,7 @@ fn data_is_verifyable() {
     let data = CredentialData::new(base_credentials(), None);
     // Verify the credentials individually
 
-    let messages = Some(vec![SIGN_MESSAGE_TEXT.to_string()]);
+    let messages = vec![SIGN_MESSAGE_TEXT.to_string()];
     let mut addresses : Vec<CredentialAddress> = Vec::with_capacity(2);
 
     // skip last until prefix is fixed from stargaze
@@ -51,7 +51,9 @@ fn data_is_verifyable() {
 
     // Verify the whole wrapper data
     // assert!(data.verify().is_ok(), "Native verify code of Credential Data failed");
-    let res = data.verify(deps, &env, &alice_info(), &messages);
+    let res = data.verify(
+        deps, &env, &alice_info(), ReplayParams::new(SIGN_NONCE, CheckOption::Messages(messages.clone())
+    ));
     assert!(res.is_ok(), "Cosmwasm verify code of Credential Data failed");
 
 

@@ -177,7 +177,10 @@ pub fn build_credential(
                     .map_err(|e| saa_common::CredentialError::InvalidProperty(
                         CredentialName::EthTypedData, "message".into(), e.to_string()
                     ))?,
-                message_property: None
+                message_property: None,
+                cache: Some(info_ext),
+                #[cfg(all(feature = "wasm", target_arch = "wasm32"))]
+                check_cw2 : None,
             })
         },
 

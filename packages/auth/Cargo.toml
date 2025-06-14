@@ -22,8 +22,11 @@ saa-schema          = { workspace = true }
 
 [features]
 default             	=   ["std"]
-std                 	=   ["saa-crypto/std", "hex?/std"]
+std                 	=   ["hex?/std"]
+utils               	=   []
 replay                  =   []
+optimise                =   []
+
 
 native              	=   ["saa-crypto/native"  ] 
 cosmwasm            	=   ["saa-crypto/cosmwasm"]

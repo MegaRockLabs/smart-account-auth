@@ -4,13 +4,16 @@ mod tests {
     use saa_common::{Binary, Verifiable};
     use smart_account_auth::{EthPersonalSign, EthTypedData};
 
+    use crate::utils::get_eth_signer;
+
+
+
 
     #[test]
     fn eth_personal_verifiable() {
         let deps = mock_dependencies();
 
         let message = r#"{"chain_id":"elgafar-1","contract_address":"stars1gjgfp9wps9c0r3uqhr0xxfgu02rnzcy6gngvwpm7a78j7ykfqquqr2fuj4","messages":["Create TBA account"],"nonce":"0"}"#;
-        let address = "0xac03048da6065e584d52007e22c69174cdf2b91a";
         let base = "eyJjaGFpbl9pZCI6ImVsZ2FmYXItMSIsImNvbnRyYWN0X2FkZHJlc3MiOiJzdGFyczFnamdmcDl3cHM5YzByM3VxaHIweHhmZ3UwMnJuemN5NmduZ3Z3cG03YTc4ajd5a2ZxcXVxcjJmdWo0IiwibWVzc2FnZXMiOlsiQ3JlYXRlIFRCQSBhY2NvdW50Il0sIm5vbmNlIjoiMCJ9";
         let message = Binary::new(message.as_bytes().to_vec());
         assert!(message.to_base64() == base, "not euqal");
@@ -20,7 +23,7 @@ mod tests {
         ).unwrap();
 
         let cred = EthPersonalSign {
-            signer : address.to_string(),
+            signer : get_eth_signer(),
             signature,
             message,
         };
@@ -148,7 +151,7 @@ mod tests {
                 );
 
         let typed_data: EthTypedData = serde_json::from_value(json).unwrap();
-        let hash = typed_data.encode_eip712().unwrap();
+        let hash = typed_data.encode_eip712(None).unwrap();
         assert_eq!(
             "0b8aa9f3712df0034bc29fe5b24dd88cfdba02c7f499856ab24632e2969709a8",
             hex::encode(&hash[..])
@@ -218,7 +221,7 @@ mod tests {
         let deps = mock_dependencies();
         let cred: EthTypedData = serde_json::from_value(json).unwrap();
 
-        let hash = cred.encode_eip712().unwrap();
+        let hash = cred.encode_eip712(None).unwrap();
         assert_eq!("11361aeafc7ea4ebb964e1213d59eba872c2488e5d737ed41a754d6a94b6b918", hex::encode(&hash[..]));
 
  

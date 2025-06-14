@@ -80,6 +80,7 @@ wasm       = [
     "dep:schemars",
     "saa-schema/cosmwasm",
 ]
+optimise   = []
 replay     = []
 types      = [
     "dep:schemars",

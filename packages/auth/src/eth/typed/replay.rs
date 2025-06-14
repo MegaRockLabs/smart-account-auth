@@ -1,5 +1,7 @@
 use crate::eth::EthTypedData;
-use saa_common::{ensure, ToString};
+use saa_common::{ensure};
+#[cfg(feature = "cosmwasm")]
+use saa_crypto::{CheckOption, ReplayParams};
 use serde_json::Value;
 
 #[cfg(feature = "cosmwasm")]
@@ -10,24 +12,16 @@ use {
 
 
 
-/* impl EthTypedData {
-
-    fn msg_nonce(&self) -> Option<[u8; 8]> {
+impl EthTypedData {
+    pub(crate) fn msg_nonce(&self) -> Option<u64> {
         self.message.get("nonce")
         .or(self.message.get("Nonce"))
-        .and_then(|v| 
-            v.as_u64()
-                .map(|n| n.to_be_bytes())
-            .or_else(|| 
-                v.as_str()
-                .and_then(|s| s.parse::<u64>().ok())
-                .map(|n| n.to_be_bytes())
-            )
+        .and_then(|v| v.as_u64()
+            .or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok()))
         )
     }
-
 }
- */
+
 
 #[cfg(feature = "cosmwasm")]
 fn hash_hex(bin: saa_common::Binary) -> String {
@@ -38,7 +32,7 @@ fn hash_hex(bin: saa_common::Binary) -> String {
 #[cfg(feature = "cosmwasm")]
 impl EthTypedData {
 
-    fn msg_string<M: serde::Serialize + core::fmt::Display>(
+ /*    fn msg_string<M: serde::Serialize + core::fmt::Display>(
         &self, 
         messages: &Option<Vec<M>>
     ) -> String {
@@ -69,11 +63,133 @@ impl EthTypedData {
                     })
                     .or_else(|| 
                         self.message.get(&format!("{}s", key))
-                        .and_then(|v| to_bin(v).map(hash_hex).ok()
+                        .and_then(|v| match v {
+                            Value::Array(arr) => {
+                                if arr.len() == 1 {
+                                    if let Some(Value::String(s)) = arr.first() {
+                                        return Some(s.clone())
+                                    }
+                                }
+                                to_bin(arr).map(hash_hex).ok()
+                            },
+                            _ => None
+                        }
                     ))
             })
             .unwrap_or_default()
+    } */
+
+    #[cfg(not(feature = "optimise"))]
+    fn msg_string<M: serde::Serialize + core::fmt::Display>(
+        &self, 
+        check: CheckOption<M>
+    ) -> String {
+
+        let str = match check {
+            CheckOption::Messages(messages) => {
+                match messages.len() {
+                    0 => String::new(),
+                    1 => messages.first()
+                    .map_or_else(
+                    || String::new(),
+                    |msg| {
+                        let str = msg.to_string();
+                        let jb = format!("\"{}\"", str).as_bytes().to_vec();
+                        to_bin(&msg).ok()
+                        .map(|b| if b == jb { str } else { hash_hex(b) })
+                        .unwrap_or_default()
+                    }),
+                    _ => to_bin(&messages).map(hash_hex).unwrap_or_default()
+                }
+            },
+            CheckOption::Text(t) => t,
+            CheckOption::Nothing => String::new(),
+        };
+
+        if str.is_empty() {
+            let key = self.message_property
+                .as_deref()
+                .unwrap_or("message");
+            self.message
+            .get(key)
+                .and_then(|v| match v {
+                    Value::String(s) => Some(s.clone()),
+                    _ => to_bin(v).map(hash_hex).ok()
+                })
+                .or_else(|| 
+                    self.message.get(&format!("{}s", key))
+                    .and_then(|v| match v {
+                        Value::Array(arr) => {
+                            if arr.len() == 1 {
+                                if let Some(Value::String(s)) = arr.first() {
+                                    return Some(s.clone())
+                                }
+                            }
+                            to_bin(arr).map(hash_hex).ok()
+                        },
+                        _ => None
+                    }
+                ))
+                .unwrap_or_default()
+        } else {
+            str
+        }
+
+    
     }
+
+    #[cfg(feature = "optimise")]
+    fn msg_string(
+        &self, 
+        check: CheckOption
+    ) -> String {
+        let str = match check {
+            CheckOption::Messages(messages) => {
+                match messages.len() {
+                    0 => String::new(),
+                    1 => messages.first().cloned().unwrap_or_default(),
+                    _ => to_bin(&messages).map(hash_hex).unwrap_or_default()
+                }
+            },
+            CheckOption::Text(t) => t,
+            CheckOption::Nothing => String::new(),
+        };
+
+        if str.is_empty() {
+            let key = self.message_property
+                .as_deref()
+                .unwrap_or("message");
+            self.message
+            .get(key)
+                .and_then(|v| match v {
+                    Value::String(s) => Some(s.clone()),
+                    _ => to_bin(v).map(hash_hex).ok()
+                })
+                .or_else(|| 
+                    self.message.get(&format!("{}s", key))
+                    .and_then(|v| match v {
+                        Value::Array(arr) => {
+                            if arr.len() == 1 {
+                                if let Some(Value::String(s)) = arr.first() {
+                                    return Some(s.clone())
+                                }
+                            }
+                            to_bin(arr).map(hash_hex).ok()
+                        },
+                        _ => None
+                    }
+                ))
+                .unwrap_or_default()
+        } else {
+            str
+        }
+
+    
+    }
+
+
+
+    
 
 }
 
@@ -85,39 +201,123 @@ impl saa_crypto::ReplayProtection for EthTypedData {
     }
 
     fn message_digest(&self) -> Vec<u8> {
-        self.encode_eip712()
+        self.encode_eip712(None)
         .map(Into::into)
         .unwrap_or_default()
     }
 
-    #[cfg(feature = "cosmwasm")]
-    fn check_replay<M: serde::Serialize + core::fmt::Display>(
+
+    #[cfg(all(feature = "cosmwasm", not(feature = "optimise")))]
+    fn protect_reply<M: serde::Serialize + core::fmt::Display>(
         &self,
         env:  &Env,
-        messages: &Option<Vec<M>>,
-        nonce: u64,
+        params: ReplayParams<M>,
     ) -> Result<(), ReplayError> {
-        use crate::eth::utils::encode_u64;
-        let chain_id = encode_u64(self.domain.chain_id.unwrap_or_default().u64());
-        ensure!(chain_id == [0; 32], ReplayError::ChainIdMismatch);
-
         let address = self.domain.verifying_contract.as_deref().unwrap_or_default();
         ensure!(address.starts_with("0x"), ReplayError::MissingData("verifying_contract".into()));
 
-        // println!("Msg string: {}", self.msg_string(messages));
+        let id_bytes = env.block.chain_id.as_bytes();
+        let addr_bytes = env.contract.address.as_bytes();
+        let msg_str = self.msg_string(params.check_inner);
 
-        let replay_hash = keccak256(
-            &[
-                env.block.chain_id.as_bytes(),
-                env.contract.address.as_bytes(),
-                self.msg_string(messages).as_bytes(),
-                &nonce.to_be_bytes(),
-            ]
-            .concat()
-        );
+        // if both message and nonce are included in the signed message,
+        // we only use chain_id and address to generate the verifying address
+        // passed message property is ignored
+        if self.message_property.is_some() {
 
-        ensure!(hex::encode(&replay_hash[12..]) == &address[2..], ReplayError::InvalidEnvelope);
-        println!("Expected address: 0x{}", address);
+            // message aren't included in the envelope.
+            // however if passed we are making sure that they
+            // are the same as the one in the signed message
+            /* if params.has_inners {
+            } */
+            ensure!(msg_str == self.msg_string::<M>(CheckOption::Nothing), ReplayError::InvalidEnvelope);
+
+            if let Some(n) = self.msg_nonce() {
+                ensure!(params.nonce == n, ReplayError::InvalidNonce(params.nonce));
+
+                let addr_hash = self
+                    .cache
+                    .as_ref()
+                    .and_then(|i| i.addr_hash.clone())
+                    .unwrap_or(hex::encode(
+                        &keccak256(&[id_bytes, addr_bytes].concat())[12..]
+                    ));
+
+                ensure!(addr_hash == address[2..], ReplayError::AddressMismatch);
+                return Ok(());
+            }
+        }
+
+        // if the environment passed 'messages' as an argument
+        // or the signed message field include a value(s) under
+        // a given message property we inlude them and the nonce
+        // in the replay attack hash
+        let replay_hash = keccak256(&[
+            id_bytes, 
+            addr_bytes, 
+            msg_str.as_bytes(), 
+            &params.nonce.to_be_bytes()
+        ].concat());
+
+        ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
+        Ok(())
+    }
+
+
+
+
+    #[cfg(all(feature = "cosmwasm", feature = "optimise"))]
+    fn protect_reply(
+        &self,
+        env:  &Env,
+        params: ReplayParams,
+    ) -> Result<(), ReplayError> {
+        let address = self.domain.verifying_contract.as_deref().unwrap_or_default();
+        ensure!(address.starts_with("0x"), ReplayError::MissingData("verifying_contract".into()));
+
+        let id_bytes = env.block.chain_id.as_bytes();
+        let addr_bytes = env.contract.address.as_bytes();
+        let msg_str = self.msg_string(params.check_inner);
+
+        // if both message and nonce are included in the signed message,
+        // we only use chain_id and address to generate the verifying address
+        // passed message property is ignored
+        if self.message_property.is_some() {
+
+            // message aren't included in the envelope.
+            // however if passed we are making sure that they
+            // are the same as the one in the signed message
+            ensure!(msg_str == self.msg_string(CheckOption::Nothing), ReplayError::InvalidEnvelope);
+
+
+            if let Some(n) = self.msg_nonce() {
+                ensure!(params.nonce == n, ReplayError::InvalidNonce(params.nonce));
+
+                let addr_hash = self
+                    .cache
+                    .as_ref()
+                    .and_then(|i| i.addr_hash.clone())
+                    .unwrap_or(hex::encode(
+                        &keccak256(&[id_bytes, addr_bytes].concat())[12..]
+                    ));
+
+                ensure!(addr_hash == address[2..], ReplayError::AddressMismatch);
+                return Ok(());
+            }
+        }
+
+        // if the environment passed 'messages' as an argument
+        // or the signed message field include a value(s) under
+        // a given message property we inlude them and the nonce
+        // in the replay attack hash
+        let replay_hash = keccak256(&[
+            id_bytes, 
+            addr_bytes, 
+            msg_str.as_bytes(), 
+            &params.nonce.to_be_bytes()
+        ].concat());
+
+        ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
         Ok(())
     }
 

@@ -28,7 +28,10 @@ serde               = { workspace = true }
 
 [features]
 default     =   ["std"]
+utils       =   []
 replay      =   ["saa-common/replay"]
+optimise    =   ["saa-common/optimise"]
+
 
 std         =   ["saa-common/std",                     "p256?/std"]
 native      =   ["saa-common/native",        "dep:cosmwasm-crypto"]

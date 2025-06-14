@@ -65,12 +65,24 @@ impl Verifiable for Caller {
 
 #[cfg(feature = "replay")]
 impl saa_crypto::ReplayProtection for Caller {
-    fn check_replay<M: serde::Serialize>(
+
+    #[cfg(not(feature = "optimise"))]
+    fn protect_reply<M: serde::Serialize + core::fmt::Display + Clone>(
+            &self,
+            #[cfg(feature = "wasm")]
+            _: &saa_common::wasm::Env, 
+            _: saa_crypto::ReplayParams<M>,
+        ) -> Result<(), saa_common::ReplayError> {
+        return Ok(());
+    }
+
+    #[cfg(feature = "optimise")]
+    fn protect_reply(
         &self,
-        _: &saa_common::wasm::Env,
-        _: &Option<Vec<M>>,
-        _: u64,
+        #[cfg(feature = "wasm")]
+        _: &saa_common::wasm::Env, 
+        _: saa_crypto::ReplayParams,
     ) -> Result<(), saa_common::ReplayError> {
-        Ok(())
+        return Ok(());
     }
 }

@@ -44,3 +44,8 @@ pub use {
     saa_common::{Expiration, SessionError},
     messages::sessions::{SessionInfo, Session}
 };
+
+#[cfg(feature = "replay")]
+pub use {
+    saa_crypto::{CheckOption, ReplayParams}
+};

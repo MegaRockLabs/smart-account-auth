@@ -1,6 +1,10 @@
 use saa_schema::saa_type;
-use saa_crypto::{sha256, ReplayProtection};
-use saa_common::{ensure, to_json_binary, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, Identifiable, String, Verifiable
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, Identifiable, String, Verifiable};
+
+#[cfg(any(feature = "cosmwasm", feature = "native"))]
+use {
+    saa_common::{to_json_binary},
+    saa_crypto::{sha256},
 };
 
 use super::client_data::ClientData;
@@ -39,20 +43,18 @@ impl Identifiable for PasskeyCredential {
 
 
 
-/* impl PasskeyCredential {
+impl PasskeyCredential {
     
-
-    #[allow(unused)]
-    #[cfg(any(feature = "cosmwasm", feature = "native"))]
-    fn message_digest(&self) -> Result<[u8; 32], AuthError> {
-        let client_data_hash = saa_crypto::sha256(&saa_common::to_json_binary(&self.client_data)?);
-        let final_digest = saa_crypto::sha256(
-            &[self.authenticator_data.as_slice(), client_data_hash.as_slice()].concat()
-        );
-        Ok(final_digest)
+    #[allow(unused, dead_code)]
+    #[cfg(any(feature = "cosmwasm", feature = "native", feature = "replay"))]
+    fn data_hash(&self) -> Result<[u8; 32], AuthError> {
+        Ok(sha256(&[
+            self.authenticator_data.as_slice(), 
+            &sha256(&to_json_binary(&self.client_data)?)
+        ].concat()))
     }
 }
- */
+ 
 
 
 
@@ -92,13 +94,13 @@ impl Verifiable for PasskeyCredential {
         let res = true;
         #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
-            &self.message_digest(),
+            &self.data_hash()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
         #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
         let res = deps.api.secp256r1_verify(
-            &self.message_digest(),
+            &self.data_hash()?,
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
@@ -109,14 +111,13 @@ impl Verifiable for PasskeyCredential {
 }
 
 
-
-impl ReplayProtection for PasskeyCredential {
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for PasskeyCredential {
 
     fn message_digest(&self) -> Vec<u8> {
-        let client_data_hash = sha256(&to_json_binary(&self.client_data).unwrap());
-        let final_digest = sha256(
-            &[self.authenticator_data.as_slice(), client_data_hash.as_slice()].concat()
-        );
-        final_digest.to_vec()
+        match self.data_hash() {
+            Ok(hash) => hash.to_vec(),
+            Err(_) => vec![]
+        }
     }
 }
