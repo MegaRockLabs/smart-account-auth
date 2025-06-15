@@ -1,3 +1,8 @@
+use saa_common::Verifiable;
+use smart_account_auth::{CheckOption, EthTypedData, ReplayParams, ReplayProtection};
+
+use crate::utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE};
+
 mod tests {
 
     use cosmwasm_std::testing::mock_dependencies;
@@ -236,33 +241,200 @@ mod tests {
 }
 
 
-/* #[serde(rename_all = "camelCase")]
-pub struct EIP712Domain {
-    ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
 
-    /// The current major version of the signing domain. Signatures from different versions are not
-    /// compatible.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub version: Option<String>,
 
-    /// The EIP-155 chain id. The user-agent should refuse signing if it does not match the
-    /// currently active chain.
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "crate::types::serde_helpers::deserialize_stringified_numeric_opt"
-    )]
-    pub chain_id: Option<U256>,
+#[test]
+fn eth_typed_daata_nft_acc_actions() {
 
-    /// The address of the contract that will verify the signature.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub verifying_contract: Option<Address>,
+  let json = serde_json::json!({
+    "signer": get_eth_signer(),
+    "signature": "s+Mm97zmBZpgVAQECscdQuKfqGwiCHGM2ju5U1M2rG9vu6WI7zjjVvQCw0PCt2e1N9S1e9Uha1QbCdcdSNY2dRs=",
+    "message_property": "action",
+    "types": {
+        "EIP712Domain": [
+            {
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "name": "version",
+                "type": "string"
+            },
+            {
+                "name": "chainId",
+                "type": "uint256"
+            },
+            {
+                "name": "verifyingContract",
+                "type": "address"
+            }
+        ],
+        "Coin": [
+            {
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "name": "denom",
+                "type": "string"
+            }
+        ],
+        "MintToken": [
+            {
+                "name": "minter",
+                "type": "string"
+            },
+            {
+                "name": "msg",
+                "type": "string"
+            }
+        ],
+        "BankSend": [
+            {
+                "name": "amount",
+                "type": "Coin[]"
+            },
+            {
+                "name": "to_address",
+                "type": "string"
+            }
+        ],
+        "Delegate": [
+            {
+                "name": "validator",
+                "type": "string"
+            },
+            {
+                "name": "amount",
+                "type": "Coin"
+            }
+        ],
+        "BankMsg": [
+            {
+                "name": "send",
+                "type": "BankSend"
+            }
+        ],
+        "StakingMsg": [
+            {
+                "name": "delegate",
+                "type": "Delegate"
+            }
+        ],
+        "CosmosMsg": [
+            {
+                "name": "bank",
+                "type": "BankMsg"
+            },
+            {
+                "name": "staking",
+                "type": "StakingMsg"
+            }
+        ],
+        "Execute": [
+            {
+                "name": "msgs",
+                "type": "CosmosMsg[]"
+            }
+        ],
+        "Transfer": [
+            {
+                "name": "collection",
+                "type": "string"
+            },
+            {
+                "name": "recipient",
+                "type": "string"
+            },
+            {
+                "name": "token_id",
+                "type": "string"
+            }
+        ],
+        "AccountAction": [
+            {
+                "name": "transfer_token",
+                "type": "Transfer"
+            },
+            {
+                "name": "execute",
+                "type": "Execute"
+            },
+            {
+                "name": "mint_token",
+                "type": "MintToken"
+            }
+        ],
+        "Prompt": [
+            {
+                "name": "actions",
+                "type": "AccountAction[]"
+            }
+        ]
+    },
+    "primaryType": "Prompt",
+    "domain": {
+        "verifyingContract": "0x737eb72d8c0191736447f5bf06f0619ed647abee",
+        "name": "Token-Bound Accounts",
+        "version": "1.1",
+        "chainId": "1"
+    },
+    "message": {
+        "actions": [
+            {
+                "transfer_token": {
+                    "collection": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "recipient": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "token_id": "1"
+                }
+            },
+            {
+                "execute": {
+                    "msgs": [
+                        {
+                            "bank": {
+                                "send": {
+                                    "amount": [
+                                        {
+                                            "amount": "5000000",
+                                            "denom": "ustars"
+                                        }
+                                    ],
+                                    "to_address": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn"
+                                }
+                            }
+                        },
+                        {
+                            "staking": {
+                                "delegate": {
+                                    "amount": {
+                                        "amount": "69000000",
+                                        "denom": "uconst"
+                                    },
+                                    "validator": "archwayvaloper1qt0e4eyswes6qpply2pmk8v5qm88r2c962fnvk"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "mint_token": {
+                    "minter": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "msg": "eyAibWludCI6IHt9IH0="
+                }
+            }
+        ]
+      }
+    }
+  );
+  let deps = get_mock_deps();
+  let env = get_mock_env();
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+  assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
 
-    /// A disambiguating salt for the protocol. This can be used as a domain separator of last
-    /// resort.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub salt: Option<[u8; 32]>,
+
 }
- */
+

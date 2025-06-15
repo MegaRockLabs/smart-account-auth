@@ -14,7 +14,7 @@ pub enum CheckOption<M: serde::Serialize + core::fmt::Display = String> {
 pub struct ReplayParams<M: serde::Serialize + core::fmt::Display = String> {
     pub override_id       :  Option<String>,
     pub override_address  :  Option<String>,
-    pub check_inner       :  CheckOption<M>,
+    pub checking          :  CheckOption<M>,
     pub has_inners        :  bool,
     pub nonce             :  u64,
 }
@@ -24,13 +24,13 @@ pub struct ReplayParams<M: serde::Serialize + core::fmt::Display = String> {
 impl<M : serde::Serialize + core::fmt::Display> ReplayParams<M> {
     pub fn new(
         nonce: u64,
-        to_check: CheckOption<M>,
+        opt: CheckOption<M>,
     ) -> Self {
-        if let CheckOption::Nothing = to_check {
+        if let CheckOption::Nothing = opt {
             Self {
                 override_id: None,
                 override_address: None,
-                check_inner: to_check,
+                checking: opt,
                 has_inners: false,
                 nonce,
             }
@@ -38,7 +38,7 @@ impl<M : serde::Serialize + core::fmt::Display> ReplayParams<M> {
             Self {
                 override_id: None,
                 override_address: None,
-                check_inner: to_check,
+                checking: opt,
                 has_inners: true,
                 nonce,
             }
@@ -91,7 +91,7 @@ pub trait ReplayProtection : Verifiable {
                 env.contract.address.to_string()
             }
         };
-        let option = params.check_inner;
+        let option = params.checking;
         let nonce = params.nonce;
         if let CheckOption::Nothing = option {
             let data : saa_common::MsgDataToVerify = saa_common::from_json(&self.message())

@@ -48,10 +48,11 @@ pub enum ExecuteMsg {
         msg: Option<CosmosMsg>
     },
 
-    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{id}\",\"to\":\"{to}\"}}}}")]
+    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{token_id}\",\"to\":\"{recipient}\"}}}}")]
     TransferToken {
-        id: String,
-        to: String,
+        collection: String,
+        recipient: String,
+        token_id: String,
     },
 
     #[strum(to_string = "freeeeeze")]

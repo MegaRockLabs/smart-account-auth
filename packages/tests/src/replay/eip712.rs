@@ -1,7 +1,8 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Display};
 
-use crate::{utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_CHAIN_ID, SIGN_CONTRACT_ADDRESS, SIGN_MESSAGE_TEXT, SIGN_NONCE}};
-use saa_common::{types::exts::Eip712DomainType, AuthError, Binary, CredentialAddress, CredentialError, CredentialName, InfoExtension, ReplayError, Verifiable};
+use crate::{types::ExecuteMsg, utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_CHAIN_ID, SIGN_CONTRACT_ADDRESS, SIGN_MESSAGE_TEXT, SIGN_NONCE}};
+use saa_common::{to_json_binary, to_json_string, types::exts::Eip712DomainType, AuthError, Binary, CredentialAddress, CredentialError, CredentialName, InfoExtension, ReplayError, Verifiable};
+use serde::Serialize;
 use serde_json::{from_value, json, Value};
 use smart_account_auth::{
     types::{Eip712Domain, Eip712Message}, 
@@ -26,6 +27,7 @@ fn cred_err(prop: &str, err: &str) -> AuthError {
         err.to_string()
     )) 
 }
+
 
 
 fn domain_attrs() -> Vec<Eip712DomainType> {
@@ -74,8 +76,10 @@ fn replay_eth_typed_no_text() {
             &SIGN_NONCE.to_be_bytes()
         ].concat()
     );
+    println!("Replay message hash: {}", hex::encode(&replay_msg_hash));
     // let replay_address = "0x2d70c6e3bc825379881c9305495ddf2e287ee808".to_string();
     let replay_address = "0x".to_owned() + &hex::encode(&replay_msg_hash[12..]);
+    println!("Replay address: {}\n", replay_address);
 
     let cred = EthTypedData {
         signature: Binary::from_base64(
@@ -92,6 +96,9 @@ fn replay_eth_typed_no_text() {
 
 
     // passing replay check using a text from message["message"] 
+    println!("Cred: {:?}", cred.protect_reply(
+        &env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)
+    ));
     assert!(cred.protect_reply(
         &env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)
     ).is_ok());
@@ -258,7 +265,7 @@ fn replay_eth_typed_custom_prop() {
 
 
 #[test]
-fn replay_attack_eth_typed_nonce() {
+fn replay_eth_typed_nonce() {
     let mock = get_mock_deps();
     let deps = mock.as_ref();
     let env = get_mock_env();
@@ -396,4 +403,254 @@ fn replay_attack_eth_typed_nonce() {
     assert!(cred.verify(deps).is_ok());
     
 }
+
+
+fn bin_hash_hex<S: Display + Serialize>(msgs: Vec<S>) -> String {
+    hex::encode(&keccak256(&to_json_binary(&msgs).unwrap()))
+}
+
+
+fn msg_address<S: Display + Serialize>(msgs: Vec<S>) -> String {
+    let str = match msgs.len() {
+        0 => String::new(),
+        1 => msgs[0].to_string(),
+        _ => bin_hash_hex(msgs)
+    };
+
+   let replay_msg_hash = keccak256(
+        &[
+            SIGN_CHAIN_ID.as_bytes(),
+            SIGN_CONTRACT_ADDRESS.as_bytes(),
+            str.as_bytes(),
+            &SIGN_NONCE.to_be_bytes()
+        ].concat()
+    );
+    "0x".to_owned() + &hex::encode(&replay_msg_hash[12..])
+}
+
+
+
+
+
+#[test]
+fn replay_eth_typed_message_strings() {
+    let mock = get_mock_deps();
+    let deps = mock.as_ref();
+    let env = get_mock_env();
+
+    use CheckOption::*;
+
+    let address = "0x0ef13906b325aba3cb700fe97a6edf86dcfee89a".to_string();
+    assert_eq!(msg_address(vec![SIGN_MESSAGE_TEXT]), address);
+
+    
+    let params_msg = ReplayParams::new(SIGN_NONCE, Messages(vec![SIGN_MESSAGE_TEXT.into()]));
+    let params_str = ReplayParams::new(SIGN_NONCE, Text(SIGN_MESSAGE_TEXT.into()));
+    let params_empty = ReplayParams::new(SIGN_NONCE, Nothing);
+
+
+    let mut cred = EthTypedData {
+        types: from_value(json!({ 
+            "EIP712Domain": domain_attrs(),
+            "Prompt": [domain_type("text",  "string")]
+        })).unwrap(),
+        primary_type: "Prompt".into(),
+        message_property: Some("text".into()),
+        message: from_value(json!({ "text": SIGN_MESSAGE_TEXT})).unwrap(),
+        signature: Binary::from_base64(
+            "KYU+RvUyJ4I48KuV30/pGYs4GzEa+Woc7TudLiiyl/pVq0cifALlhMsLR0ETWNQGK3EUfuV20BXZPZ6Qar7jwhs="
+        ).unwrap(),
+        ..def_cred(address)
+    };
+
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, params_msg.clone()).is_ok());
+    assert!(cred.protect_reply(&env, params_str.clone()).is_ok());
+    assert!(cred.protect_reply(&env, params_empty.clone()).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+
+    // ------ One text string ------
+    cred.types.insert("Prompt".into(),vec![domain_type("texts", "string[]")]);
+    cred.message = from_value(json!({ "texts": [SIGN_MESSAGE_TEXT] })).unwrap();
+    // Same replay address as before. Only signature is different
+    cred.signature = Binary::from_base64("3tLiiBh+WwcPA247Y+MyDUS82d97e1o1d5PBqri4xpEyKbSAsOIo+M1/7et2BTjFtD1U7PWQWu7L7oz7gCsK6Rw=").unwrap();
+    
+    
+    println!("Cred validate {:?}", cred.validate());
+    println!("Cred protect empty: {:?}", cred.protect_reply(&env, params_empty.clone()));
+    println!("Cred protect msgs: {:?}", cred.protect_reply(&env, params_msg.clone()));
+    println!("Cred protect text: {:?}", cred.protect_reply(&env, params_str.clone()));
+    println!("Cred verify: {:?}", cred.verify(deps));
+
+
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, params_msg.clone()).is_ok());
+    assert!(cred.protect_reply(&env, params_str.clone()).is_ok());
+    assert!(cred.protect_reply(&env, params_empty.clone()).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+
+    // ------ Multiple text strings ------
+    let msgs = vec![SIGN_MESSAGE_TEXT, "Foo", "Bar", "Hello"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect::<Vec<_>>();
+
+    cred.message = from_value(json!({ "texts": msgs.clone() })).unwrap();
+    cred.domain.verifying_contract = Some(msg_address(msgs.clone()));
+    cred.signature = Binary::from_base64("ThVoNC3hl7bPmaMN5IQxGGlPWM2bRATzZuQ1F1LTCs0GaVe55dG/EdRvlcy4e1WK5jf5fEdxi/oAUFRJ4t7XkBw=").unwrap();
+
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, Messages(msgs.clone()))).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, Text(bin_hash_hex(msgs.clone())))).is_ok());
+    assert!(cred.protect_reply(&env, params_empty.clone()).is_ok());
+
+
+
+    let res = cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, Messages(msgs.clone())));
+    println!("Cred res: {:?}", res);
+    assert!(res.is_ok(), "Credential validation failed: {:?}", res);
+
+
+}
+
+
+
+
+
+#[test]
+fn replay_eth_typed_message_actions() {
+    let mock = get_mock_deps();
+    let deps = mock.as_ref();
+    let env = get_mock_env();
+
+    let empty = ReplayParams::new(SIGN_NONCE, CheckOption::Nothing);
+    
+    //  ------ The whole message itself is the action -----
+
+    let address = "0x571fe8e963ef3f9e7944d62640288be7319ce6e9".to_string();
+
+    let recipient = "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn".to_string();
+    let collection = "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn".to_string();
+    let token_id = "1".to_string();
+
+    let msg = ExecuteMsg::TransferToken {
+        collection: collection.clone(),
+        recipient: recipient.clone(),
+        token_id: token_id.clone()
+    };
+    let msg_str = to_json_string(&msg).unwrap();
+    
+    let mut cred = EthTypedData {
+        types: from_value(json!({ 
+            "EIP712Domain": domain_attrs(),
+            "Transfer": [
+                domain_type("collection", "string"),
+                domain_type("recipient", "string"),
+                domain_type("token_id", "string")
+            ],
+            "AccountAction": [domain_type("transfer_token",  "Transfer")]
+        })).unwrap(),
+        primary_type: "AccountAction".into(),
+        message_property: None,
+        message: from_value(json!({
+            "transfer_token": {
+                "collection": collection,
+                "recipient": recipient,
+                "token_id": token_id,
+            }
+        })).unwrap(),
+        signature: Binary::from_base64(
+            "kNsp8lSOk2sQbtbN48A8/IUqjljUdYSZBK5hsFMqJadFdxJsJqR4VFaaerUfSgbuNeZLus0o+tgnE5GbYdnH/Bs="
+        ).unwrap(),
+        ..def_cred(address)
+    };
+
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Messages(vec![msg_str.clone().into()]))).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Text(msg_str.clone()))).is_ok());
+    println!("Cred: {:?}", cred.protect_reply(&env,ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)));
+    
+    assert!(cred.protect_reply(&env, empty.clone()).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+    
+    //  ------ Action is a propery of the message -----
+
+    cred.message = from_value(json!({
+        "action": {
+            "transfer_token": {
+                "collection": collection,
+                "recipient": recipient,
+                "token_id": token_id,
+            }
+        },
+        "text": "TBA account action"
+    })).unwrap();
+    cred.types.insert("Prompt".into(), vec![
+        domain_type("action", "AccountAction"),
+        domain_type("text", "string")
+    ]);
+    cred.primary_type = "Prompt".into();
+    cred.message_property = Some("action".into());
+    cred.signature = Binary::from_base64(
+        "S1lR/bSGu/r4Pftflc/y8vljzLsv5Huq745BWtvl9kQ5MugymZWzMrHYeHSRcBAJMy8+EgqRoYBBfFL8L2ituBw="
+    ).unwrap();
+    cred.domain.verifying_contract = Some("0x571fe8e963ef3f9e7944d62640288be7319ce6e9".to_string());
+
+   // let text = to_json_string(&
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, empty.clone()).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Messages(vec![msg_str.clone().into()]))).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Text(msg_str.clone().into()))).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+
+    //  ------ List of one element as message property -----
+    cred.types.insert("Prompt".into(), vec![
+        domain_type("actions", "AccountAction[]"),
+        domain_type("text", "string")
+    ]);
+    cred.message = from_value(json!({
+        "actions": [{
+            "transfer_token": {
+                "collection": collection,
+                "recipient": recipient,
+                "token_id": token_id,
+            }
+        }],
+        "text": "TBA account action"
+    })).unwrap();
+
+    cred.signature = Binary::from_base64(
+        "gItgh83Rj3GC+fYgFr5MyM8Q/7cddEKsX59T0fYU+fY6KBou/nAnpQBpC66qsjvkjXVryvI6Vsbfb4+lcMQNKRw="
+    ).unwrap();
+
+
+
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, empty.clone()).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Messages(vec![msg_str.clone().into()]))).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Text(msg_str.clone().into()))).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+
+
+    //  ------ List of multiple actions inside the primary message -----
+
+
+    println!("Cred validate {:?}", cred.protect_reply(&env, empty.clone()));
+    println!("Cred protect empty: {:?}", cred.protect_reply(&env, empty.clone()));
+    println!("Cred protect msgs: {:?}", cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Messages(vec![msg_str.clone().into()]))));
+    println!("Cred protect text: {:?}", cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Text(msg_str.clone().into()))));
+    println!("Cred verify: {:?}", cred.verify(deps));
+
+    assert!(cred.validate().is_ok());
+    assert!(cred.protect_reply(&env, empty.clone()).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Messages(vec![msg_str.clone().into()]))).is_ok());
+    assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Text(msg_str.clone().into()))).is_ok());
+    assert!(cred.verify(deps).is_ok());
+
+}
+
 

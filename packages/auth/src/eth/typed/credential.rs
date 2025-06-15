@@ -231,7 +231,9 @@ impl Verifiable for EthTypedData {
                 InvalidProperty(EthTypedName, "message_property".into(), "cannot be set for EIP712Domain".into())
             );
             ensure!(
-                !prop.is_empty() && self.message.contains_key(prop),
+                !prop.is_empty() && (self.message.contains_key(prop) || 
+                    self.message.contains_key(format!("{}s", prop).as_str())
+                ),
                 InvalidProperty(EthTypedName, "message_property".into(), "must be in 'message'".into())
             );
         }

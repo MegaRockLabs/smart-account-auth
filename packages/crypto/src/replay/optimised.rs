@@ -5,7 +5,7 @@ use saa_common::{
     to_json_binary as to_bin
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum CheckOption {
     Messages(Vec<String>),
     Text(String),
@@ -13,11 +13,11 @@ pub enum CheckOption {
 
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ReplayParams {
     pub override_id       :  Option<String>,
     pub override_address  :  Option<String>,
-    pub check_inner       :  CheckOption,
+    pub checking          :  CheckOption,
     pub has_inners        :  bool,
     pub nonce             :  u64,
 }
@@ -27,13 +27,13 @@ pub struct ReplayParams {
 impl ReplayParams {
     pub fn new(
         nonce: u64,
-        to_check: CheckOption,
+        opt: CheckOption,
     ) -> Self {
-        if let CheckOption::Nothing = to_check {
+        if let CheckOption::Nothing = opt {
             Self {
                 override_id: None,
                 override_address: None,
-                check_inner: to_check,
+                checking: opt,
                 has_inners: false,
                 nonce,
             }
@@ -41,7 +41,7 @@ impl ReplayParams {
             Self {
                 override_id: None,
                 override_address: None,
-                check_inner: to_check,
+                checking: opt,
                 has_inners: true,
                 nonce,
             }
@@ -89,7 +89,7 @@ pub trait ReplayProtection : Verifiable {
                 env.contract.address.to_string()
             }
         };
-        let msgs = match params.check_inner {
+        let msgs = match params.checking {
             CheckOption::Messages(msgs) => msgs,
             CheckOption::Text(t) => vec![t],
             CheckOption::Nothing => vec![],

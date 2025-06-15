@@ -120,7 +120,7 @@ fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::Tok
             schemars(crate = "::saa_schema::schemars")
         )]
         #[strum(serialize_all = "snake_case", crate = "::saa_schema::strum")]
-        #[serde(deny_unknown_fields, crate = "::saa_schema::serde")]
+        #[serde(deny_unknown_fields, rename_all = "snake_case", crate = "::saa_schema::serde")]
         #[schemars(crate = "::saa_schema::schemars")]
         #[allow(clippy::derive_partial_eq_without_eq)]
         #input
