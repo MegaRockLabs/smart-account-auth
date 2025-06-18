@@ -27,22 +27,3 @@ pub struct ClientData {
 }
 
 
-
-
-impl ClientData {
-    pub fn new(
-        challenge: impl ToString, 
-        origin: impl ToString, 
-        cross_origin: bool, 
-        other_keys: Option<ClientDataOtherKeys>
-    ) -> Self {
-        Self {
-            ty: "webauthn.get".into(),
-            challenge: challenge.to_string(),
-            origin: origin.to_string(),
-            cross_origin,
-            other_keys,
-        }
-    }
-}
-

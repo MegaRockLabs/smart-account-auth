@@ -9,18 +9,17 @@ pub use saa_common::types::exts::{
 };
 
 
-use serde_json::{Value, Map};
-use ethers_core::{types::transaction::eip712, abi::encode};
-use eip712::encode_data;
+use saa_schema::saa_type;
+use super::eip712::encode;
+// use eip712::encode_data;
 
 use saa_crypto::hashes::keccak256;
-use saa_schema::saa_type;
 
 use saa_common::CredentialError::{InvalidProperty, IncorrectData};
 use CredentialName::EthTypedData as EthTypedName;
 
 
-use crate::eth::utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed};
+use crate::eth::{typed::eip712::encode_data, utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed}};
 
 
 #[saa_type]
@@ -52,34 +51,19 @@ pub struct EthTypedData {
 
 
 
-fn types_to_types(
-    types: &Eip712Types
-) -> eip712::Types {
-    types
-        .iter()
-        .map(|(k, v)| 
-            (k.clone(), v.iter()
-                        .map(|t| 
-                            t.clone().into()
-                        )
-                        .collect()
-            )
-        )
-        .collect()
-}
-
 
 impl EthTypedData {
 
     fn struct_hash(&self) -> Result<[u8; 32], AuthError> {
         let tokens = encode_data(
                 &self.primary_type,
-                &Value::Object(Map::from_iter(self.message.clone())),
-                &types_to_types(&self.types),
+                &self.message.to_value(),
+                &self.types,
             )
             .map_err(|e| 
                 AuthError::Crypto(e.to_string())
             )?;
+            
         Ok(keccak256(&encode(&tokens)))
     }
 
@@ -91,7 +75,7 @@ impl EthTypedData {
             #[cfg(not(feature = "replay"))]
             return None;
             #[cfg(feature = "replay")]
-            if self.message_property.is_some() && self.msg_nonce().is_some() {
+            if self.message_property.is_some() && self.message.nonce.is_some() {
                 self.domain.verifying_contract
                 .as_ref().map(|addr| addr[2..].to_string())
             } else {

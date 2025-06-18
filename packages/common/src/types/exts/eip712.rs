@@ -1,11 +1,95 @@
-use crate::{Binary, String};
+use crate::{Binary, String, Uint64};
 use std::collections::BTreeMap;
 use saa_schema::saa_type;
-use ethers_core::types::transaction::eip712::Eip712DomainType as CoreDomainType;
+use schemars::JsonSchema;
+use serde_json::Value;
 
 pub type Eip712Types    =  BTreeMap<String, Vec<Eip712DomainType>>;
+// pub type Eip712Message  =  BTreeMap<String, Value>;
+// use serde_json::Value
 
-pub type Eip712Message  =  BTreeMap<String, serde_json::Value>;
+
+#[saa_type(no_deny)]
+#[non_exhaustive]
+pub struct Eip712MessageProps {}
+
+impl Default for Eip712MessageProps {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl Eip712MessageProps {
+    pub fn get(&self, _key: &str) -> Option<String> {
+        println!("Eip712MessageProps::get called: {:?}", self);
+        None // Placeholder for actual implementation
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[non_exhaustive]
+pub struct Eip712Message {
+    pub nonce: Option<Uint64>,
+
+    #[serde(flatten)]
+    pub props: BTreeMap<Value, Value>,
+}
+
+
+impl Eip712Message {
+
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.props.contains_key(&Value::String(key.to_string()))
+    }
+
+    pub fn get(&self, key: &str) -> Option<Value> {
+        self.props.get(&Value::String(key.to_string()))
+            .cloned()
+    }
+
+    pub fn gets(&self, key: &str) -> Option<Vec<Value>> {
+        self.props.get(&Value::String(format!("{}s", key)))
+            .and_then(|value| match value {
+                Value::Seq(arr) => Some(arr.clone()),
+                _ => None,
+            })
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.props.is_empty() && self.nonce.is_none()
+    }
+
+    pub fn to_value(&self) -> Value {
+        let mut map = BTreeMap::<Value, Value>::new();
+        if let Some(nonce) = self.nonce {
+            map.insert(Value::String("nonce".into()), Value::U64(nonce.u64()));
+        }
+        for (key, value) in &self.props {
+            map.insert(key.clone(), value.clone());
+        }
+        Value::Map(map)
+    }
+}
+
+
+impl JsonSchema for Eip712Message {
+    fn schema_name() -> String {
+        "Eip712Message".to_string()
+    }
+
+    fn json_schema(_: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        schemars::schema::Schema::Object(schemars::schema::SchemaObject {
+            metadata: Some(Box::new(schemars::schema::Metadata {
+                description: Some("EIP-712 message structure".to_string()),
+                ..Default::default()
+            })),
+            instance_type: Some(schemars::schema::SingleOrVec::Single(Box::new(
+                schemars::schema::InstanceType::Object)
+            )),
+            ..Default::default()
+        })
+    }
+}
 
 
 #[saa_type]
@@ -14,7 +98,6 @@ pub struct Eip712DomainType {
     #[serde(rename = "type")]
     pub r#type: String,
 }
-
 
 
 
@@ -40,17 +123,6 @@ pub struct Eip712Domain {
 
 
 #[saa_type]
-pub struct EthTypedCache {
-    pub chain_id         :  Option<[u8; 32]>,
-    pub contract_addr    :  Option<[u8; 32]>,
-    pub domain_digest    :  Option<[u8; 32]>,
-    pub preamble_digest  :  Vec<u8>,
-    pub use_salt         :  bool,
-}
-
-
-
-#[saa_type]
 pub struct EthTypedInfo {
     pub addr_hash   :  Option<String>,
     pub pre_hash    :  Vec<u8>,
@@ -62,37 +134,16 @@ pub struct EthTypedInfo {
 #[saa_type(no_deny)]
 #[non_exhaustive]
 pub struct EthTypedPayload {
-    pub types           :  Option<Binary>,
-    pub primary_type    :  Option<String>,
+    pub types            :  Option<Eip712Types>,
+    pub primary_type     :  Option<String>,
+    pub message_property :  Option<String>,
     
-    pub domain          :  Option<Binary>,
-    pub contract_addr   :  Option<String>,
-    pub salt            :  Option<Binary>
+    pub domain           :  Option<Eip712Domain>,
+    pub contract_addr    :  Option<String>,
+    pub salt             :  Option<Binary>
 }
 
 
 
 
-
-
-impl Default for EthTypedCache {
-    fn default() -> Self {
-        Self {
-            chain_id: None,
-            contract_addr: None,
-            domain_digest: None,
-            preamble_digest: vec![],
-            use_salt: false,
-        }
-    }
-}
-
-impl Into<CoreDomainType> for Eip712DomainType {
-    fn into(self) -> CoreDomainType {
-        CoreDomainType {
-            name: self.name,
-            r#type: self.r#type,
-        }
-    }
-}
 

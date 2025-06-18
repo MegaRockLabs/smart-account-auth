@@ -45,6 +45,8 @@ pub fn build_credential(
     msg         : crate::msgs::SignedDataMsg,
     payload     : Option<saa_common::PayloadExtension>,
 ) -> Result<Credential, saa_common::CredentialError> {
+    return Err(saa_common::CredentialError::NoneLeft);
+    /* 
     let (id, info) = record;
     let message = msg.data;
     let signature = msg.signature;
@@ -152,13 +154,11 @@ pub fn build_credential(
 
  
             let types = types
-                .and_then(|bin| from_json::<Eip712Types>(&bin).ok())
                 .ok_or_else(|| saa_common::CredentialError::InvalidProperty(
                     CredentialName::EthTypedData, "types".into(), "Payload is missing or has invalid Eip712 types".into()
                 ))?;
             
             let domain = domain
-                .and_then(|bin| from_json::<Eip712Domain>(&bin).ok())
                 .ok_or_else(|| saa_common::CredentialError::InvalidProperty(
                     CredentialName::EthTypedData, "domain".into(), "Payload is missing or has invalid Eip712 domain".into()
                 ))?;
@@ -183,10 +183,10 @@ pub fn build_credential(
                 check_cw2 : None,
             })
         },
-
       
     };
-    Ok(credential)
+    
+    Ok(credential) */
 }
 
 

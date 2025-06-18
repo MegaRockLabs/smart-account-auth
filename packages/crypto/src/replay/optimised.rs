@@ -1,9 +1,10 @@
-use saa_common::{Verifiable, String};
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
 use saa_common::{
     ensure, ReplayError, MsgDataToSign, CredentialName,
     to_json_binary as to_bin
 };
+use saa_common::{Verifiable, String};
+
 
 #[derive(Clone, Debug)]
 pub enum CheckOption {

@@ -109,6 +109,7 @@ impl crate::CredentialsWrapper for CredentialData {
             // if not pre-validated, validating each one by one
             if !pre_val { 
                 c.validate()?; 
+                println!("Validating credential {:?}", c);
                 #[cfg(feature = "replay")]
                 c.protect_reply(
                     #[cfg(feature = "wasm")]

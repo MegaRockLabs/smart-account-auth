@@ -9,7 +9,6 @@ repository  = { workspace = true }
 
 [dependencies]
 hex                 = { version = "0.4.3", optional = true, default-features = false }
-ethers-core		    = { workspace = true,  optional = true }
 serde_json          = { workspace = true,  optional = true }
 serde               = { workspace = true }
 schemars            = { workspace = true }
@@ -18,7 +17,8 @@ saa-crypto          = { workspace = true }
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 
-
+# ethabi              = { version = "0.26.0", default-features = false, features = ["serde"] }
+primitive-types      = { version = "0.12.2", optional = true, default-features = false, features = ["serde"] }
 
 [features]
 default             	=   ["std"]
@@ -33,7 +33,7 @@ cosmwasm            	=   ["saa-crypto/cosmwasm"]
 
 eth_personal        	=   ["saa-crypto/ethereum", "saa-common/eth_personal", "dep:hex"]
 
-eth_typed_data      	=   ["saa-crypto/ethereum", "saa-common/eth_typed_data", "dep:ethers-core", "dep:serde_json", "dep:hex"]
+eth_typed_data      	=   ["saa-crypto/ethereum", "saa-common/eth_typed_data", "dep:primitive-types",  "dep:serde_json", "dep:hex"]
 #eth_typed_data_cache    =   ["eth_typed_data"]  
 eth_typed_data_replay   =   ["eth_typed_data"]  
 

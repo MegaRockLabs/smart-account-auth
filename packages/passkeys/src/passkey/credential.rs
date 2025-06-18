@@ -1,11 +1,6 @@
 use saa_schema::saa_type;
 use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, Identifiable, String, Verifiable};
 
-#[cfg(any(feature = "cosmwasm", feature = "native"))]
-use {
-    saa_common::{to_json_binary},
-    saa_crypto::{sha256},
-};
 
 use super::client_data::ClientData;
 use CredentialName::Passkey as PasskeyName;
@@ -43,18 +38,6 @@ impl Identifiable for PasskeyCredential {
 
 
 
-impl PasskeyCredential {
-    
-    #[allow(unused, dead_code)]
-    #[cfg(any(feature = "cosmwasm", feature = "native", feature = "replay"))]
-    fn data_hash(&self) -> Result<[u8; 32], AuthError> {
-        Ok(sha256(&[
-            self.authenticator_data.as_slice(), 
-            &sha256(&to_json_binary(&self.client_data)?)
-        ].concat()))
-    }
-}
- 
 
 
 
@@ -110,14 +93,3 @@ impl Verifiable for PasskeyCredential {
 
 }
 
-
-#[cfg(feature = "replay")]
-impl saa_crypto::ReplayProtection for PasskeyCredential {
-
-    fn message_digest(&self) -> Vec<u8> {
-        match self.data_hash() {
-            Ok(hash) => hash.to_vec(),
-            Err(_) => vec![]
-        }
-    }
-}

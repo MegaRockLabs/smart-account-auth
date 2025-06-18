@@ -16,8 +16,9 @@ crate-type  =  ["cdylib", "rlib"]
 
 
 [dependencies]
-serde                   = { workspace = true }
 strum                   = { workspace = true }
+serde                   = { workspace = true }
+schemars                = { workspace = true }
 saa-schema              = { workspace = true }
 saa-crypto              = { workspace = true }
 saa-common              = { workspace = true }
@@ -29,7 +30,7 @@ serde_json              = { workspace = true,  optional = true }
 
 [features]
 # ---- Grouped  ----
-default       =   ["std", "majors", "replay", "traits", "optimise"         ]
+default       =   ["std", "replay", "traits", "optimise" ,  "eth_typed_data"      ]
 majors        =   ["cosmos_arb_addr", "eth_personal", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
@@ -39,8 +40,10 @@ ed25519                 =   ["saa-curves/ed25519"            ]
 secp256k1               =   ["saa-curves/secp256k1"          ]
 secp256r1               =   ["saa-passkeys/secp256r1"        ]
 passkeys                =   ["saa-passkeys/passkeys"         ]
+#-
 eth_personal            =   ["saa-auth/eth_personal"         ]
 eth_typed_data          =   ["saa-auth/eth_typed_data",      ]
+#-
 cosmos_arb              =   ["saa-auth/cosmos_arb"           ]
 cosmos_arb_addr         =   ["saa-auth/cosmos_arb_addr"      ]
 

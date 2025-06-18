@@ -148,21 +148,6 @@ impl Action {
         }
     }
 
-    #[cfg(all(feature = "wasm", feature = "utils"))]
-    pub fn with_serde_name<A : serde::Serialize>(message: A) -> Result<Self, SessionError> {
-        Ok(Self {
-            method: ActionDerivation::Name,
-            result: serde_json::to_value(message)
-                    .map_err(|_| SessionError::DerivationError)?
-                    .as_object()
-                    .map(|obj| obj.keys()
-                        .next()
-                        .map(|k| k.to_string())
-                    )
-                    .flatten()
-                    .ok_or(SessionError::DerivationError)?
-        })
-    }
 
     #[cfg(all(feature = "wasm", feature = "utils"))]
     pub fn with_serde_json<A : serde::Serialize>(message: A) -> Result<Self, SessionError> {

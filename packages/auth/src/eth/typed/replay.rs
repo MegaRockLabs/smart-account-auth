@@ -5,19 +5,25 @@ use serde_json::Value;
 
 #[cfg(feature = "cosmwasm")]
 use {
-    saa_common::{ensure, ReplayError, wasm::Env, to_json_binary as to_bin},
+    saa_common::{ensure, ReplayError, wasm::Env, to_json_string, to_json_binary as to_bin},
     saa_crypto::hashes::keccak256,
 };
 
 
 
 impl EthTypedData {
-    pub(crate) fn msg_nonce(&self) -> Option<u64> {
+    /* pub(crate) fn msg_nonce(&self) -> Option<u64> {
         self.message.get("nonce")
         .or(self.message.get("Nonce"))
-        .and_then(|v| v.as_u64()
-            .or_else(|| v.as_str().and_then(|s| s.parse::<u64>().ok()))
-        )
+        .and_then(|v| match v {
+            Value::U64(n) => Some(n.clone()),
+            Value::String(s) => s.parse::<u64>().ok(),
+            _ => None,
+        })
+    }  */
+
+   pub(crate) fn msg_nonce(&self) -> Option<u64> {
+        self.message.nonce.map(|n| n.u64())
     }
 }
 
@@ -36,70 +42,11 @@ impl EthTypedData {
         &self, 
         check: CheckOption<M>
     ) -> String {
-
-        let str = match check {
-            CheckOption::Messages(messages) => {
-                match messages.len() {
-                    0 => String::new(),
-                    1 => messages.first()
-                    .map_or_else(
-                    || String::new(),
-                    |msg| {
-                        let str = msg.to_string();
-                        let jb = format!("\"{}\"", str).as_bytes().to_vec();
-                        to_bin(&msg).ok()
-                        .map(|b| if b == jb { str } else { hash_hex(b) })
-                        .unwrap_or_default()
-                    }),
-                    _ => to_bin(&messages).map(hash_hex).unwrap_or_default()
-                }
-            },
-            CheckOption::Text(t) => t,
-            CheckOption::Nothing => String::new(),
-        };
-
-        if str.is_empty() {
-            let key = self.message_property
-                .as_deref()
-                .unwrap_or("message");
-            self.message
-            .get(key)
-                .and_then(|v| match v {
-                    Value::String(s) => Some(s.clone()),
-                    _ => to_bin(v).map(hash_hex).ok()
-                })
-                .or_else(|| 
-                    self.message.get(&format!("{}s", key))
-                    .and_then(|v| match v {
-                        Value::Array(arr) => {
-                            if arr.len() == 1 {
-                                if let Some(Value::String(s)) = arr.first() {
-                                    return Some(s.clone())
-                                }
-                            }
-                            to_bin(arr).map(hash_hex).ok()
-                        },
-                        _ => None
-                    }
-                ))
-                .unwrap_or_default()
-        } else {
-            str
-        }
-
-    
-    }
-
-    #[cfg(feature = "optimise")]
-    fn msg_string(
-        &self, 
-        check: CheckOption
-    ) -> String {
         match check {
             CheckOption::Messages(messages) => {
                 match messages.len() {
                     0 => None,
-                    1 => messages.first().cloned(),
+                    1 => messages.first().map(|m| m.to_string()),
                     _ => to_bin(&messages).map(hash_hex).ok()
                 }
             },
@@ -128,39 +75,115 @@ impl EthTypedData {
                             }
                         }
                     }
-                    let bin = to_bin(arr);
-                    println!("Array to bin: {:?}", bin);
-                    let hash = keccak256(&bin.unwrap());
-                    println!("Array hash: {:?}", hash);
-                    println!("Array hash hex: {:?}", hex::encode(&hash));
                     to_bin(arr).map(hash_hex).ok()
                 },
                 _ => None
             }
         ))})
         .or_else(|| {
-            use saa_common::to_json_string;
-            println!("Message is empty, trying to convert to JSON string");
-
-            if self.message.is_empty() {
-                return None;
+            if !self.message.is_empty() {
+                saa_common::to_json_string(&self.message).ok()
+            } else {
+                None
             }
-
-            println!("\n\nmessage to json string: {}\n\n", to_json_string(&self.message).unwrap());
-            println!("message to value sting: {}\n\n", serde_json::to_value(&self.message).unwrap().to_string());
-            println!("message to serde sting: {}\n\n", serde_json::to_string(&self.message).unwrap());
-            println!("message from iter string: {}\n\n\n", Value::from_iter(self.message.iter().map(|(k, v)| (k.clone(), v.clone()))).to_string());
-            
-            saa_common::to_json_string(&self.message).ok()
         })
         .unwrap_or_default()
     
     }
 
+    #[cfg(feature = "optimise")]
+    fn msg_string(
+        &self, 
+        check: CheckOption
+    ) -> String {
+        match check {
+            CheckOption::Messages(messages) => {
+                match messages.len() {
+                    0 => None,
+                    1 => messages.first().cloned(),
+                    _ => to_bin(&messages).map(hash_hex).ok()
+                }
+            },
+            CheckOption::Text(t) => Some(t),
+            CheckOption::Nothing => None
+        }
+        .or_else(|| {
 
+        let key = self.message_property
+            .as_deref()
+            .unwrap_or("message");
+        self.message
+        .get(key)
+            .and_then(|v| match v {
+                Value::String(s) => Some(s.clone()),
+                v => to_json_string(&v).ok()
+            })
+        .or_else(|| 
+            self.message.gets(key)
+            .and_then(|arr| {
+                if arr.len() == 1 {
+                    if let Some(f) = arr.first() {
+                        return match f {
+                            Value::String(s) => Some(s.clone()),
+                            v => to_json_string(&v).ok()
+                        }
+                    }
+                }
+                to_bin(&arr).map(hash_hex).ok()
+            }
+        ))})
+        .or_else(|| {
+            if !self.message.is_empty() {
+                saa_common::to_json_string(&self.message).ok()
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default()
+    }
 
-    
-
+/* 
+    #[cfg(feature = "optimise")]
+    fn msg_string(
+        &self, 
+        check: CheckOption
+    ) -> String {
+        match check {
+            CheckOption::Messages(messages) => {
+                match messages.len() {
+                    0 => None,
+                    1 => messages.first().cloned(),
+                    _ => to_bin(&messages).map(hash_hex).ok()
+                }
+            },
+            CheckOption::Text(t) => Some(t),
+            CheckOption::Nothing => None
+        }
+        .or_else(|| {
+        let key = self.message_property
+            .as_deref()
+            .unwrap_or("message");
+        self.message.get(key)
+        .or_else(|| 
+            self.message.gets(key)
+            .and_then(|arr| {
+                if arr.len() == 1 {
+                    arr.first().cloned()
+                } else {
+                    to_bin(&arr).map(hash_hex).ok()
+                }
+            }
+        ))})
+        .or_else(|| {
+            if !self.message.is_empty() {
+                saa_common::to_json_string(&self.message).ok()
+            } else {
+                None
+            }
+        })
+        .unwrap_or_default()
+    }
+ */
 }
 
 
@@ -247,12 +270,6 @@ impl saa_crypto::ReplayProtection for EthTypedData {
         let addr_bytes = env.contract.address.as_bytes();
         let msg_str = self.msg_string(params.checking.clone());
         
-      /*   
-        println!("Replay attack check string: {}", msg_str);
-        println!("Msg hash hex: {}", hex::encode(keccak256(msg_str.as_bytes())));
-        println!("Given Address: {}", address); */
-
-     
         // if both message and nonce are included in the signed message,
         // we only use chain_id and address to generate the verifying address
         // passed message property is ignored
@@ -291,25 +308,6 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             msg_str.as_bytes(), 
             &params.nonce.to_be_bytes()
         ].concat());
-
-        
-        if self.primary_type == "Prompt"
-        {
-            println!("\n\nReplay attack check string: {}\n", msg_str);
-            println!("Msg bytes: {:?}", msg_str.as_bytes());
-            println!("Message hash hex: {}", hex::encode(&keccak256(msg_str.as_bytes())));
-            println!("Params nonce: {:?}", params);
-            println!("ID bytes: {:?}", id_bytes);
-            println!("Address bytes: {:?}", addr_bytes);
-            println!("Params nonce bytes: {:?}", params.nonce.to_be_bytes());
-            println!("Replay attack chain id: {}", env.block.chain_id);
-            println!("Replay attack address: {}", env.contract.address);
-            println!("Replay attack nonce {:?}", params.nonce);
-            println!("Replay hash: {}", hex::encode(replay_hash));
-            println!("Generated address: 0x{}", hex::encode(&replay_hash[12..]));
-            println!("Given Address: {}\n\n", address);
-        }
-
 
         ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
         Ok(())

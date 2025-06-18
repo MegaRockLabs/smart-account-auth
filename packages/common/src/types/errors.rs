@@ -1,7 +1,6 @@
 
 mod std_mod {
     use saa_schema::saa_error;
-
     use crate::CredentialName;
 
     #[cfg(feature = "session")]
@@ -189,6 +188,14 @@ mod std_mod {
     impl From<std::string::FromUtf8Error> for AuthError {
         fn from(err: std::string::FromUtf8Error) -> Self {
             Self::Recovery(err.to_string())
+        }
+    }
+
+
+    #[cfg(feature = "eth_typed_data")] 
+    impl From<serde_json::DeserializerError> for AuthError {
+        fn from(err: serde_json::DeserializerError) -> Self {
+            Self::Generic(err.to_string())
         }
     }
 

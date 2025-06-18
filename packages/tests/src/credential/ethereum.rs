@@ -225,7 +225,10 @@ mod tests {
 
         let deps = mock_dependencies();
         let cred: EthTypedData = serde_json::from_value(json).unwrap();
-
+/*         println!("Cred: {:?}", cred.message);
+        println!("Props: {:?}", cred.message.props);
+        println!("Get props: {:?}", cred.message.get("chain_id"));
+ */
         let hash = cred.encode_eip712(None).unwrap();
         assert_eq!("11361aeafc7ea4ebb964e1213d59eba872c2488e5d737ed41a754d6a94b6b918", hex::encode(&hash[..]));
 

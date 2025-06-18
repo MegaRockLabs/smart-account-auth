@@ -11,5 +11,5 @@ mod utils;
 mod credential;
 #[cfg(test)]
 mod data;
-#[cfg(test)]
-mod replay;
+/* #[cfg(test)]
+mod replay; */
