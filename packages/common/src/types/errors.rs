@@ -153,6 +153,9 @@ mod std_mod {
         #[error("Unauthorized: {0}")]
         Unauthorized(String),
 
+        #[error("Invalid length for type '{0}'. Expected: {1}, Received: {2}")]
+        InvalidLength(String, u16, u16),
+
         #[error("Signature verification error for {0} with id of '{1}'")]
         Signature(CredentialName, String),
 

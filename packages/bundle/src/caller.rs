@@ -1,5 +1,5 @@
 use saa_common::{
-    AuthError, CredentialAddress, CredentialError, CredentialId, CredentialInfo, CredentialName, Identifiable, Verifiable
+    AuthError, CredentialError, CredentialId, CredentialName, Identifiable, Verifiable
 };
 
 
@@ -40,10 +40,11 @@ impl Verifiable for Caller {
         Ok(())
     }
     
+    #[cfg(any(feature = "native", feature = "wasm"))]  
     fn verify(&self,
         #[cfg(feature = "wasm")]
         deps: saa_common::wasm::Deps
-    ) -> Result<CredentialInfo, AuthError> {
+    ) -> Result<saa_common::CredentialInfo, AuthError> {
         #[cfg(feature = "wasm")]
         let address = deps.api.addr_validate(self.0.as_str())?;
         #[cfg(feature = "wasm")]
@@ -53,11 +54,11 @@ impl Verifiable for Caller {
         #[cfg(not(feature = "wasm"))]
         let hrp = None;
         
-        Ok(CredentialInfo {
+        Ok(saa_common::CredentialInfo {
             hrp,
             extension: None,
             name: Native,
-            address: Some(CredentialAddress::Bech32(address)),
+            address: Some(saa_common::CredentialAddress::Bech32(address)),
         })
     }
 }
@@ -66,7 +67,7 @@ impl Verifiable for Caller {
 #[cfg(feature = "replay")]
 impl saa_crypto::ReplayProtection for Caller {
 
-    #[cfg(not(feature = "optimise"))]
+    #[cfg(all(any(feature = "cosmwasm", feature = "native"), not(feature = "optimise")))]
     fn protect_reply<M: serde::Serialize + core::fmt::Display + Clone>(
             &self,
             #[cfg(feature = "wasm")]
@@ -77,6 +78,7 @@ impl saa_crypto::ReplayProtection for Caller {
     }
 
     #[cfg(feature = "optimise")]
+    #[cfg(all(any(feature = "cosmwasm", feature = "native"), feature = "optimise"))]
     fn protect_reply(
         &self,
         #[cfg(feature = "wasm")]

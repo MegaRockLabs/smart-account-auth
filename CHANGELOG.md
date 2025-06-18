@@ -16,6 +16,9 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - a separate testing golder
 - `InfoExtension` and `PayloadExtension` as a wrapper for current and all future supported extension tyoes 
 - [Feature] `cosmos_arb_addr` feature tag for a Cosmos Arbitrary with a passed address type instead of deriving it from prefix 
+- CheckOption and ReplayParams as argument to replay attack protection methods
+- `ReplayProtection` trait with methods for replay attack protection
+- Definitions to `EthTypedData` credential type
 
 ## Changed
 - `Verifiable` interface now has only one (mutually exclusive) `verify` method without VMs suffixes (like _cosmwasm)
@@ -25,11 +28,13 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - `AuthPayload` now has `PayloadExtension` as the type of `extensions` field instead of `Binary`
 - `PasskeyPayload` now requires the value of `other_keys_can...` to be passed. Previously it was using `Option<bool>` and then proceeding with the default value of the long "do not compare clientDataJSON aga.."
 - Exporting the whole `cosmwasm_std` package when  both `types` are any wasmic VM features are enabled (Vs few selected primtives)
+- Renamed replay attack protection methods to be `protect_replay`
 - [Feature] `cosmos` renamed to `cosmos_arb`
 - [Feature] `cosmwasm_1` renamed to `cosmwasm_v1`  
 - [Feature] `ethereum` feature is changed to include all ethereum related credentials. The previous behaviour can enabled with `eth_personal` separately
 
 ## Fixed
+- Replay attack protection works for each credential individually now
 - Overall optimisations, refactoring and including less dependencies when possible
 - `PasskeyCredential` and `Secp256r1` are now in a separate crate and don't include `p256` crate for CosmWasm 2.0
 - `to_json_string` imports and definitions

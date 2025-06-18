@@ -18,10 +18,10 @@ mod bin;
 mod uint;
 
 
-#[derive(serde::Deserialize)]
+#[cfg_attr(feature="wasm", derive(serde::Deserialize))]
 pub struct ContractVersion {
-    pub contract: String,
-    pub version: String,
+    pub contract: crate::String,
+    pub version: crate::String,
 }
 
 

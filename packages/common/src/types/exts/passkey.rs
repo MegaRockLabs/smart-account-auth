@@ -3,6 +3,7 @@ use crate::Binary;
 
 
 
+#[cfg_attr(not(feature = "wasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type(no_deny)]
 #[non_exhaustive]
 pub struct ClientDataOtherKeys {

@@ -5,7 +5,7 @@ use serde_json::Value;
 
 #[cfg(feature = "cosmwasm")]
 use {
-    saa_common::{ensure, ReplayError, wasm::Env, to_json_string, to_json_binary as to_bin},
+    saa_common::{ensure, ReplayError, wasm::Env, to_json_binary as to_bin},
     saa_crypto::hashes::keccak256,
 };
 
@@ -61,21 +61,20 @@ impl EthTypedData {
         .get(key)
             .and_then(|v| match v {
                 Value::String(s) => Some(s.clone()),
-                v => Some(v.to_string())
+                v => saa_common::to_json_string(&v).ok()
             })
         .or_else(|| 
             self.message.get(&format!("{}s", key))
             .and_then(|v| match v {
-                Value::Array(arr) => {
-                    if arr.len() == 1 {
+                Value::Seq(arr) => {                    if arr.len() == 1 {
                         if let Some(f) = arr.first() {
                             return match f {
                                 Value::String(s) => Some(s.clone()),
-                                v => Some(v.to_string())
+                                v => saa_common::to_json_string(&v).ok()
                             }
                         }
                     }
-                    to_bin(arr).map(hash_hex).ok()
+                    to_bin(&arr).map(hash_hex).ok()
                 },
                 _ => None
             }
@@ -116,7 +115,7 @@ impl EthTypedData {
         .get(key)
             .and_then(|v| match v {
                 Value::String(s) => Some(s.clone()),
-                v => to_json_string(&v).ok()
+                v => saa_common::to_json_string(&v).ok()
             })
         .or_else(|| 
             self.message.gets(key)
@@ -125,7 +124,7 @@ impl EthTypedData {
                     if let Some(f) = arr.first() {
                         return match f {
                             Value::String(s) => Some(s.clone()),
-                            v => to_json_string(&v).ok()
+                            v => saa_common::to_json_string(&v).ok()
                         }
                     }
                 }

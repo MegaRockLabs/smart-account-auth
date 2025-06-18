@@ -41,11 +41,12 @@ impl Verifiable for Secp256k1 {
         Ok(())
     }
 
+    #[cfg(any(feature = "native", feature = "cosmwasm"))]  
     fn verify(&self,
         #[cfg(feature = "cosmwasm")]
         deps: saa_common::wasm::Deps
     ) -> Result<CredentialInfo, AuthError> {
-        #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
+        #[cfg(not(feature = "cosmwasm"))]
         let res = saa_crypto::secp256k1_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 

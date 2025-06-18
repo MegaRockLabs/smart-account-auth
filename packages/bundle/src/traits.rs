@@ -10,7 +10,7 @@ pub use saa_common::{Verifiable, Identifiable};
 use saa_crypto::ReplayParams;
 pub use super::wrapper::CredentialsWrapper;
 
-use crate::{Credential, CredentialName, CredentialAddress, CredentialData};
+use crate::{Credential, CredentialData};
 
 #[cfg(feature = "wasm")]
 use saa_common::wasm::{Env, MessageInfo, Deps};
@@ -123,7 +123,7 @@ impl crate::CredentialsWrapper for CredentialData {
                 deps
             )?;
             has_extensions |= info.extension.is_some();
-            has_natives |= info.name == CredentialName::Native;
+            has_natives |= info.name == saa_common::CredentialName::Native;
 
             if let Some(address) = info.address.clone() {
                 addresses.push(address);
@@ -133,7 +133,7 @@ impl crate::CredentialsWrapper for CredentialData {
         })?;
 
         if use_native && !has_natives {
-            addresses.push(CredentialAddress::Bech32(sender.clone()));
+            addresses.push(saa_common::CredentialAddress::Bech32(sender.clone()));
             credentials.push((sender.to_string(), sender.clone().into()));
         }
 

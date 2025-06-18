@@ -1,7 +1,7 @@
 use core::ops::Deref;
 use std::borrow::Cow;
 
-use crate::{AuthError, CredentialId, CredentialInfo, CredentialName};
+use crate::{AuthError, CredentialId, CredentialName};
 
 
 pub trait Identifiable {
@@ -21,7 +21,7 @@ pub trait Verifiable : Identifiable  {
     fn verify(&self,
         #[cfg(feature = "wasm")]
         deps: crate::wasm::Deps
-    ) -> Result<CredentialInfo, AuthError>;
+    ) -> Result<crate::CredentialInfo, AuthError>;
 
 }
 
@@ -52,7 +52,7 @@ impl<T: Deref> Verifiable for T
     fn verify(&self,
         #[cfg(feature = "wasm")]
         deps: crate::wasm::Deps
-    ) -> Result<CredentialInfo, AuthError> {
+    ) -> Result<crate::CredentialInfo, AuthError> {
         self.deref().verify(
             #[cfg(feature = "wasm")]
             deps

@@ -17,7 +17,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.26.0-beta"
+version         = "0.26.0-rc2"
 edition         = "2021"
 readme          = "README.md"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
@@ -31,22 +31,24 @@ bech32                  = { version = "0.11.0", default-features = false, featur
 base64                  = { version = "0.22.1", default-features = false, features = ["alloc"] }
 semver                  = { version = "1.0.26", default-features = false }
 thiserror               = { version = "2.0.12", default-features = false }
-
-smart-account-auth      = { version = "0.26.0-beta", path = "packages/bundle", default-features = false }
-saa-common              = { version = "0.26.0-beta", path = "packages/common", default-features = false }
-saa-auth                = { version = "0.26.0-beta", path = "packages/auth" }
-saa-schema              = { version = "0.26.0-beta", path = "packages/schema" }
-saa-curves              = { version = "0.26.0-beta", path = "packages/curves" }
-saa-passkeys            = { version = "0.26.0-beta", path = "packages/passkeys" }
-saa-crypto              = { version = "0.26.0-beta", path = "packages/crypto" }
-
-saa-proto-core          = { version = "0.26.0-beta", path = "packages/macros-proto/core" }
-saa-proto-wasm          = { version = "0.26.0-beta", path = "packages/macros-proto/wasm" }
-saa-proto-solana        = { version = "0.26.0-beta", path = "packages/macros-proto/solana" }
-saa-proto-substrate     = { version = "0.26.0-beta", path = "packages/macros-proto/substrate" }
-
 cosmwasm-schema         = { version = "1.5.11", default-features = false }
 cosmwasm-crypto         = { version = "2.2.2",  default-features = false }
+
+
+saa-proto-core          = { version = "0.26.0", path = "packages/macros-proto/core" }
+saa-proto-wasm          = { version = "0.26.0", path = "packages/macros-proto/wasm" }
+saa-proto-solana        = { version = "0.26.0", path = "packages/macros-proto/solana" }
+saa-proto-substrate     = { version = "0.26.0", path = "packages/macros-proto/substrate" }
+
+saa-schema              = { version = "0.26.0", path = "packages/schema" }
+saa-common              = { version = "0.26.0-rc2", path = "packages/common", default-features = false }
+saa-auth                = { version = "0.26.0-rc2", path = "packages/auth" }
+saa-curves              = { version = "0.26.1", path = "packages/curves" }
+saa-passkeys            = { version = "0.26.0-rc2", path = "packages/passkeys" }
+saa-crypto              = { version = "0.26.0-rc1", path = "packages/crypto" }
+smart-account-auth      = { version = "0.26.0-rc1", path = "packages/bundle", default-features = false }
+
+
 
 
 # Substrate

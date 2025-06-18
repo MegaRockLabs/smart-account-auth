@@ -26,7 +26,7 @@ bech32              = { workspace = true, optional = true }
 base64              = { workspace = true }
 serde               = { workspace = true }
 strum               = { workspace = true }
-serde-json-wasm     = { workspace = true, optional = true }
+serde-json-wasm     = { workspace = true }
 serde_json          = { workspace = true, optional = true }
 getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
 
@@ -35,11 +35,9 @@ getrandom           = { version = "0.2.15",  default-features = false, features 
 default     = [
     "std", 
     "replay",
-    "cosmwasm",
 ]
 solana      = [
     "dep:borsh", 
-    "dep:serde-json-wasm",
     "saa-schema/solana"
 ]
 cosmwasm    = [
@@ -53,18 +51,16 @@ cosmwasm_v1 = [
 ]
 secretwasm  = [
     "dep:secretwasm-std",
-    "dep:serde-json-wasm",
     "wasm",
 ]
 substrate   = [
     "dep:ink", 
     "dep:scale",
     "dep:scale-info",
-    "dep:serde-json-wasm",
     "saa-schema/substrate",
 ]
 std         = [
-    "serde-json-wasm?/std",
+    "serde-json-wasm/std",
     "ink?/std",
     "scale?/std",
     "scale-info?/std",
@@ -72,7 +68,6 @@ std         = [
 ]
 native     = [
     "dep:cosmwasm-crypto",
-    "dep:serde-json-wasm",
 ]
 session    = []
 wasm       = [
