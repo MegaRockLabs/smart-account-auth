@@ -1,6 +1,5 @@
 use saa_common::{CredentialAddress, CredentialId, CredentialRecord};
 use saa_schema::saa_type;
-use schemars::JsonSchema;
 use crate::Credential;
 
 

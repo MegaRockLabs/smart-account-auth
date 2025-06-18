@@ -62,7 +62,7 @@ impl Eip712Message {
     pub fn to_value(&self) -> Value {
         let mut map = BTreeMap::<Value, Value>::new();
         if let Some(nonce) = self.nonce {
-            map.insert(Value::String("nonce".into()), Value::U64(nonce.u64()));
+            map.insert(Value::String("nonce".into()), Value::String(nonce.to_string()));
         }
         for (key, value) in &self.props {
             map.insert(key.clone(), value.clone());

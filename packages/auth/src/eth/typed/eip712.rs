@@ -9,9 +9,7 @@ use primitive_types::{H160, U256};
 use saa_crypto::hashes::keccak256;
 
 
-
 pub type Address = H160;
-
 
 pub type Int = U256;
 
