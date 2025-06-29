@@ -82,13 +82,13 @@ impl crate::CredentialsWrapper for CredentialData {
         #[cfg(feature = "wasm")]
         let sender = info.sender.clone();
         #[cfg(feature = "replay")]
-        let nonce = self.nonce.unwrap_or_default().u64();
+        let nonce = params.nonce;
         let pre_val = self.pre_validate.unwrap_or_default();
 
         if pre_val { 
             self.validate(sender.as_ref())?; 
             #[cfg(feature = "replay")]
-            self.protect_reply(
+            <Self as ReplayProtectionWrapper>::protect_reply(self,
                 #[cfg(feature = "wasm")]
                 env,
                 #[cfg(feature = "replay")]
@@ -132,8 +132,17 @@ impl crate::CredentialsWrapper for CredentialData {
             Ok::<(), AuthError>(())
         })?;
 
+        println!("Used native: {}, has natives: {}, has extensions: {}", use_native, has_natives, has_extensions);
+
         if use_native && !has_natives {
-            addresses.push(saa_common::CredentialAddress::Bech32(sender.clone()));
+            let addr = saa_common::CredentialAddress::Bech32(sender.clone());
+
+            if !addresses.iter().any(|a| a == &addr) {
+                // if no native address was found, we add the sender as a native address
+                // this is useful for cases like `info.sender` in CosmWasm or `caller` in EVM
+                addresses.push(saa_common::CredentialAddress::Bech32(sender.clone()));
+            }
+
             credentials.push((sender.to_string(), sender.clone().into()));
         }
 

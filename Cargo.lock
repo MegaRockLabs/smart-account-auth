@@ -1913,7 +1913,7 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 
 [[package]]
 name = "saa-auth"
-version = "0.26.0-rc2"
+version = "0.26.0-rc6"
 dependencies = [
  "hex",
  "primitive-types",
@@ -1927,7 +1927,7 @@ dependencies = [
 
 [[package]]
 name = "saa-common"
-version = "0.26.0-rc2"
+version = "0.26.0-rc6"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.0",
@@ -1951,7 +1951,7 @@ dependencies = [
 
 [[package]]
 name = "saa-crypto"
-version = "0.26.0-rc2"
+version = "0.26.0-rc6"
 dependencies = [
  "bech32 0.11.0",
  "cosmwasm-crypto 2.2.2",
@@ -2041,7 +2041,7 @@ dependencies = [
 
 [[package]]
 name = "saa-tests"
-version = "0.26.0-rc2"
+version = "0.26.0-rc6"
 dependencies = [
  "base64-url",
  "cosmwasm-schema",
@@ -2456,7 +2456,7 @@ checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.26.0-rc2"
+version = "0.26.0-rc6"
 dependencies = [
  "saa-auth",
  "saa-common",

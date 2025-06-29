@@ -29,7 +29,8 @@ export interface CosmosArbitrary {
     message: string;
     pubkey: string;
     signature: string;
-    hrp : string
+    address?: string;
+    hrp? : string
 }
 
 export interface ClientData {

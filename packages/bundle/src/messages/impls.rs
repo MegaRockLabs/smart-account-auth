@@ -222,18 +222,17 @@ impl AllowedActions {
         match self {
             AllowedActions::All {} => true,
             AllowedActions::Include(ref actions) => actions
-                .iter()
-                .any(|action| {
-                    if action.method != ActionDerivation::Json {
-                        return false;
-                    }
-                    let res = Action::with_serde_json(msg)
-                        .map(|msg| msg.result)
-                        .unwrap_or_default();
-                    action.result == res
-                })
+            .iter()
+            .any(|action| {
+                if action.method != ActionDerivation::Json {
+                    return false;
+                }
+                let res = Action::with_serde_json(msg)
+                    .map(|msg| msg.result)
+                    .unwrap_or_default();
+                action.result == res
+            })
         }
-      
     }
 
 }

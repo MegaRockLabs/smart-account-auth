@@ -31,7 +31,7 @@ serde_json              = { workspace = true,  optional = true }
 [features]
 # ---- Grouped  ----
 default       =   ["std", "replay", "traits", "optimise" ,  "majors"      ]
-majors        =   ["cosmos_arb_addr", "eth_personal", "passkeys", "ed25519"]
+majors        =   ["cosmos_arb_addr", "eth_typed_data", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
 

@@ -20,9 +20,6 @@ pub struct CredentialData {
     pub pre_validate           :  Option<bool>,
     /// An optional flag that indicates whether that 
     pub override_primary       :  Option<bool>,
-    /// A custom nonce value to use for replay attack protection. Meant to be set by verifier, not user. 0 by default.
-    #[cfg(feature = "replay")]
-    pub nonce                  :  Option<saa_common::Uint64>,
 }
 
 

@@ -106,9 +106,7 @@ impl Identifiable for Credential {
 
 #[cfg(feature = "replay")]
 impl ReplayProtectionWrapper for CredentialData {
-    fn signed_nonce(&self) -> u64 {
-        self.nonce.unwrap_or_default().u64()
-    }
+    
 }
 
 
@@ -166,8 +164,6 @@ impl CredentialData {
             primary_index: None,
             pre_validate: None,
             override_primary: None,
-            #[cfg(feature = "replay")]
-            nonce: None,
         }
     }
 

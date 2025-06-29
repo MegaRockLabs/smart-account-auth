@@ -20,7 +20,7 @@ cfg_mod_use!("wasm", wasm);
 
 pub use traits::*;
 pub use saa_schema::{saa_type, saa_derivable};
-pub use saa_common::types::errors;
+pub use saa_common::{types::errors, Expiration};
 pub use errors::AuthError;
 
 use saa_common::{cfg_mod_pub, cfg_mod_use, mod_use};
@@ -41,8 +41,7 @@ pub use saa_crypto as crypto;
 
 #[cfg(feature = "session")]
 pub use { 
-    saa_common::{Expiration, SessionError},
-    messages::sessions::{SessionInfo, Session}
+    messages::sessions::{Session, SessionInfo}, saa_common::SessionError
 };
 
 #[cfg(feature = "replay")]

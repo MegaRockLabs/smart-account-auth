@@ -137,9 +137,6 @@ pub trait ReplayProtectionWrapper : CredentialsWrapper
     where Self::Credential: ReplayProtection
 {
 
-    fn signed_nonce(&self) -> u64;
-
-
     #[cfg(all(feature = "optimise", any(feature = "native", feature = "wasm")))]
     fn protect_reply(
         &self,
@@ -147,10 +144,8 @@ pub trait ReplayProtectionWrapper : CredentialsWrapper
         env: &saa_common::wasm::Env,
         params: ReplayParams,
     ) -> Result<(), saa_common::ReplayError> {
-        use saa_common::{ensure, ReplayError};
         #[cfg(not(feature = "wasm"))]
-        ensure!(messages.is_some(), ReplayError::MissingData("Messages".into()));
-        ensure!(self.signed_nonce() == params.nonce, ReplayError::InvalidNonce(params.nonce));    
+        ensure!(messages.is_some(), saa_common::ReplayError::MissingData("Messages".into()));
         self
             .credentials()
             .iter()
@@ -166,12 +161,9 @@ pub trait ReplayProtectionWrapper : CredentialsWrapper
         env: &saa_common::wasm::Env,
         params: ReplayParams<M>,
     ) -> Result<(), saa_common::ReplayError> {
-        use saa_common::{ensure, ReplayError};
         #[cfg(not(feature = "wasm"))]
-        ensure!(messages.is_some(), ReplayError::MissingData("Messages".into()));
-        ensure!(self.signed_nonce() == params.nonce, ReplayError::InvalidNonce(params.nonce));    
-        self
-            .credentials()
+        ensure!(messages.is_some(), saa_common::ReplayError::MissingData("Messages".into()));
+        self.credentials()
             .iter()
             .filter(|c| c.name() != CredentialName::Native)
             .try_for_each(|c| c.protect_reply(env, params.clone()))
