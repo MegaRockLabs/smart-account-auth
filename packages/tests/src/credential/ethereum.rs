@@ -1,3 +1,4 @@
+use cosmwasm_std::Addr;
 use saa_common::Verifiable;
 use smart_account_auth::{CheckOption, EthTypedData, ReplayParams, ReplayProtection};
 
@@ -441,3 +442,54 @@ fn eth_typed_daata_nft_acc_actions() {
 
 }
 
+
+#[test]
+fn eth_typed_local_testing_chain() {
+  let deps = get_mock_deps();
+  let mut env = get_mock_env();
+  env.block.chain_id = "testing".to_string();
+  env.contract.address = Addr::unchecked("stars1wug8sewp6cedgkmrmvhl3lf3tulagm9hnvy8p0rppz9yjw0g4wtqmpd9x3");
+
+  let json = serde_json::json!({
+    "types": {
+      "EIP712Domain": [
+        { "name": "name", "type": "string" },
+        { "name": "version", "type": "string" },
+        { "name": "chainId", "type": "uint256" },
+        { "name": "verifyingContract", "type": "address" }
+      ],
+      "Transfer": [
+        { "name": "collection", "type": "string" },
+        { "name": "recipient", "type": "string" },
+        { "name": "token_id", "type": "string" }
+      ],
+      "AccountAction": [
+        { "name": "transfer_token", "type": "Transfer" }
+      ]
+    },
+    "primaryType": "AccountAction",
+    "domain": {
+      "chainId": "0",
+      "name": "Token-Bound Accounts",
+      "verifyingContract": "0x518526d38c3242f316c622fd464c7b8970dd1250",
+      "version": "1.1"
+    },
+    "message": {
+      "transfer_token": {
+        "collection": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+        "recipient": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+        "token_id": "1"
+      }
+    },
+    "signer": "0xac03048da6065e584d52007e22c69174cdf2b91a",
+    "signature": "fRKr9rJAX7EGar40a9PYYfeEY14l2M8NXutilC8K2b5zMD5y+3Jl//yKEyfmaXd5CIBuM0XTqk6Lji2cO4WKnRs="
+  });
+
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+  assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
+
+
+}

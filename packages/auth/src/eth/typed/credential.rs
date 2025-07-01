@@ -22,6 +22,7 @@ use CredentialName::EthTypedData as EthTypedName;
 use crate::eth::{typed::eip712::encode_data, utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed}};
 
 
+#[cfg_attr(not(feature = "cosmwasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type]
 pub struct EthTypedData {
     pub signer        :   String,

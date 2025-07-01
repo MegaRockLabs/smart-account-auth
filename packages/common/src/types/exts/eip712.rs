@@ -1,4 +1,4 @@
-use crate::{Binary, String, Uint64};
+use crate::{AuthError, Binary, String, Uint64};
 use std::collections::BTreeMap;
 use saa_schema::saa_type;
 use schemars::JsonSchema;
@@ -9,6 +9,7 @@ pub type Eip712Types    =  BTreeMap<String, Vec<Eip712DomainType>>;
 // use serde_json::Value
 
 
+#[cfg_attr(not(feature = "wasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type(no_deny)]
 #[non_exhaustive]
 pub struct Eip712MessageProps {}
@@ -26,6 +27,7 @@ impl Eip712MessageProps {
     }
 }
 
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]
 pub struct Eip712Message {
@@ -39,7 +41,7 @@ pub struct Eip712Message {
 impl Eip712Message {
 
     pub fn contains_key(&self, key: &str) -> bool {
-        self.props.contains_key(&Value::String(key.to_string()))
+        key == "nonce" || self.props.contains_key(&Value::String(key.to_string()))
     }
 
     pub fn get(&self, key: &str) -> Option<Value> {
@@ -61,13 +63,20 @@ impl Eip712Message {
 
     pub fn to_value(&self) -> Value {
         let mut map = BTreeMap::<Value, Value>::new();
-        if let Some(nonce) = self.nonce {
-            map.insert(Value::String("nonce".into()), Value::String(nonce.to_string()));
-        }
         for (key, value) in &self.props {
             map.insert(key.clone(), value.clone());
         }
+        if let Some(nonce) = self.nonce {
+            map.insert(Value::String("nonce".into()), Value::String(nonce.to_string()));
+        }
         Value::Map(map)
+    }
+
+    pub fn to_string(&self) -> Result<String, AuthError> {
+        match self.nonce {
+            Some(_) => crate::to_json_string(&self.to_value()),
+            None => crate::to_json_string(&self.props)
+        }.map_err(|e| AuthError::generic(e.to_string()))
     }
 }
 
@@ -91,7 +100,7 @@ impl JsonSchema for Eip712Message {
     }
 }
 
-
+#[cfg_attr(not(feature = "wasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type]
 pub struct Eip712DomainType {
     pub name: String,
@@ -102,6 +111,7 @@ pub struct Eip712DomainType {
 
 
 
+#[cfg_attr(not(feature = "wasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type]
 pub struct Eip712Domain {
     ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
@@ -121,7 +131,7 @@ pub struct Eip712Domain {
 
 
 
-
+#[cfg_attr(not(feature = "wasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type]
 pub struct EthTypedInfo {
     pub addr_hash   :  Option<String>,

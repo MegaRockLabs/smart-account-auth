@@ -1,13 +1,12 @@
-use crate::eth::EthTypedData;
-#[cfg(feature = "cosmwasm")]
-use saa_crypto::{CheckOption, ReplayParams};
-use serde_json::Value;
-
 #[cfg(feature = "cosmwasm")]
 use {
-    saa_common::{ensure, ReplayError, wasm::Env, to_json_binary as to_bin},
-    saa_crypto::hashes::keccak256,
+    saa_common::{ensure, to_json_binary as to_bin, wasm::Env, ReplayError},
+    saa_crypto::{CheckOption, ReplayParams}
 };
+use crate::eth::EthTypedData;
+use saa_crypto::hashes::keccak256;
+use serde_json::Value;
+
 
 
 
@@ -81,7 +80,7 @@ impl EthTypedData {
         ))})
         .or_else(|| {
             if !self.message.is_empty() {
-                saa_common::to_json_string(&self.message).ok()
+                self.message.to_string().ok()
             } else {
                 None
             }
@@ -133,7 +132,7 @@ impl EthTypedData {
         ))})
         .or_else(|| {
             if !self.message.is_empty() {
-                saa_common::to_json_string(&self.message).ok()
+                self.message.to_string().ok()
             } else {
                 None
             }
@@ -297,6 +296,14 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             }
         }
 
+        println!("Chain ID: {}", env.block.chain_id);
+        println!("Contract address: {}", env.contract.address);
+        println!("Nonce: {}\n", params.nonce);
+
+        println!("id bytes: {:?}", id_bytes);
+        println!("addr bytes: {:?}", addr_bytes);
+        println!("nonce bytes: {:?}\n", params.nonce.to_be_bytes());
+
         // if the environment passed 'messages' as an argument
         // or the signed message field include a value(s) under
         // a given message property we inlude them and the nonce
@@ -307,6 +314,9 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             msg_str.as_bytes(), 
             &params.nonce.to_be_bytes()
         ].concat());
+
+        println!("Replay hash full: {}", hex::encode(&replay_hash));
+        println!("Replay hash: {}", hex::encode(&replay_hash[12..]));
 
         ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
         Ok(())

@@ -13,10 +13,10 @@ saa-schema          = { workspace = true }
 thiserror           = { workspace = true }
 
 
-ink                 = { version = "5.1.1", optional = true, default-features = false }
 cosmwasm-std        = { version = "2.2.2",  optional = true }
 cosmwasm-std-v1     = { version = "1.5.11", optional = true, package = "cosmwasm-std" }
 secretwasm-std      = { version = "1.1.11", optional = true, package = "secret-cosmwasm-std" }
+ink                 = { version = "5.1.1", optional = true, default-features = false }
 scale-info          = { workspace = true, optional = true }
 scale               = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
@@ -85,5 +85,5 @@ secp256k1       =  []
 secp256r1       =  []
 passkeys        =  []
 eth_personal    =  []
-eth_typed_data  =  ["dep:serde_json", "std"]
+eth_typed_data  =  ["dep:serde_json", "dep:schemars", "std"]
 cosmos_arb      =  ["dep:bech32"]
