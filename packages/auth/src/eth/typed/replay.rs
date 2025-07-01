@@ -9,24 +9,6 @@ use serde_json::Value;
 
 
 
-
-impl EthTypedData {
-    /* pub(crate) fn msg_nonce(&self) -> Option<u64> {
-        self.message.get("nonce")
-        .or(self.message.get("Nonce"))
-        .and_then(|v| match v {
-            Value::U64(n) => Some(n.clone()),
-            Value::String(s) => s.parse::<u64>().ok(),
-            _ => None,
-        })
-    }  */
-
-   pub(crate) fn msg_nonce(&self) -> Option<u64> {
-        self.message.nonce.map(|n| n.u64())
-    }
-}
-
-
 #[allow(unused)]
 fn hash_hex(bin: saa_common::Binary) -> String {
     hex::encode(keccak256(bin.as_slice()))
@@ -220,10 +202,10 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             // are the same as the one in the signed message
             /* if params.has_inners {
             } */
-            ensure!(msg_str == self.msg_string::<M>(CheckOption::Nothing), ReplayError::InvalidEnvelope);
+            ensure!(msg_str == self.msg_string::<M>(CheckOption::Nothing), ReplayError::MessageMismatch(msg_str.clone()));
 
-            if let Some(n) = self.msg_nonce() {
-                ensure!(params.nonce == n, ReplayError::InvalidNonce(params.nonce));
+            if let Some(n) = self.message.nonce {
+                ensure!(params.nonce == n.u64(), ReplayError::InvalidNonce(params.nonce));
 
                 let addr_hash = self
                     .cache
@@ -249,7 +231,8 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             &params.nonce.to_be_bytes()
         ].concat());
 
-        ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
+        let encoded = format!("0x{}", hex::encode(&replay_hash[12..]));
+        ensure!(encoded == address, ReplayError::InvalidEnvelope(encoded, address.to_string()));
         Ok(())
     }
 
@@ -277,11 +260,10 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             // message aren't included in the envelope.
             // however if passed we are making sure that they
             // are the same as the one in the signed message
-            ensure!(msg_str == self.msg_string(CheckOption::Nothing), ReplayError::InvalidEnvelope);
+            ensure!(msg_str == self.msg_string(CheckOption::Nothing), ReplayError::MessageMismatch(msg_str.clone()));
 
-
-            if let Some(n) = self.msg_nonce() {
-                ensure!(params.nonce == n, ReplayError::InvalidNonce(params.nonce));
+            if let Some(n) = self.message.nonce {
+                ensure!(params.nonce == n.u64(), ReplayError::InvalidNonce(params.nonce));
 
                 let addr_hash = self
                     .cache
@@ -315,10 +297,11 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             &params.nonce.to_be_bytes()
         ].concat());
 
-        println!("Replay hash full: {}", hex::encode(&replay_hash));
-        println!("Replay hash: {}", hex::encode(&replay_hash[12..]));
+        println!("Replay hash full: 0x{}", hex::encode(&replay_hash));
+        let encoded = format!("0x{}", hex::encode(&replay_hash[12..]));
+        println!("Replay hash: {}", encoded);
 
-        ensure!(hex::encode(&replay_hash[12..]) == address[2..], ReplayError::InvalidEnvelope);
+        ensure!(encoded == address, ReplayError::InvalidEnvelope(encoded, address.to_string()));
         Ok(())
     }
 

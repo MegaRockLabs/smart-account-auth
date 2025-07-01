@@ -70,6 +70,9 @@ pub trait ReplayProtection : Verifiable {
         env: &saa_common::wasm::Env, 
         params: ReplayParams<M>,
     ) -> Result<(), saa_common::ReplayError> {
+        use saa_common::Binary;
+        use ReplayError::InvalidEnvelope;
+
         if self.name() == saa_common::CredentialName::Native {
             return Ok(());
         }
@@ -109,7 +112,9 @@ pub trait ReplayProtection : Verifiable {
             to_bin(&MsgDataToSign::new(chain_id,addr,strs,nonce))
             .map_err(|_| ReplayError::ToBin("MsgDataToVerify".to_string()))?
         };
-        ensure!(self.hash_message(&bin) == self.message_digest(), ReplayError::InvalidEnvelope);
+
+        let equal = self.hash_message(&bin) == self.message_digest();
+        ensure!(equal, InvalidEnvelope(bin.to_string(), Binary::from(self.message().to_vec()).to_string()));
         Ok(())
     }
     

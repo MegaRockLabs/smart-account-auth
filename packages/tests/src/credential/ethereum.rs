@@ -1,6 +1,6 @@
 use cosmwasm_std::Addr;
 use saa_common::Verifiable;
-use smart_account_auth::{CheckOption, EthTypedData, ReplayParams, ReplayProtection};
+use smart_account_auth::{types::Eip712Message, CheckOption, EthTypedData, ReplayParams, ReplayProtection};
 
 use crate::utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE};
 
@@ -442,9 +442,71 @@ fn eth_typed_daata_nft_acc_actions() {
 
 }
 
+#[test]
+fn eth_typed_local_chain_creation() {
+  let deps = get_mock_deps();
+  let mut env = get_mock_env();
+  env.block.chain_id = "testing".to_string();
+  env.contract.address = Addr::unchecked("stars1wug8sewp6cedgkmrmvhl3lf3tulagm9hnvy8p0rppz9yjw0g4wtqmpd9x3");
+
+  let msg = "Create TBA account";
+
+
+  let json = serde_json::json!({
+    "types": {
+      "EIP712Domain": [
+        { "name": "name", "type": "string" },
+        { "name": "version", "type": "string" },
+        { "name": "chainId", "type": "uint256" },
+        { "name": "verifyingContract", "type": "address" }
+      ],
+      "CreatePrompt": [{ "name": "message", "type": "string" }],
+    },
+    "primaryType": "CreatePrompt",
+    "domain": {
+      "chainId": "0",
+      "name": "Token-Bound Accounts",
+      "verifyingContract": "0xd7296ff158d2de4a0e192c8a15b2772600980c23",
+      "version": "1.1"
+    },
+    "message": { "message": msg.to_string() },
+    "signer": get_eth_signer(),
+    "signature": "0+mgaZb9ZYE8jObiMqJw/B170ojkEDTcZuqzvnt+4eB2KPk7Bpr5+25yfRHhWCpDqTYpgpW95ycAtZmEuxeALxs="
+  });
+
+  
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+
+  let eip_msg : Eip712Message = serde_json::from_value(serde_json::json!({
+    "message": msg.to_string(),
+  })).unwrap();
+  println!("EIP712 message: {:?}", eip_msg);
+
+  let eip_msg_props : Eip712Message = serde_json::from_value(serde_json::json!({
+    "props": {
+      "message": msg.to_string(),
+    }
+  })).unwrap();
+  println!("EIP712 message with props: {:?}", eip_msg_props);
+
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+
+  let mut params = ReplayParams::new(SIGN_NONCE, CheckOption::Nothing);
+  assert!(cred.protect_reply(&env, params.clone()).is_ok());
+
+  params.checking = CheckOption::Messages(vec![msg.into()]);
+  assert!(cred.protect_reply(&env, params.clone()).is_ok());
+
+  params.checking = CheckOption::Text(msg.into());
+  assert!(cred.protect_reply(&env, params).is_err());
+
+
+}
+
 
 #[test]
-fn eth_typed_local_testing_chain() {
+fn eth_typed_local_chain_action() {
   let deps = get_mock_deps();
   let mut env = get_mock_env();
   env.block.chain_id = "testing".to_string();
@@ -490,6 +552,5 @@ fn eth_typed_local_testing_chain() {
   assert!(cred.validate().is_ok(), "Validation failed");
   assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
   assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
-
 
 }

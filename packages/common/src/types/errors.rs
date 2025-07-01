@@ -55,6 +55,9 @@ mod std_mod {
         #[error("The provided credential was meant for a different contract address")]
         AddressMismatch,
 
+        #[error("Invalid messages. Expected to be signing the following inner message: '{0}'")]
+        MessageMismatch(String),
+
         #[error("Error converting from binary to {0}")]
         FromBin(String),
 
@@ -64,8 +67,8 @@ mod std_mod {
         #[error("Signed too many messages. Expected: {0}; Received: {1}")]
         ManyMessages(u8, u8),
 
-        #[error("Invalid signed envelope. Check that chain_id`s, contract_address`s, nonce`s amd messages` match")]
-        InvalidEnvelope,
+        #[error("Invalid signed envelope: (chain_id, contract_address, nonce or messages)`.\nExpected: '{0}'; Received: '{1}'")]
+        InvalidEnvelope(String, String),
 
         #[error("The data for the replay protection is missing or invalid. Item: {0}")]
         MissingData(String),
