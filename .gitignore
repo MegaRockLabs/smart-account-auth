@@ -28,6 +28,9 @@ hash.txt
 contracts.txt
 artifacts/
 
+node_modules/
+yarn.lock
+
 # code coverage
 tarpaulin-report.*
 
