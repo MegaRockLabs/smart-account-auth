@@ -25,7 +25,6 @@ default             	=   ["std"]
 std                 	=   ["hex?/std"]
 utils               	=   []
 replay                  =   []
-optimise                =   []
 
 
 native              	=   ["saa-crypto/native"  ] 

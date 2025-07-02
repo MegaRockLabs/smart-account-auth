@@ -40,82 +40,24 @@ pub struct MsgDataToVerify {
 
 
 
-#[cfg(feature = "optimise")]
-mod optimised {
-    use crate::String;
+#[derive(serde::Serialize)]
+pub struct MsgDataToSign {
+    pub chain_id: String,
+    pub contract_address: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub messages: Vec<String>,
+    pub nonce: crate::Uint64,
+}
 
-    #[derive(serde::Serialize)]
-    pub struct MsgDataToSign {
-        pub chain_id: String,
-        pub contract_address: String,
-        #[serde(skip_serializing_if = "Vec::is_empty")]
-        pub messages: Vec<String>,
-        pub nonce: crate::Uint64,
-    }
 
-    impl MsgDataToSign {
-        pub fn new(cid: String, addr: String, msgs: Vec<String>, nonce: u64) -> Self {
-            Self {
-                chain_id: cid,
-                messages: msgs,
-                contract_address: addr,
-                nonce: nonce.into(),
-            }
+impl MsgDataToSign {
+    pub fn new(cid: String, addr: String, msgs: Vec<String>, nonce: u64) -> Self {
+        Self {
+            chain_id: cid,
+            messages: msgs,
+            contract_address: addr,
+            nonce: nonce.into(),
         }
     }
 }
 
-#[cfg(not(feature = "optimise"))]
-mod default {
-    use super::MsgDataToVerify;
-
-    #[saa_schema::saa_type]
-    pub struct MsgDataToSign<M: serde::Serialize = String> {
-        pub chain_id: String,
-        pub contract_address: String,
-        #[cfg_attr(feature = "wasm", serde(skip_serializing_if = "Vec::is_empty"))]
-        pub messages: Vec<M>,
-        pub nonce: crate::Uint64,
-    }
-
-    impl<M: serde::Serialize> MsgDataToSign<M> {
-        pub fn new(cid: String, addr: String, msgs: Vec<M>, nonce: u64) -> Self {
-            Self {
-                chain_id: cid,
-                messages: msgs,
-                contract_address: addr,
-                nonce: nonce.into(),
-            }
-        }
-    }
-
-    impl<M : serde::Serialize> Into<MsgDataToVerify> for &MsgDataToSign<M> {
-        fn into(self) -> MsgDataToVerify {
-            MsgDataToVerify {
-                chain_id: self.chain_id.clone(),
-                contract_address: self.contract_address.clone(),
-                nonce: self.nonce.clone(),
-            }
-        }
-    }
-
-    #[cfg(feature = "wasm")]
-    mod wasm_impl {
-        use crate::wasm::{Env, ensure};
-        impl super::MsgDataToVerify {
-            pub fn validate(&self, env: &Env, expected: u64 ) -> Result<(), crate::ReplayError> {
-                ensure!(self.chain_id == env.block.chain_id, crate::ReplayError::ChainIdMismatch);
-                ensure!(self.contract_address == env.contract.address.to_string(), crate::ReplayError::AddressMismatch);
-                let signed = self.nonce.u64();
-                ensure!(signed == expected, crate::ReplayError::InvalidNonce(expected));
-                Ok(())
-            }
-        }
-        impl crate::wasm::CustomMsg for super::super::SignedDataMsg {}
-    }
-}
-
-#[cfg(not(feature = "optimise"))]
-pub use default::MsgDataToSign;
-#[cfg(feature = "optimise")]
-pub use optimised::MsgDataToSign;

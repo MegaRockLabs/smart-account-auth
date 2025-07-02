@@ -67,18 +67,8 @@ impl Verifiable for Caller {
 #[cfg(feature = "replay")]
 impl saa_crypto::ReplayProtection for Caller {
 
-    #[cfg(all(any(feature = "cosmwasm", feature = "native"), not(feature = "optimise")))]
-    fn protect_reply<M: serde::Serialize + core::fmt::Display + Clone>(
-            &self,
-            #[cfg(feature = "wasm")]
-            _: &saa_common::wasm::Env, 
-            _: saa_crypto::ReplayParams<M>,
-        ) -> Result<(), saa_common::ReplayError> {
-        return Ok(());
-    }
 
-    #[cfg(feature = "optimise")]
-    #[cfg(all(any(feature = "cosmwasm", feature = "native"), feature = "optimise"))]
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
     fn protect_reply(
         &self,
         #[cfg(feature = "wasm")]

@@ -1,9 +1,9 @@
 #[cfg(feature = "replay")]
-use super::traits::ReplayProtectionWrapper;
+use super::traits::ReplayProtection;
 use core::ops::Deref;
 
 use crate::{credential::CredentialName, Credential, CredentialData, caller::Caller};
-use crate::traits::{CredentialsWrapper, Verifiable};
+use crate::traits::CredentialsWrapper;
 use saa_common::{CredentialError, Identifiable, ensure};
 
 
@@ -68,9 +68,23 @@ impl From<saa_passkeys::PasskeyCredential> for Credential {
 
 
 
+impl Identifiable for Credential {
+    fn id(&self) -> String {
+        self.deref().id()
+    }
+    fn name(&self) -> CredentialName {
+        self.deref().name()
+    }
+}
+
 
 impl Deref for Credential {
-    type Target = dyn Verifiable;
+    #[cfg(not(feature = "replay"))]
+    type Target = dyn saa_common::Verifiable;
+    #[cfg(feature = "replay")]
+    type Target = dyn ReplayProtection;
+
+
     fn deref(&self) -> &Self::Target {
         match self {
             Credential::Native(c) => c,
@@ -93,21 +107,8 @@ impl Deref for Credential {
 }
 
 
-impl Identifiable for Credential {
-    fn id(&self) -> String {
-        self.deref().id()
-    }
-
-    fn name(&self) -> CredentialName {
-        self.deref().name()
-    }
-}
 
 
-#[cfg(feature = "replay")]
-impl ReplayProtectionWrapper for CredentialData {
-    
-}
 
 
 impl CredentialData {

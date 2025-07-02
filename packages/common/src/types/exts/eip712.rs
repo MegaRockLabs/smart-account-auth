@@ -73,10 +73,13 @@ impl Eip712Message {
     }
 
     pub fn to_string(&self) -> Result<String, AuthError> {
-        match self.nonce {
-            Some(_) => crate::to_json_string(&self.to_value()),
-            None => crate::to_json_string(&self.props)
-        }.map_err(|e| AuthError::generic(e.to_string()))
+        crate::to_json_string(&self.to_value())
+            .map_err(|e| AuthError::generic(e.to_string()))
+    }
+
+    pub fn to_binary(&self) -> Result<Binary, AuthError> {
+        crate::to_json_binary(&self.to_value())
+            .map_err(|e| AuthError::generic(e.to_string()))
     }
 }
 

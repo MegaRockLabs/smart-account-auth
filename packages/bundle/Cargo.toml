@@ -30,7 +30,7 @@ serde_json              = { workspace = true,  optional = true }
 
 [features]
 # ---- Grouped  ----
-default       =   ["std", "replay", "traits", "optimise" ,  "majors"      ]
+default       =   ["std", "replay", "traits",  "majors"      ]
 majors        =   ["cosmos_arb_addr", "eth_typed_data", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
@@ -61,7 +61,6 @@ wasm         =   ["saa-crypto/cosmwasm",    "saa-auth?/cosmwasm", "saa-passkeys?
 # ---- Features ----
 session     =   ["saa-common/session"]
 replay      =   ["saa-crypto/replay", "saa-auth?/replay", "saa-passkeys?/replay", "saa-curves?/replay"]
-optimise    =   ["saa-crypto/optimise", "saa-auth?/optimise"]
 
 # ---- Extra exports ----
 types       =   ["saa-common/types"]

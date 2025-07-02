@@ -172,7 +172,7 @@ impl Identifiable for EthTypedData {
 impl Verifiable for EthTypedData {
 
     fn message(&self) -> std::borrow::Cow<[u8]> {
-        match saa_common::to_json_binary(&self.message) {
+        match self.message.to_binary() {
             Ok(msg) => std::borrow::Cow::Owned(msg.into()),
             Err(_) => std::borrow::Cow::Borrowed(&[])
         }

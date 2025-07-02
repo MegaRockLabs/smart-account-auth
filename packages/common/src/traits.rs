@@ -12,17 +12,13 @@ pub trait Identifiable {
 
 
 pub trait Verifiable : Identifiable  {
-
     fn message(&self) -> Cow<[u8]>;
-
     fn validate(&self) -> Result<(), AuthError>;
-
     #[cfg(any(feature = "native", feature = "wasm"))]  
     fn verify(&self,
         #[cfg(feature = "wasm")]
         deps: crate::wasm::Deps
     ) -> Result<crate::CredentialInfo, AuthError>;
-
 }
 
 

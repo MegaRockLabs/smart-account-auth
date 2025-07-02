@@ -67,12 +67,11 @@ mod std_mod {
         #[error("Signed too many messages. Expected: {0}; Received: {1}")]
         ManyMessages(u8, u8),
 
-        #[error("Invalid signed envelope: (chain_id, contract_address, nonce or messages)`.\nExpected: '{0}'; Received: '{1}'")]
+        #[error("Invalid envelope: (chain_id, contract_address, nonce or messages)`. Expected: '{0}'; Received: '{1}'")]
         InvalidEnvelope(String, String),
 
         #[error("The data for the replay protection is missing or invalid. Item: {0}")]
         MissingData(String),
-
     }
 
 
@@ -253,7 +252,13 @@ mod no_std_mod {
     pub enum ReplayError {
         DifferentNonce(u64, u64),
         ChainIdMismatch,
-        ContractMismatch,
+        AddressMismatch,
+        MessageMismatch(String),
+        FromBin(String),
+        ToBin(String),
+        ManyMessages(u8, u8),
+        InvalidEnvelope(String, String),
+        MissingData(String),
     }
 
     #[cfg(feature = "session")]

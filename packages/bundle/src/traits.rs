@@ -1,7 +1,7 @@
 #[cfg(feature = "session")]
 pub use crate::messages::actions::DerivableMsg;
 #[cfg(feature = "replay")]
-pub use {saa_crypto::ReplayProtection, super::wrapper::ReplayProtectionWrapper};
+pub use saa_crypto::ReplayProtection;
 #[cfg(any(feature = "wasm", feature = "native"))]
 use crate::data::VerifiedData;
 
@@ -16,37 +16,6 @@ use crate::{Credential, CredentialData};
 use saa_common::wasm::{Env, MessageInfo, Deps};
 use saa_common::AuthError;
 
-
-
-
-
-/* 
-pub trait Identifiable : Verifiable + strum::IntoDiscriminant<Discriminant : core::fmt::Display> {
-
-    fn name(&self) -> <Self as IntoDiscriminant>::Discriminant {
-        self.discriminant()    
-    }
-
-    fn extension(&self) -> Option<saa_common::InfoExtension>;    
-
-}
- */
-
-
-
-/* impl Identifiable for Credential {
-    
-   /*  fn extension(&self) -> Option<InfoExtension> {
-        #[cfg(feature = "passkeys")]
-        if let Credential::Passkey(c) = self {
-            return Some(c.clone().into())
-        }
-        None
-    } */
-
-}
-
- */
 
 
 
@@ -74,10 +43,8 @@ impl crate::CredentialsWrapper for CredentialData {
         deps: Deps, env: &Env, info: &MessageInfo,
         #[cfg(not(feature = "wasm"))]
         sender: String,
-        #[cfg(all(feature = "replay", feature = "optimise"))]
-        params: ReplayParams,
-        #[cfg(all(feature = "replay", not(feature = "optimise")))]
-        params: ReplayParams<impl serde::Serialize + core::fmt::Display + Clone>
+        #[cfg(feature = "replay")]
+        params: ReplayParams
     ) -> Result<crate::VerifiedData, AuthError> {
         #[cfg(feature = "wasm")]
         let sender = info.sender.clone();
@@ -88,12 +55,15 @@ impl crate::CredentialsWrapper for CredentialData {
         if pre_val { 
             self.validate(sender.as_ref())?; 
             #[cfg(feature = "replay")]
-            <Self as ReplayProtectionWrapper>::protect_reply(self,
-                #[cfg(feature = "wasm")]
-                env,
-                #[cfg(feature = "replay")]
-                params.clone()
-            )?;
+             self.credentials()
+                .into_iter()
+                // .filter(|c| c.name() != saa_common::CredentialName::Native)
+                .try_for_each(|c| c.protect_reply(
+                    #[cfg(feature = "wasm")]
+                    env, 
+                    params.clone()
+                ))?;
+  
         }
 
         let use_native = self.use_native.unwrap_or_default();
@@ -105,17 +75,33 @@ impl crate::CredentialsWrapper for CredentialData {
         // Parsed Addresses
         let mut addresses  = Vec::with_capacity(self.credentials.len());
 
-        self.credentials.iter().try_for_each(|c| {
+        self.credentials.clone().into_iter().try_for_each(|c| {
             // if not pre-validated, validating each one by one
             if !pre_val { 
                 c.validate()?; 
-                println!("Validating credential {:?}", c);
                 #[cfg(feature = "replay")]
                 c.protect_reply(
                     #[cfg(feature = "wasm")]
                     env, 
                     params.clone()
                 )?;
+                /* match c {
+                    #[cfg(feature = "eth_typed_data")]
+                    Credential::EthTypedData(c) => {
+                        c.clone().protect_reply(
+                            #[cfg(feature = "wasm")]
+                            env, 
+                            params.clone()
+                        )?;
+                    }
+                    _ => {
+                        c.protect_reply(
+                            #[cfg(feature = "wasm")]
+                            env, 
+                            params.clone()
+                        )?;
+                    }
+                } */
             }
             // verify siganture and get extracted info like address, name, etc.
             let info = c.verify(
@@ -131,8 +117,6 @@ impl crate::CredentialsWrapper for CredentialData {
             credentials.push((c.id().to_lowercase(), info));
             Ok::<(), AuthError>(())
         })?;
-
-        println!("Used native: {}, has natives: {}, has extensions: {}", use_native, has_natives, has_extensions);
 
         if use_native && !has_natives {
             let addr = saa_common::CredentialAddress::Bech32(sender.clone());
@@ -160,85 +144,6 @@ impl crate::CredentialsWrapper for CredentialData {
             nonce: nonce + 1,
         })
     }
-
-
-/*     #[cfg(all(any(feature = "native", feature = "wasm"), feature = "optimise"))]
-    fn verify_t(&self,
-        #[cfg(feature = "wasm")]
-        deps: Deps, env: &Env, info: &MessageInfo,
-        #[cfg(feature = "replay")]
-        params: ReplayParams
-    ) -> Result<VerifiedData, AuthError>  {
-        #[cfg(feature = "wasm")]
-        let sender = info.sender.clone();
-        #[cfg(feature = "replay")]
-        let nonce = self.nonce.unwrap_or_default().u64();
-        let pre_val = self.pre_validate.unwrap_or_default();
-
-        if pre_val { 
-            self.validate(sender.as_ref())?; 
-            self.protect_reply(
-                #[cfg(feature = "wasm")]
-                env,
-                #[cfg(feature = "replay")]
-                params.clone()
-            )?;
-        }
-
-        let use_native = self.use_native.unwrap_or_default();
-        // flags describing the cred data batch 
-        let mut has_natives = false;
-        let mut has_extensions = false;
-
-        let mut credentials = Vec::with_capacity(self.credentials.len());
-        // Parsed Addresses
-        let mut addresses  = Vec::with_capacity(self.credentials.len());
-
-        self.credentials.iter().try_for_each(|c| {
-            // if not pre-validated, validating each one by one
-            if !pre_val { 
-                c.validate()?; 
-                c.protect_reply(
-                    #[cfg(feature = "wasm")]
-                    env, 
-                    #[cfg(feature = "replay")]
-                    params.clone()
-                )?;
-            }
-            // verify siganture and get extracted info like address, name, etc.
-            let info = c.verify(
-                #[cfg(feature = "wasm")]
-                deps
-            )?;
-            has_extensions |= info.extension.is_some();
-            has_natives |= info.name == CredentialName::Native;
-
-            if let Some(address) = info.address.clone() {
-                addresses.push(address);
-            }
-            credentials.push((c.id().to_lowercase(), info));
-            Ok::<(), AuthError>(())
-        })?;
-
-        if use_native && !has_natives {
-            addresses.push(CredentialAddress::Bech32(sender.clone()));
-            credentials.push((sender.to_string(), sender.clone().into()));
-        }
-
-        // running a post check in any scenario
-        self.validate_logic(sender.as_str(), Some(&credentials))?;
-    
-        Ok(VerifiedData {
-            credentials,
-            addresses,
-            has_natives,
-            has_extensions,
-            primary_id: self.primary_id().to_lowercase(),
-            override_primary: self.override_primary.unwrap_or_default(),
-            nonce: nonce + 1,
-        })
-    }
- */
 
 
 

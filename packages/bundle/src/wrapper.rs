@@ -1,29 +1,15 @@
-use saa_common::{AuthError, CredentialId, CredentialName, Identifiable, Vec, Verifiable};
+#[cfg(feature = "replay")]
+use saa_crypto::{ReplayProtection, ReplayParams};
 #[cfg(feature = "wasm")]
-use {
-    saa_common::wasm::{Deps, Env, MessageInfo},
-};
+use saa_common::wasm::{Deps, Env, MessageInfo};
+use saa_common::{AuthError, CredentialId, CredentialName, Identifiable, Vec};
 
 
-/* #[derive(Clone)]
-pub enum TempOption<M: serde::Serialize + core::fmt::Display + Clone> {
-    None,
-    Messages(Vec<M>),
-}
-
-
-#[derive(Clone)]
-pub struct TempParams<M: serde::Serialize + core::fmt::Display + Clone> {
-    pub override_id       :  Option<String>,
-    pub override_address  :  Option<String>,
-    pub check_inner       :  TempOption<M>,
-    pub has_inners        :  bool,
-    pub nonce             :  u64,
-}
- */
 pub trait CredentialsWrapper  {
-
-    type Credential  : Verifiable + Clone;
+    #[cfg(not(feature = "replay"))]
+    type Credential  : saa_common::Verifiable + Clone;
+    #[cfg(feature = "replay")]
+    type Credential  : ReplayProtection + Clone;
 
     fn credentials(&self) -> &Vec<Self::Credential>;
 
@@ -40,37 +26,11 @@ pub trait CredentialsWrapper  {
         deps: Deps, env: &Env, info: &MessageInfo,
         #[cfg(not(feature = "wasm"))]
         sender: String,
-        #[cfg(all(feature = "replay", feature = "optimise"))]
+        #[cfg(feature = "replay")]
         params: ReplayParams,
-        #[cfg(all(feature = "replay", not(feature = "optimise")))]
-        params: ReplayParams<impl serde::Serialize + core::fmt::Display + Clone>
     ) -> Result<crate::VerifiedData, AuthError>;
 
 
-/* 
-    #[cfg(all(any(feature = "native", feature = "wasm"), feature = "replay", not(feature = "optimise")))]
-    fn verify<M : serde::Serialize + core::fmt::Display + Clone>(&self,
-        #[cfg(feature = "wasm")]
-        deps: Deps, env: &Env, info: &MessageInfo,
-        params: ReplayParams<M>
-    ) -> Result<crate::data::VerifiedData, AuthError>;
-
-    
-    #[cfg(all(any(feature = "native", feature = "wasm"), feature = "replay", feature = "optimise"))]
-    fn verify(&self,
-        #[cfg(feature = "wasm")]
-        deps: Deps, env: &Env, info: &MessageInfo,
-        params: ReplayParams
-    ) -> Result<crate::data::VerifiedData, AuthError>;
-
-
-
-    #[cfg(all(any(feature = "native", feature = "wasm"), not(feature = "replay")))]
-    fn verify(&self,
-        #[cfg(feature = "wasm")]
-        deps: Deps, env: &Env, info: &MessageInfo,
-    ) -> Result<crate::data::VerifiedData, AuthError>;
- */
    
     fn primary(&self) -> &Self::Credential {
         let creds = self.credentials();
@@ -120,54 +80,5 @@ pub trait CredentialsWrapper  {
             .position(|c| c.name() == name && *id == c.id())
     }
 
-
     
 }
-
-
-
-#[cfg(all(any(feature = "native", feature = "wasm"), feature = "replay"))]
-use saa_crypto::ReplayParams;
-#[cfg(feature = "replay")]
-use saa_crypto::ReplayProtection;
-
-
-#[cfg(feature = "replay")]
-pub trait ReplayProtectionWrapper : CredentialsWrapper 
-    where Self::Credential: ReplayProtection
-{
-
-    #[cfg(all(feature = "optimise", any(feature = "native", feature = "wasm")))]
-    fn protect_reply(
-        &self,
-        #[cfg(feature = "wasm")]
-        env: &saa_common::wasm::Env,
-        params: ReplayParams,
-    ) -> Result<(), saa_common::ReplayError> {
-        #[cfg(not(feature = "wasm"))]
-        ensure!(messages.is_some(), saa_common::ReplayError::MissingData("Messages".into()));
-        self
-            .credentials()
-            .iter()
-            .filter(|c| c.name() != CredentialName::Native)
-            .try_for_each(|c| c.protect_reply(env, params.clone()))
-    }
-
-
-     #[cfg(all(not(feature = "optimise"), any(feature = "native", feature = "wasm")))]
-    fn protect_reply<M: serde::Serialize + core::fmt::Display + Clone>(
-        &self,
-        #[cfg(feature = "wasm")]
-        env: &saa_common::wasm::Env,
-        params: ReplayParams<M>,
-    ) -> Result<(), saa_common::ReplayError> {
-        #[cfg(not(feature = "wasm"))]
-        ensure!(messages.is_some(), saa_common::ReplayError::MissingData("Messages".into()));
-        self.credentials()
-            .iter()
-            .filter(|c| c.name() != CredentialName::Native)
-            .try_for_each(|c| c.protect_reply(env, params.clone()))
-    
-    }
-}
-
