@@ -115,7 +115,7 @@ pub trait ReplayProtection : Verifiable {
 
 // implement for all &Credential whose enum value is ReplayProtection
 impl<T> ReplayProtection for T  
-    where T: Deref<Target : ReplayProtection> + Verifiable + Clone
+    where T: Deref<Target : ReplayProtection> + Verifiable 
 {
 
     fn hash_message(&self, bytes: &[u8]) -> Vec<u8> {
@@ -126,6 +126,7 @@ impl<T> ReplayProtection for T
         self.deref().message_digest()
     }
 
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
     fn protect_reply(
         &self,
         #[cfg(feature = "cosmwasm")]
