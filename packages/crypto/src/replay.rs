@@ -102,6 +102,10 @@ pub trait ReplayProtection : Verifiable {
         let evlp = MsgDataToSign::new(chain_id,addr,msgs,params.nonce);
         let bin = to_bin(&evlp).map_err(|_| ReplayError::ToBin("MsgDataToSign".into()))?;
         
+        println!("Verifying credential: {}, envelope: {:?}", self.name(), evlp);
+        println!("Data hash: {:?}", self.hash_message(&bin));
+        println!("Message digest: {:?}", self.message_digest());
+
         if self.hash_message(&bin) != self.message_digest() {
             let orig_bin : saa_common::Binary = self.message().to_vec().into();
             return Err(ReplayError::InvalidEnvelope(bin.to_string(), orig_bin.to_string()));

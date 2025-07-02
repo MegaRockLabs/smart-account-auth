@@ -91,8 +91,25 @@ impl saa_crypto::ReplayProtection for EthTypedData {
         let address = self.domain.verifying_contract.as_deref().unwrap_or_default();
         ensure!(address.starts_with("0x"), ReplayError::MissingData("verifying_contract".into()));
 
-        let id_bytes = env.block.chain_id.as_bytes();
-        let addr_bytes = env.contract.address.as_bytes();
+        let chain_id = match params.override_id {
+            Some(ref id) => id.clone(),
+            None => {
+                #[cfg(not(feature = "cosmwasm"))]
+                return Err(ReplayError::MissingData("Chain ID".into()));
+                #[cfg(feature = "cosmwasm")]
+                env.block.chain_id.clone()
+            }
+        };
+        let addr = match params.override_address {
+            Some(ref addr) => addr.clone(),
+            None => {
+                #[cfg(not(feature = "cosmwasm"))]
+                return Err(ReplayError::MissingData("Contract Address".into()));
+                #[cfg(feature = "cosmwasm")]
+                env.contract.address.to_string()
+            }
+        };
+
         let msg_str = self.msg_string(params.checking.clone());
         
         // if both message and nonce are included in the signed message,
@@ -114,7 +131,7 @@ impl saa_crypto::ReplayProtection for EthTypedData {
                     .as_ref()
                     .and_then(|i| i.addr_hash.clone())
                     .unwrap_or(hex::encode(
-                        &keccak256(&[id_bytes, addr_bytes].concat())[12..]
+                        &keccak256(&[chain_id.as_bytes(), addr.as_bytes()].concat())[12..]
                     ));
 
                 ensure!(addr_hash == address[2..], ReplayError::AddressMismatch);
@@ -128,8 +145,8 @@ impl saa_crypto::ReplayProtection for EthTypedData {
         // a given message property we inlude them and the nonce
         // in the replay attack hash
         let replay_hash = keccak256(&[
-            id_bytes, 
-            addr_bytes, 
+            chain_id.as_bytes(), 
+            addr.as_bytes(),
             msg_str.as_bytes(), 
             &params.nonce.to_be_bytes()
         ].concat());

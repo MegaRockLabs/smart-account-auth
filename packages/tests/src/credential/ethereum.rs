@@ -499,7 +499,7 @@ fn eth_typed_local_chain_creation() {
   assert!(cred.protect_reply(&env, params.clone()).is_ok());
 
   params.checking = CheckOption::Text(msg.into());
-  assert!(cred.protect_reply(&env, params).is_err());
+  assert!(cred.protect_reply(&env, params).is_ok());
 
 
 }

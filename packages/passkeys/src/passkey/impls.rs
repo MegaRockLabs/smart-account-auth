@@ -47,6 +47,7 @@ impl PasskeyCredential {
     
     #[allow(unused, dead_code)]
     pub(crate) fn data_hash(&self) -> Result<[u8; 32], saa_common::AuthError> {
+        
         Ok(saa_crypto::sha256(&[
             self.authenticator_data.as_slice(), 
             &saa_crypto::sha256(
@@ -60,12 +61,4 @@ impl PasskeyCredential {
 
 
 #[cfg(feature = "replay")]
-impl saa_crypto::ReplayProtection for PasskeyCredential {
-
-    fn message_digest(&self) -> Vec<u8> {
-        match self.data_hash() {
-            Ok(hash) => hash.to_vec(),
-            Err(_) => vec![]
-        }
-    }
-}
+impl saa_crypto::ReplayProtection for PasskeyCredential {}

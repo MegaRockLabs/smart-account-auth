@@ -40,7 +40,7 @@ pub struct MsgDataToVerify {
 
 
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct MsgDataToSign {
     pub chain_id: String,
     pub contract_address: String,

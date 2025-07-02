@@ -52,8 +52,9 @@ fn data_is_verifyable() {
     // Verify the whole wrapper data
     // assert!(data.verify().is_ok(), "Native verify code of Credential Data failed");
     let res = data.verify(
-        deps, &env, &alice_info(), ReplayParams::new(SIGN_NONCE, CheckOption::Messages(messages.clone())
+        deps, &env, &alice_info(), ReplayParams::new(SIGN_NONCE, CheckOption::Messages(messages)
     ));
+    println!("Credential Data verify result: {:?}", res);
     assert!(res.is_ok(), "Cosmwasm verify code of Credential Data failed");
 
 

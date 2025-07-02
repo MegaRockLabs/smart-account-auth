@@ -1,5 +1,5 @@
 #[cfg(feature = "replay")]
-use saa_crypto::{ReplayProtection, ReplayParams};
+use saa_crypto::ReplayProtection;
 #[cfg(feature = "wasm")]
 use saa_common::wasm::{Deps, Env, MessageInfo};
 use saa_common::{AuthError, CredentialId, CredentialName, Identifiable, Vec};
@@ -27,7 +27,7 @@ pub trait CredentialsWrapper  {
         #[cfg(not(feature = "wasm"))]
         sender: String,
         #[cfg(feature = "replay")]
-        params: ReplayParams,
+        params: saa_crypto::ReplayParams,
     ) -> Result<crate::VerifiedData, AuthError>;
 
 
