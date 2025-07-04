@@ -57,7 +57,6 @@ impl crate::CredentialsWrapper for CredentialData {
             #[cfg(feature = "replay")]
              self.credentials()
                 .into_iter()
-                // .filter(|c| c.name() != saa_common::CredentialName::Native)
                 .try_for_each(|c| c.protect_reply(
                     #[cfg(feature = "wasm")]
                     env, 
@@ -67,15 +66,17 @@ impl crate::CredentialsWrapper for CredentialData {
         }
 
         let use_native = self.use_native.unwrap_or_default();
-        // flags describing the cred data batch 
         let mut has_natives = false;
         let mut has_extensions = false;
 
         let mut credentials = Vec::with_capacity(self.credentials.len());
-        // Parsed Addresses
         let mut addresses  = Vec::with_capacity(self.credentials.len());
 
-        self.credentials.clone().into_iter().try_for_each(|c| {
+        self.credentials
+            .clone()
+            .into_iter()
+            .try_for_each(|c| 
+        {
             // if not pre-validated, validating each one by one
             if !pre_val { 
                 c.validate()?; 
@@ -85,23 +86,6 @@ impl crate::CredentialsWrapper for CredentialData {
                     env, 
                     params.clone()
                 )?;
-                /* match c {
-                    #[cfg(feature = "eth_typed_data")]
-                    Credential::EthTypedData(c) => {
-                        c.clone().protect_reply(
-                            #[cfg(feature = "wasm")]
-                            env, 
-                            params.clone()
-                        )?;
-                    }
-                    _ => {
-                        c.protect_reply(
-                            #[cfg(feature = "wasm")]
-                            env, 
-                            params.clone()
-                        )?;
-                    }
-                } */
             }
             // verify siganture and get extracted info like address, name, etc.
             let info = c.verify(

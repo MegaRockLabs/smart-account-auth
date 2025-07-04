@@ -112,7 +112,7 @@ mod std_mod {
         #[error("Invalid primary index: {0}. There are only {1} credentials. (Max index is {1}-1)")]
         IndexOutOfBounds(usize, usize),
 
-        #[error("Client requested to use a native address that called the environment as a credential, but it hasn't been set")]
+        #[error("A native address is requested but not provided")]
         NoNativeCaller,
 
         #[error("One of the main properties of the credential '{0}' are missing")]
@@ -124,15 +124,16 @@ mod std_mod {
         #[error("The credential '{0}' is not valid. Error in property '{1}': {2}")]
         InvalidProperty(CredentialName, String, String),
 
-        #[error("Passed only (native) credentials that aren't validated by the environment. Need to supply at least one verifyable credential")]
+        #[error("Must supply at least one non-native credential to be validated")]
         OnlyCustomNatives,
 
+/*
         #[error("The credential '{0}' was expecting an info object with a property '{1}', however it wasn't provided or was empty")]
         NoInfoProperty(CredentialName, String),
 
-        #[error("The credential '{0}' needs an extended info to be passed. It hasn't been done or there was an error")]
+         #[error("The credential '{0}' needs an extended info to be passed. It hasn't been done or there was an error")]
         NoInfoExt(CredentialName),
-
+ */
         #[cfg(feature = "wasm")]
         #[error("(Std) Serialization error: {0}")]
         Std(#[from] crate::wasm::StdError),
@@ -162,9 +163,6 @@ mod std_mod {
         Signature(CredentialName, String),
 
         #[error("{0}")]
-        Recovery(String),
-
-        #[error("{0}")]
         Generic(String),
 
         #[error("{0}")]
@@ -192,7 +190,7 @@ mod std_mod {
 
     impl From<std::string::FromUtf8Error> for AuthError {
         fn from(err: std::string::FromUtf8Error) -> Self {
-            Self::Recovery(err.to_string())
+            Self::Crypto(err.to_string())
         }
     }
 
@@ -211,13 +209,13 @@ mod std_mod {
 
         impl From<crate::wasm::RecoverPubkeyError> for AuthError {
             fn from(err: crate::wasm::RecoverPubkeyError) -> Self {
-                Self::Recovery(err.to_string())
+                Self::Crypto(err.to_string())
             }
         }
 
         impl From<crate::wasm::StdError> for AuthError {
             fn from(err: crate::wasm::StdError) -> Self {
-                Self::Generic(err.to_string())
+                Self::Crypto(err.to_string())
             }
         }
 
@@ -286,7 +284,6 @@ mod no_std_mod {
         PasskeyChallenge,
         Unauthorized(String),
         Signature(String),
-        Recovery(String),
         Generic(String),
         Convertation(String),
         Crypto(String),

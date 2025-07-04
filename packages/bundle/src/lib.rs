@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+use saa_common::{cfg_mod_pub, cfg_mod_use, mod_use};
 
 
 mod wrapper;
@@ -7,15 +8,11 @@ mod messages;
 mod impls;
 mod traits;
 
-// declare and use *
 mod_use!(data);
 mod_use!(credential);
-// conditional declare and use *
 cfg_mod_pub!("utils", utils);
 cfg_mod_pub!("types", types);
-// declared public if enabled and private otherwise
 cfg_mod_use!("wasm", wasm);
-
 
 
 pub use traits::*;
@@ -23,8 +20,13 @@ pub use saa_schema::{saa_type, saa_derivable};
 pub use saa_common::{types::errors, Expiration};
 pub use errors::AuthError;
 
-use saa_common::{cfg_mod_pub, cfg_mod_use, mod_use};
 
+#[cfg(feature = "session")]
+pub use {messages::sessions::{Session, SessionInfo}, saa_common::SessionError};
+#[cfg(feature = "replay")]
+pub use {saa_crypto::{CheckOption, ReplayParams}};
+#[cfg(feature = "native")]
+pub use saa_crypto as crypto;
 
 pub mod msgs {
     #[cfg(feature = "session")]
@@ -33,18 +35,3 @@ pub mod msgs {
     pub use saa_common::types::signed::{MsgDataToSign, MsgDataToVerify};
     pub use saa_common::types::signed::{SignedDataMsg, AuthPayload};
 }
-
-
-#[cfg(feature = "native")]
-pub use saa_crypto as crypto;
-
-
-#[cfg(feature = "session")]
-pub use { 
-    messages::sessions::{Session, SessionInfo}, saa_common::SessionError
-};
-
-#[cfg(feature = "replay")]
-pub use {
-    saa_crypto::{CheckOption, ReplayParams}
-};

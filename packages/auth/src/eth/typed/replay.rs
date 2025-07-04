@@ -1,5 +1,5 @@
 use {
-    saa_common::{ensure, to_json_binary as to_bin, wasm::Env, ReplayError},
+    saa_common::{ensure, to_json_binary as to_bin, ReplayError},
     saa_crypto::{CheckOption, ReplayParams}
 };
 use crate::eth::EthTypedData;
@@ -83,9 +83,10 @@ impl saa_crypto::ReplayProtection for EthTypedData {
     }
 
 
-    fn protect_reply(
-        &self,
-        env:  &Env,
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
+    fn protect_reply(&self,
+        #[cfg(feature = "cosmwasm")]
+        env:  &saa_common::wasm::Env,
         params: ReplayParams,
     ) -> Result<(), ReplayError> {
         let address = self.domain.verifying_contract.as_deref().unwrap_or_default();
@@ -109,15 +110,12 @@ impl saa_crypto::ReplayProtection for EthTypedData {
                 env.contract.address.to_string()
             }
         };
-
         let msg_str = self.msg_string(params.checking.clone());
-        
+
         // if both message and nonce are included in the signed message,
         // we only use chain_id and address to generate the verifying address
         // passed message property is ignored
         if self.message_property.is_some() {
-            // println!("Message string nothing: {}", self.msg_string(CheckOption::Nothing));
-
             // message aren't included in the envelope.
             // however if passed we are making sure that they
             // are the same as the one in the signed message
@@ -139,7 +137,6 @@ impl saa_crypto::ReplayProtection for EthTypedData {
             }
         }
 
-
         // if the environment passed 'messages' as an argument
         // or the signed message field include a value(s) under
         // a given message property we inlude them and the nonce
@@ -152,7 +149,6 @@ impl saa_crypto::ReplayProtection for EthTypedData {
         ].concat());
 
         let encoded = format!("0x{}", hex::encode(&replay_hash[12..]));
-
         ensure!(encoded == address, ReplayError::InvalidEnvelope(encoded, address.to_string()));
         Ok(())
     }

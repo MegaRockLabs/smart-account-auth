@@ -4,8 +4,6 @@ use bech32::{hrp::Hrp, Bech32};
 
 
 
-
-
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> saa_common::wasm::CanonicalAddr {
     saa_common::wasm::CanonicalAddr::from(ripemd160(&sha256(pubkey))).into()
 }

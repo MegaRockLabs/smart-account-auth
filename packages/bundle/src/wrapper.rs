@@ -31,7 +31,6 @@ pub trait CredentialsWrapper  {
     ) -> Result<crate::VerifiedData, AuthError>;
 
 
-   
     fn primary(&self) -> &Self::Credential {
         let creds = self.credentials();
         if let Some(index) = self.primary_index() {

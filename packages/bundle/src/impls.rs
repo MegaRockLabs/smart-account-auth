@@ -2,9 +2,9 @@
 use super::traits::ReplayProtection;
 use core::ops::Deref;
 
+use saa_common::{CredentialError, Identifiable, ensure};
 use crate::{credential::CredentialName, Credential, CredentialData, caller::Caller};
 use crate::traits::CredentialsWrapper;
-use saa_common::{CredentialError, Identifiable, ensure};
 
 
 impl From<Caller> for Credential {
@@ -27,6 +27,14 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
         Credential::EthPersonalSign(c)
     }
 }
+
+#[cfg(feature = "eth_typed_data")]
+impl From<saa_auth::eth::EthTypedData> for Credential {
+    fn from(c: saa_auth::eth::EthTypedData) -> Self {
+        Credential::EthTypedData(c)
+    }
+}
+
 
 #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {

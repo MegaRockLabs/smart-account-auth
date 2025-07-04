@@ -14,19 +14,6 @@ pub type Eip712Types    =  BTreeMap<String, Vec<Eip712DomainType>>;
 #[non_exhaustive]
 pub struct Eip712MessageProps {}
 
-impl Default for Eip712MessageProps {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl Eip712MessageProps {
-    pub fn get(&self, _key: &str) -> Option<String> {
-        println!("Eip712MessageProps::get called: {:?}", self);
-        None // Placeholder for actual implementation
-    }
-}
-
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[non_exhaustive]

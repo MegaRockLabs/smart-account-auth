@@ -10,7 +10,7 @@ repository  = { workspace = true }
 
 [dev-dependencies]
 smart-account-auth  = { workspace = true, default-features = false, features = [
-    "cosmwasm", "curves",  "utils", "traits", "types", "cosmos_arb_addr", "ethereum", "passkeys"
+    "cosmwasm", "curves",  "utils",  "types", "cosmos_arb_addr", "ethereum", "passkeys"
 ]}
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }

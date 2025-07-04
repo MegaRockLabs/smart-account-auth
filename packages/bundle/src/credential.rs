@@ -44,8 +44,8 @@ pub fn build_credential(
     record      : CredentialRecord,
     msg         : crate::msgs::SignedDataMsg,
     payload     : Option<saa_common::PayloadExtension>,
-) -> Result<Credential, saa_common::CredentialError> {
-    return Err(saa_common::CredentialError::NoneLeft);
+) -> Result<Credential, saa_common::AuthError> {
+    return Err(saa_common::AuthError::generic("Not implemented"));
     /* 
     let (id, info) = record;
     let message = msg.data;

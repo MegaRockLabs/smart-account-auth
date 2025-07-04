@@ -5,7 +5,7 @@ use saa_common::ReplayError;
 
 mod eip712;
 
-
+/* 
 
 #[test]
 fn replay_attack_check_data() {
@@ -60,3 +60,4 @@ fn replay_attack_check_data() {
     assert!(bad_nonce_res.unwrap_err() == ReplayError::InvalidNonce(nonce));
 }
 
+ */

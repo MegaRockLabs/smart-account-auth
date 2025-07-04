@@ -1,5 +1,6 @@
 use cosmwasm_std::Addr;
 use saa_common::Verifiable;
+use serde_json::{from_value, json};
 use smart_account_auth::{types::Eip712Message, CheckOption, EthTypedData, ReplayParams, ReplayProtection};
 
 use crate::utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE};
@@ -11,8 +12,6 @@ mod tests {
     use smart_account_auth::{EthPersonalSign, EthTypedData};
 
     use crate::utils::get_eth_signer;
-
-
 
 
     #[test]
@@ -553,4 +552,84 @@ fn eth_typed_local_chain_action() {
   assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
   assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
 
+
+    let msg : Eip712Message = from_value(json!({
+        "transfer_token": {
+            "collection": "stars1wkwy0xh89ksdgj9hr347dyd2dw7zesmtrue6kfzyml4vdtz6e5ws2hcm9v",
+            "recipient": "stars1yw4xvtc43me9scqfr2jr2gzvcxd3a9y4eq7gaukreugw2yd2f8tssqyvcm",
+            "token_id": "3"
+        }
+    })).unwrap();
+
+
+    let json = serde_json::json!({
+        "signer": get_eth_signer(),
+        "signature": "XnU642YBJ3Sr7Z0K9LGntUHClUkLuxlLt+Iw2e1/L38VzP2Sdiz7TOjPPKeY+cIwzDhaIdWUcowzEaXZ0MaE2hs=",
+        "types": {
+            "EIP712Domain": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                },
+                {
+                    "name": "chainId",
+                    "type": "uint256"
+                },
+                {
+                    "name": "verifyingContract",
+                    "type": "address"
+                }
+            ],
+            "Transfer": [
+                {
+                    "name": "collection",
+                    "type": "string"
+                },
+                {
+                    "name": "recipient",
+                    "type": "string"
+                },
+                {
+                    "name": "token_id",
+                    "type": "string"
+                }
+            ],
+            "AccountAction": [
+                {
+                    "name": "transfer_token",
+                    "type": "Transfer"
+                }
+            ]
+        },
+        "primaryType": "AccountAction",
+        "domain": {
+            "verifyingContract": "0xa28eb59cd37b94146b294eb46d17c0aca3d78f6e",
+            "name": "Token-Bound Accounts",
+            "version": "1.1",
+            "chainId": "0"
+        },
+        "message": msg
+    });
+
+    env.contract.address = Addr::unchecked("stars1yw4xvtc43me9scqfr2jr2gzvcxd3a9y4eq7gaukreugw2yd2f8tssqyvcm");
+
+
+    let cred: EthTypedData = from_value(json).unwrap();
+    assert!(cred.validate().is_ok());
+    assert!(cred.verify(deps.as_ref()).is_ok());
+   
+   let res = cred.protect_reply(&env, 
+    ReplayParams::new(1, CheckOption::Messages(vec![msg.to_string().unwrap()])
+  ));
+    println!("Replay protection result: {:?}", res);
+    assert!(res.is_ok(), "Replay protection failed");
+
+
+
 }
+
+

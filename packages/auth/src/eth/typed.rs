@@ -1,5 +1,5 @@
 
-#[cfg(all(feature = "cosmwasm", feature = "replay"))]
+#[cfg(feature = "replay")]
 mod replay;
 mod eip712;
 mod credential;

@@ -3,10 +3,10 @@ name        = "smart-account-auth"
 description = "Authentication library for smart accounts on various blockchains and their virtual machines"
 edition     = { workspace = true }
 authors     = { workspace = true }
-version     = { workspace = true }
 license     = { workspace = true }
 readme      = { workspace = true }
 repository  = { workspace = true }
+version     = "0.26.2"
 
 
 [lib]
@@ -29,8 +29,8 @@ serde_json              = { workspace = true,  optional = true }
 
 
 [features]
-# ---- Grouped  ----
-default       =   ["std", "replay", "traits",  "majors"      ]
+# ---- Groups  ----
+default       =   ["std", "replay",  "majors"      ]
 majors        =   ["cosmos_arb_addr", "eth_typed_data", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
@@ -48,7 +48,6 @@ cosmos_arb              =   ["saa-auth/cosmos_arb"           ]
 cosmos_arb_addr         =   ["saa-auth/cosmos_arb_addr"      ]
 
 # ---- Environement ----
-
 substrate    =   ["saa-common/substrate" ]
 solana       =   ["saa-schema/solana"    ]
 cosmwasm     =   ["saa-common/cosmwasm", "wasm"]
@@ -65,4 +64,3 @@ replay      =   ["saa-crypto/replay", "saa-auth?/replay", "saa-passkeys?/replay"
 # ---- Extra exports ----
 types       =   ["saa-common/types"]
 utils       =   ["dep:serde_json", "saa-crypto/utils", "saa-auth?/utils"]
-traits      =   []

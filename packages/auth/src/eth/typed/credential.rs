@@ -69,20 +69,20 @@ impl EthTypedData {
     }
 
     fn addr_hash(&self) -> Option<String> {
-        self.cache
-        .as_ref()
-        .and_then(|c| c.addr_hash.clone())
-        .or_else(|| {
-            #[cfg(not(feature = "replay"))]
-            return None;
-            #[cfg(feature = "replay")]
-            if self.message_property.is_some() && self.message.nonce.is_some() {
-                self.domain.verifying_contract
-                .as_ref().map(|addr| addr[2..].to_string())
-            } else {
+         match self.cache {
+            Some(ref c) => c.addr_hash.clone(),
+            None => {
+                #[cfg(not(feature = "replay"))]
+                return None;
+                #[cfg(feature = "replay")]
+                if self.message_property.is_some() && self.message.nonce.is_some() {
+                    return self.domain.verifying_contract
+                        .as_ref()
+                        .map(|addr| addr[2..].to_string());
+                }
                 None
             }
-        })
+         }
     }
 
     fn pre_hash(&self) -> Vec<u8> {
@@ -181,14 +181,10 @@ impl Verifiable for EthTypedData {
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(
-            self.signer.starts_with("0x"), 
-            InvalidProperty(EthTypedName, "signer".into(), "must start with 0x".into())
-        );
-        ensure!(
             self.signature.len() >= 65, 
             InvalidProperty(EthTypedName, "signature".into(), "must be at least 65 bytes".into())
         );
-        ensure!(
+        ensure!(self.signer.starts_with("0x") &&
             hex::decode(&self.signer[2..]).map_err(|_| AuthError::Convertion("hex address".into()))?
             .len() == 20, IncorrectData(EthTypedName)
         );
@@ -196,7 +192,6 @@ impl Verifiable for EthTypedData {
         let primary_str = self.primary_type.as_str();
         let primary_types = self.types.get(primary_str)
             .ok_or_else(|| InvalidProperty(EthTypedName, "primaryType".into(), "must be in 'types'".into()))?;
-
             
         if self.primary_type != "EIP712Domain" {
             primary_types
@@ -246,7 +241,6 @@ impl Verifiable for EthTypedData {
                     InvalidProperty(EthTypedName, "domain.version".into(), "must match cw2".into())
                 );
             }
-        
         }
         let signature = &self.signature.to_vec();
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
