@@ -1,9 +1,9 @@
 use cosmwasm_std::Addr;
-use saa_common::Verifiable;
+use saa_common::{to_json_string, Verifiable};
 use serde_json::{from_value, json};
 use smart_account_auth::{types::Eip712Message, CheckOption, EthTypedData, ReplayParams, ReplayProtection};
 
-use crate::utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE};
+use crate::{types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE}};
 
 mod tests {
 
@@ -218,7 +218,7 @@ mod tests {
             "messages": ["Create TBA account"],
             "nonce": "0",
           },
-          "signer": "0xac03048da6065e584d52007e22c69174cdf2b91a",
+          "signer": get_eth_signer(),
           "signature": "gJvZFFHWWy4RHirV50D1BfLZMZbJo+Oye5uKVFmLNnl0/kQEFOY8kngyEq3fuiMjYBgh1K7h5GrmyxqAZOmAYhs="
         });
         
@@ -542,7 +542,7 @@ fn eth_typed_local_chain_action() {
         "token_id": "1"
       }
     },
-    "signer": "0xac03048da6065e584d52007e22c69174cdf2b91a",
+    "signer": get_eth_signer(),
     "signature": "fRKr9rJAX7EGar40a9PYYfeEY14l2M8NXutilC8K2b5zMD5y+3Jl//yKEyfmaXd5CIBuM0XTqk6Lji2cO4WKnRs="
   });
 
@@ -629,6 +629,110 @@ fn eth_typed_local_chain_action() {
     assert!(res.is_ok(), "Replay protection failed");
 
 
+    let json = serde_json::json!({
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Coin": [
+          { "name": "denom", "type": "string" },
+          { "name": "amount", "type": "uint256" }
+        ],
+        "Send": [
+          { "name": "to_address", "type": "string" },
+          { "name": "amount", "type": "Coin[]" }
+        ],
+        "Delegate": [
+          { "name": "validator", "type": "string" },
+          { "name": "amount", "type": "Coin" }
+        ],
+        "BankMsg": [
+          { "name": "send", "type": "Send" }
+        ],
+        "StakingMsg": [
+          { "name": "delegate", "type": "Delegate" }
+        ],
+        "CosmosMsg": [
+          { "name": "bank", "type": "BankMsg" },
+          { "name": "staking", "type": "StakingMsg" }
+        ],
+        "Execute": [
+          { "name": "msgs", "type": "CosmosMsg[]" }
+        ],
+        "AccountAction": [
+          { "name": "execute", "type": "Execute" }
+        ]
+      },
+      "primaryType": "AccountAction",
+      "domain": {
+        "verifyingContract": "0x73c4d31b9abcfb1d2096b69f4cf5fb2ca5d24635",
+        "name": "Token-Bound Accounts",
+        "version": "1.1",
+        "chainId": "0"
+      },
+      "message": {
+        "execute": {
+          "msgs": [
+            {
+              "bank": {
+                "send": {
+                  "to_address": "stars16z43tjws3vw06ej9v7nrszu0ldsmn0eyjnjpu8",
+                  "amount": [
+                    { "amount": "500000", "denom": "ustars" }
+                  ]
+                }
+              }
+            },
+            {
+              "staking": {
+                "delegate": {
+                  "validator": "starsvaloper1rd6wzd9kwsg4fgdew2xs842rrqsdl3jdlwsapl",
+                  "amount": { "amount": "500000", "denom": "ustars" }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "signer": get_eth_signer(),
+      "signature": "CLPfmTNY8/ATInPCAUyvmqNZlnMTb1nlPLsdjt5lBq9jkN0faQV7H6/Pqf7fiKdZaVdiLnLCiPJqwgKe3VM9Sxw="
+    });
+
+
+    let cred: EthTypedData = serde_json::from_value(json).unwrap();
+    assert!(cred.validate().is_ok(), "Validation failed");
+    assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+
+    // Default algorithm sorts the fields. The verifyn address was calculated with unsorted fields due to Cosmos fields not being sorted by default.
+    assert!(cred.protect_reply(&env, ReplayParams::new(1, CheckOption::Nothing)).is_err(),);
+    
+    let msg = ExecuteMsg::Execute { 
+      msgs: vec![
+        CosmosMsg::Bank(BankMsg::Send { 
+          to_address: "stars16z43tjws3vw06ej9v7nrszu0ldsmn0eyjnjpu8".to_string(),
+          amount: vec![Coin {
+            amount: 500000u128.into(),
+            denom: "ustars".to_string()
+          }]
+        }),
+        CosmosMsg::Staking(StakingMsg::Delegate { 
+          validator: "starsvaloper1rd6wzd9kwsg4fgdew2xs842rrqsdl3jdlwsapl".to_string(),
+          amount: Coin {
+            amount: 500000u128.into(),
+            denom: "ustars".to_string()
+          }
+        })
+      ]
+    };
+
+    let res = cred.protect_reply(&env, 
+        ReplayParams::new(1, CheckOption::Messages(vec![to_json_string(&msg).unwrap()]))
+    );
+    println!("Replay protection result: {:?}", res);
+    assert!(res.is_ok(), "Replay protection failed");
 
 }
 

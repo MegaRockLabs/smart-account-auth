@@ -29,7 +29,6 @@ impl crate::CredentialsWrapper for CredentialData {
     fn primary_index(&self) -> Option<usize> {
         self.primary_index.clone()
     }
-
     
     fn validate(&self, sender: impl AsRef<str> )-> Result<(), AuthError> {
         self.validate_logic(sender.as_ref(), None)?;
@@ -48,12 +47,13 @@ impl crate::CredentialsWrapper for CredentialData {
     ) -> Result<crate::VerifiedData, AuthError> {
         #[cfg(feature = "wasm")]
         let sender = info.sender.clone();
-        #[cfg(feature = "replay")]
-        let nonce = params.nonce;
-        let pre_val = self.pre_validate.unwrap_or_default();
+        let mut pre_val = self.pre_validate.unwrap_or_default();
+        let override_primary = self.override_primary.unwrap_or_default();
+        let data = self.with_native(sender.as_str());
+        let len = data.credentials.len();
 
-        if pre_val { 
-            self.validate(sender.as_ref())?; 
+        if pre_val || len <= 1 { 
+            data.validate(sender.as_ref())?; 
             #[cfg(feature = "replay")]
              self.credentials()
                 .into_iter()
@@ -62,17 +62,15 @@ impl crate::CredentialsWrapper for CredentialData {
                     env, 
                     params.clone()
                 ))?;
-  
+            pre_val = true;
         }
 
-        let use_native = self.use_native.unwrap_or_default();
+        let mut credentials = Vec::with_capacity(len);
+        let mut addresses  = Vec::with_capacity(len);
         let mut has_natives = false;
         let mut has_extensions = false;
 
-        let mut credentials = Vec::with_capacity(self.credentials.len());
-        let mut addresses  = Vec::with_capacity(self.credentials.len());
-
-        self.credentials
+        data.credentials
             .clone()
             .into_iter()
             .try_for_each(|c| 
@@ -102,30 +100,18 @@ impl crate::CredentialsWrapper for CredentialData {
             Ok::<(), AuthError>(())
         })?;
 
-        if use_native && !has_natives {
-            let addr = saa_common::CredentialAddress::Bech32(sender.clone());
-
-            if !addresses.iter().any(|a| a == &addr) {
-                // if no native address was found, we add the sender as a native address
-                // this is useful for cases like `info.sender` in CosmWasm or `caller` in EVM
-                addresses.push(saa_common::CredentialAddress::Bech32(sender.clone()));
-            }
-
-            credentials.push((sender.to_string(), sender.clone().into()));
-        }
-
         // running a post check in any scenario
-        self.validate_logic(sender.as_str(), Some(&credentials))?;
+        data.validate_logic(sender.as_str(), Some(&credentials))?;
     
         Ok(VerifiedData {
+            primary_id: data.primary_id().to_lowercase(),
             credentials,
             addresses,
             has_natives,
             has_extensions,
-            primary_id: self.primary_id().to_lowercase(),
-            override_primary: self.override_primary.unwrap_or_default(),
+            override_primary,
             #[cfg(feature = "replay")]
-            nonce: nonce + 1,
+            nonce: params.nonce + 1,
         })
     }
 

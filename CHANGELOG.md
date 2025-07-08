@@ -8,7 +8,19 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 
 <!-- next-header -->
 
-## [Unreleased]
+
+## [0.26.3] - 2025-07-97
+
+## Fixed
+- `CredentialWrapper` panicking on verify when calling `primary_id`
+- `CredentialWrapper`'s post validation not making sure that the sender is found when `use_native` is set
+
+## Changed
+- `CredentialWrapper`'s method `with_native` now returns a copy of the data instead of changing in place
+
+
+
+## [0.26.2] - 2025-07-97
 
 ## Added
 - Feature tags for including every single one of the supported credentials separately

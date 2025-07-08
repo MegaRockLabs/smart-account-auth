@@ -148,7 +148,7 @@ impl CredentialData {
             ensure!(index < count, CredentialError::IndexOutOfBounds(index, count));
         }
         if self.use_native.unwrap_or_default() {
-            ensure!(native_count > 0, CredentialError::NoNativeCaller);
+            ensure!(native_count > 0 && sender_found, CredentialError::NoNativeCaller);
         }
         // if all are native make sure that at least one is a validated by the node / environment
         if native_count == count {
@@ -180,9 +180,9 @@ impl CredentialData {
     /// or constucting a new wrapper with the Caller credential being injected 
     /// @param cal: native caller of the environment
     /// @return: checked wrapper 
-    pub fn with_native<C: Into::<Caller>> (self, cal: C) -> Self {
+    pub fn with_native<C: Into::<Caller>> (&self, cal: C) -> Self {
         if !self.use_native.unwrap_or(false) {
-            return self
+            return self.clone()
         }
         let caller : Caller = cal.into();
         let mut credentials = self.credentials.clone();
@@ -192,7 +192,7 @@ impl CredentialData {
         };
         Self { 
             credentials, 
-            ..self
+            ..self.clone()
         }
     }
 

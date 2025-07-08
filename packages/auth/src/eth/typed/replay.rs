@@ -136,6 +136,14 @@ impl saa_crypto::ReplayProtection for EthTypedData {
                 return Ok(());
             }
         }
+/* 
+        if let CheckOption::Nothing = params.checking {
+            println!("\nMessage: {:?}", self.message);
+
+            println!("\nChecking replay protection for: chain_id: {}, address: {}\nmessages: {}\nnonce: {}\n",
+                chain_id, addr, msg_str, params.nonce);
+        } */
+
 
         // if the environment passed 'messages' as an argument
         // or the signed message field include a value(s) under
