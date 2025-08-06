@@ -52,14 +52,14 @@ impl Verifiable for Ed25519 {
     ) -> Result<CredentialInfo, AuthError> {
         #[cfg(not(feature = "cosmwasm"))]
         let res = saa_crypto::ed25519_verify(
-            &saa_crypto::hashes::sha256(&self.message), 
+            &self.message, 
             &self.signature, 
             &self.pubkey
         )?;
         #[cfg(feature = "cosmwasm")]
         let res = deps.api.ed25519_verify(
-            &saa_crypto::hashes::sha256(&self.message), 
-            &self.signature, 
+            &self.message,
+            &self.signature,
             &self.pubkey
         )?;
         ensure!(res, AuthError::Signature(Name, self.id()));

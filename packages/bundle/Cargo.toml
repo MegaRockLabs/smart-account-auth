@@ -6,7 +6,7 @@ authors     = { workspace = true }
 license     = { workspace = true }
 readme      = { workspace = true }
 repository  = { workspace = true }
-version     = "0.26.2"
+version     = "0.26.3"
 
 
 [lib]
@@ -30,8 +30,8 @@ serde_json              = { workspace = true,  optional = true }
 
 [features]
 # ---- Groups  ----
-default       =   ["std", "replay",  "majors"      ]
-majors        =   ["cosmos_arb_addr", "eth_typed_data", "passkeys", "ed25519"]
+default       =   ["std", "replay",  "majors"]
+majors        =   ["cosmos_arb", "eth_personal", "passkeys", "ed25519"]
 curves        =   ["secp256r1", "secp256k1", "ed25519"]
 ethereum      =   ["eth_personal", "eth_typed_data"]
 

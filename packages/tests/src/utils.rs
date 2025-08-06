@@ -85,8 +85,6 @@ pub fn base_credentials() -> Vec<Credential> {
 }
 
 
-
-
 pub fn get_mock_deps() -> OwnedDeps<MockStorage, MockApi, MockQuerier, Empty>  {
     let mut deps = mock_dependencies();
     deps.api = MockApi::default().with_prefix("stars");

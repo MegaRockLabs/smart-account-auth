@@ -1,7 +1,6 @@
 use std::ops::Deref;
 use saa_common::{Verifiable, String};
 
-
 #[cfg(any(feature = "cosmwasm", feature = "native"))]
 use saa_common::{
     ReplayError, MsgDataToSign, CredentialName,
