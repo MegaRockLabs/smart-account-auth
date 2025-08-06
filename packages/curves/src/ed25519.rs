@@ -62,6 +62,7 @@ impl Verifiable for Ed25519 {
             &self.signature,
             &self.pubkey
         )?;
+        
         ensure!(res, AuthError::Signature(Name, self.id()));
         Ok(CredentialInfo {
             extension: None,

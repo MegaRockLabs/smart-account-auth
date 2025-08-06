@@ -5,7 +5,7 @@ pub use super::messages::actions::{ActionDerivation, AllQueryDerivation};
 #[cfg(feature = "passkeys")]
 pub use saa_passkeys::{ClientData, ClientDataOtherKeys, PasskeyInfo, PasskeyPayload};
 #[cfg(feature = "eth_typed_data")]
-pub use saa_auth::eth::{
+pub use saa_auth::ethereum::{
     Eip712Message, Eip712Types, Eip712Domain, 
     EthTypedInfo, EthTypedPayload 
 };

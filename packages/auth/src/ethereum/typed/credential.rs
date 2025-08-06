@@ -19,7 +19,7 @@ use saa_common::CredentialError::{InvalidProperty, IncorrectData};
 use CredentialName::EthTypedData as EthTypedName;
 
 
-use crate::eth::{typed::eip712::encode_data, utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed}};
+use crate::ethereum::{typed::eip712::encode_data, utils::{encode_address, encode_u64, hash_eth_typed_data, prehash_eth_typed}};
 
 
 #[cfg_attr(not(feature = "cosmwasm"), derive(serde::Serialize, serde::Deserialize))]
@@ -247,13 +247,13 @@ impl Verifiable for EthTypedData {
         let key_data = saa_crypto::secp256k1_recover_pubkey(
             &self.encode_eip712(Some(pre_hash.clone()))?, 
             &signature[..64], 
-            crate::eth::utils::get_recovery_param(signature[64])?
+            crate::ethereum::utils::get_recovery_param(signature[64])?
         )?;
         #[cfg(feature = "cosmwasm")]
         let key_data = deps.api.secp256k1_recover_pubkey(
             &self.encode_eip712(Some(pre_hash.clone()))?, 
             &signature[..64], 
-            crate::eth::utils::get_recovery_param(signature[64])?
+            crate::ethereum::utils::get_recovery_param(signature[64])?
         )?;
         let key_hash = saa_crypto::hashes::keccak256(&key_data[1..]);
 

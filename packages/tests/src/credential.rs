@@ -2,6 +2,7 @@ mod ethereum;
 mod passkey;
 mod cosmos;
 mod ed25519;
+mod secp256k1;
 use std::str::FromStr;
 
 use crate::utils::{get_cosmos_arbitrary, get_eth_personal, get_passkey};

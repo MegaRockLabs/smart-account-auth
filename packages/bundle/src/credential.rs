@@ -1,8 +1,8 @@
 
 #[cfg(feature = "eth_personal")]
-pub use saa_auth::eth::EthPersonalSign;
+pub use saa_auth::ethereum::EthPersonalSign;
 #[cfg(feature = "eth_typed_data")]
-pub use saa_auth::eth::{Eip712Types, EthTypedData};
+pub use saa_auth::ethereum::{Eip712Types, EthTypedData};
 #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 pub use saa_auth::cosmos::CosmosArbitrary;
 #[cfg(feature = "passkeys")]

@@ -22,15 +22,15 @@ impl From<&str> for Credential {
 
 
 #[cfg(feature = "eth_personal")]
-impl From<saa_auth::eth::EthPersonalSign> for Credential {
-    fn from(c: saa_auth::eth::EthPersonalSign) -> Self {
+impl From<saa_auth::ethereum::EthPersonalSign> for Credential {
+    fn from(c: saa_auth::ethereum::EthPersonalSign) -> Self {
         Credential::EthPersonalSign(c)
     }
 }
 
 #[cfg(feature = "eth_typed_data")]
-impl From<saa_auth::eth::EthTypedData> for Credential {
-    fn from(c: saa_auth::eth::EthTypedData) -> Self {
+impl From<saa_auth::ethereum::EthTypedData> for Credential {
+    fn from(c: saa_auth::ethereum::EthTypedData) -> Self {
         Credential::EthTypedData(c)
     }
 }

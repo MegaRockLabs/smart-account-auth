@@ -10,12 +10,16 @@ repository  = { workspace = true }
 
 [dev-dependencies]
 smart-account-auth  = { workspace = true, default-features = false, features = [
-    "cosmwasm", "curves",  "utils",  "types", "cosmos_arb_addr", "ethereum", "passkeys"
+    "cosmwasm", "curves",  "utils",  "types", "cosmos_arb_addr", "ethereum", "passkeys", "replay", "cosmos_arb"
 ]}
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 strum_macros        = { workspace = true }
 strum               = { workspace = true }
+atp-chain-utils = "0.1.1"
+bitcoin-bosd = { version = "0.4.2", features = ["address", "arbitrary"] }
+bitcoin =  { version = "0.32.6", features = ["secp-recovery"] }
+b58 = "0.1.2"
 
 serde_json          = { version = "1.0.140" }
 cosmwasm-std        = { version = "2.2.2", default-features = false }

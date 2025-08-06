@@ -91,6 +91,6 @@ impl Verifiable for EthPersonalSign {
 #[cfg(feature = "replay")]
 impl saa_crypto::ReplayProtection for EthPersonalSign {
     fn hash_message(&self, bytes: &[u8]) -> Vec<u8> {
-        crate::eth::utils::hash_eth_personal(&bytes).to_vec()
+        crate::ethereum::utils::hash_eth_personal(&bytes).to_vec()
     }
 }

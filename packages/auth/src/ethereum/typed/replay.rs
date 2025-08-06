@@ -2,7 +2,7 @@ use {
     saa_common::{ensure, to_json_binary as to_bin, ReplayError},
     saa_crypto::{CheckOption, ReplayParams}
 };
-use crate::eth::EthTypedData;
+use crate::ethereum::EthTypedData;
 use saa_crypto::hashes::keccak256;
 use serde_json::Value;
 
