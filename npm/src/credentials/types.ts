@@ -17,11 +17,20 @@ export interface EthPersonalSign {
     signer: string;
 }
 
+export interface EthTypedData {
+    //message: string;
+    signature: string;
+    signer: string;
+    typed_data: any;
+}
+
+
 export interface CosmosArbitrary {
     message: string;
     pubkey: string;
     signature: string;
-    hrp : string
+    address?: string;
+    hrp? : string
 }
 
 export interface ClientData {
@@ -132,9 +141,10 @@ export interface PasskeyInfo {
 
 
 export type Credential = 
-  { eth_personal_sign: EthPersonalSign } | 
-  { cosmos_arbitrary: CosmosArbitrary } |
-  { passkey: PasskeyCredential };
+{ eth_personal_sign: EthPersonalSign } | 
+{ eth_typed_data: EthTypedData } |
+{ cosmos_arbitrary: CosmosArbitrary } |
+{ passkey: PasskeyCredential };
 
 
 

@@ -1,7 +1,6 @@
 
 use cosmwasm_std::Uint128;
-use cw_auths::{session_action, session_query};
-use saa_schema::saa_type;
+use saa_schema::{saa_derivable, saa_type};
 
 
 #[saa_type]
@@ -36,9 +35,9 @@ pub enum CosmosMsg {
 
 
 
-#[session_action]
+#[saa_derivable]
 pub enum ExecuteMsg {
-
+    #[strum(to_string = "{{ \"execute\": {{ \"msgs\": {msgs:?} }} }}")]
     Execute { 
         msgs: Vec<CosmosMsg> 
     },
@@ -49,35 +48,15 @@ pub enum ExecuteMsg {
         msg: Option<CosmosMsg>
     },
 
-    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{id}\",\"to\":\"{to}\"}}}}")]
+    #[strum(to_string = "{{\"transfer_token\":{{\"id\":\"{token_id}\",\"to\":\"{recipient}\"}}}}")]
     TransferToken {
-        id: String,
-        to: String,
+        collection: String,
+        recipient: String,
+        token_id: String,
     },
-
 
     #[strum(to_string = "freeeeeze")]
     Freeze {},
 
-    
     Purge {},
-}
-
-
-
-#[session_query(ExecuteMsg)]
-pub enum QueryMsg {
-
-    #[returns(Vec<Coin>)]
-    GetBalance {},
-
-    #[returns(String)]
-    REAllyLongAnnoyingQuery(String),
-
-
-    #[returns(Option<String>)]
-    StrumQuery {
-        #[strum(to_string = "{{ \"get_balance\": {{ \"address\": \"{address}\" }} }}")]
-        address: String,
-    },
 }

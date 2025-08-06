@@ -1,56 +1,64 @@
 use core::ops::Deref;
-use crate::{AuthError, CredentialId};
+use std::borrow::Cow;
+
+use crate::{AuthError, CredentialId, CredentialName};
 
 
-pub trait Verifiable  {
-
+pub trait Identifiable {
     fn id(&self) -> CredentialId;
-
-    fn hrp(&self) -> Option<String> {
-        None
-    }
-
-    fn validate(&self) -> Result<(), AuthError>;
-
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError>;
-
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self,  _:  &dyn crate::wasm::Api) -> Result<(), AuthError>  {
-        #[cfg(feature = "native")]
-        {
-            self.verify()?;
-            return Ok(());
-        }
-        #[cfg(not(feature = "native"))]
-        Err(AuthError::generic("Not implemented"))
-    }
+    fn name(&self) -> CredentialName;
 }
 
 
 
-impl<T: Deref<Target = dyn Verifiable>> Verifiable for T {
-    
+pub trait Verifiable : Identifiable  {
+    fn message(&self) -> Cow<[u8]>;
+    fn validate(&self) -> Result<(), AuthError>;
+    #[cfg(any(feature = "native", feature = "wasm"))]  
+    fn verify(&self,
+        #[cfg(feature = "wasm")]
+        deps: crate::wasm::Deps
+    ) -> Result<crate::CredentialInfo, AuthError>;
+}
+
+
+impl<T: Deref<Target = dyn Identifiable>> Identifiable for T {
     fn id(&self) -> CredentialId {
         self.deref().id()
     }
 
-    fn hrp(&self) -> Option<String> {
-        self.deref().hrp()
+    fn name(&self) -> CredentialName {
+        self.deref().name()
     }
+}
 
+
+
+impl<T: Deref> Verifiable for T 
+    where 
+        T: Identifiable,
+        T::Target: Identifiable + Verifiable
+{
+    
     fn validate(&self) -> Result<(), AuthError> {
         self.deref().validate()
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        self.deref().verify()
+    #[cfg(any(feature = "native", feature = "wasm"))]
+    fn verify(&self,
+        #[cfg(feature = "wasm")]
+        deps: crate::wasm::Deps
+    ) -> Result<crate::CredentialInfo, AuthError> {
+        self.deref().verify(
+            #[cfg(feature = "wasm")]
+            deps
+        )
     }
-
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self, api: &dyn crate::wasm::Api) -> Result<(), AuthError> {
-        self.deref().verify_cosmwasm(api)
+    
+    fn message(&self) -> Cow<[u8]> {
+        self.deref().message()
     }
 }
+
+
 

@@ -1,11 +1,9 @@
-use saa_common::{AuthError, Binary, CredentialId, String, Verifiable, ensure};
 use saa_schema::saa_type;
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, Identifiable, String, Verifiable};
+
 
 use super::client_data::ClientData;
-
-// expand later after adding implementations for other platforms
-
-
+use CredentialName::Passkey as PasskeyName;
 
 
 #[saa_type]
@@ -27,92 +25,70 @@ pub struct PasskeyCredential {
 
 
 
-#[saa_type]
-pub struct PasskeyInfo {
-    /// webauthn Authenticator data
-    pub authenticator_data: Binary,
-    /// Origin of the client where the passkey was created
-    pub origin: String,
-    /// Secpk256r1 Public key used for verification 
-    pub pubkey: Binary,
-    // Flag to allow cross origin requests
-    #[cfg_attr(feature = "cosmwasm", serde(rename = "crossOrigin"))]
-    pub cross_origin: bool,
-    /// Optional user handle reserved for future use
-    pub user_handle: Option<String>,
-}
+impl Identifiable for PasskeyCredential {
 
-
-
-
-
-impl PasskeyCredential {
-    
-    pub fn base64_message_bytes(&self) -> Result<Vec<u8>, AuthError> {
-        let base64_str = super::utils::url_to_base64(&self.client_data.challenge);
-        let binary = Binary::from_base64(&base64_str)
-            .map_err(|_| AuthError::PasskeyChallenge)?;
-        Ok(binary.to_vec())
+    fn id(&self) -> saa_common::CredentialId {
+        self.id.to_lowercase()
     }
 
-    #[cfg(any(feature = "cosmwasm", feature = "native"))]
-    fn message_digest(&self) -> Result<Vec<u8>, AuthError> {
-        let client_data_hash = saa_crypto::sha256(&saa_common::to_json_binary(&self.client_data)?);
-        let final_digest = saa_crypto::sha256(
-            &[self.authenticator_data.as_slice(), client_data_hash.as_slice()].concat()
-        );
-        Ok(final_digest)
+    fn name(&self) -> saa_common::CredentialName {
+        PasskeyName
     }
 }
+
+
+
+
+
 
 impl Verifiable for PasskeyCredential {
 
-    fn id(&self) -> CredentialId {
-        self.id.clone()
+    // transfroming from base64 url to regular base64 so that we can deserialize using `from_json` etc.
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        match Binary::from_base64(&super::utils::url_to_base64(&self.client_data.challenge)) {
+            Ok(bytes) => std::borrow::Cow::Owned(bytes.to_vec()),
+            Err(_) => std::borrow::Cow::Borrowed(&[])
+        }
     }
 
     fn validate(&self) -> Result<(), AuthError> {
-        ensure!(self.authenticator_data.len() >= 37, AuthError::generic("Invalid authenticator data"));
-        ensure!(self.signature.len() > 0, AuthError::generic("Empty signature"));
-        ensure!(self.client_data.challenge.len() > 0, AuthError::generic("Empty challenge"));
-        ensure!(self.client_data.ty == "webauthn.get", AuthError::generic("Invalid client data type"));
-        ensure!(self.pubkey.is_some(), AuthError::generic("Missing public key"));
-        self.base64_message_bytes()?;
-        Ok(())
-    }
-
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        let res = saa_crypto::secp256r1_verify(
-            &self.message_digest()?,
-            &self.signature,
-            self.pubkey.as_ref().unwrap()
-        )?;
-        ensure!(res, AuthError::generic("Passkey Signature verification failed"));
+        ensure!(
+            self.signature.len() > 0 &&
+            self.authenticator_data.len() > 0 &&
+            self.client_data.challenge.len() > 0 &&
+            self.message().len() > 0, CredentialError::MissingData(PasskeyName)
+        );
+        ensure!(self.authenticator_data.len() >= 37, CredentialError::InvalidProperty(
+            PasskeyName, "authenticator_data".to_string(), "must be at least 37 bytes long".to_string()
+        ));
+        ensure!(self.client_data.ty == "webauthn.get", CredentialError::InvalidProperty(
+            PasskeyName, "client_data.type".to_string(), "must be 'webauthn.get'".to_string()
+        ));
         Ok(())
     }
 
 
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(
-        &self,  
-        #[allow(unused_variables)]    
-        api : &dyn saa_common::wasm::Api
-    ) -> Result<(), AuthError> {
-        #[cfg(feature = "no_api_r1")]
+    #[allow(unused_variables)]
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        let res = true;
+        #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
-            &self.message_digest()?,
+            &self.data_hash()?,
             &self.signature,
             self.pubkey.as_ref().unwrap()
         )?;
-        #[cfg(not(feature = "no_api_r1"))]
-        let res = api.secp256r1_verify(
-            &self.message_digest()?,
+        #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
+        let res = deps.api.secp256r1_verify(
+            &self.data_hash()?,
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature("Passkey Signature verification failed".to_string()));
-        Ok(())
+        ensure!(res, AuthError::Signature(PasskeyName, self.id()));
+        Ok(CredentialInfo { extension: None, address: None, hrp: None, name: PasskeyName })
     }
 
 }

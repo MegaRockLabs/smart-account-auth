@@ -1,7 +1,10 @@
+#[cfg(feature = "replay")]
+use super::traits::ReplayProtection;
 use core::ops::Deref;
-use strum::IntoDiscriminant;
-use saa_common::{ensure, AuthError, Binary, CredentialId, Verifiable};
-use crate::{credential::CredentialName, Credential, CredentialData, CredentialInfo, caller::Caller};
+
+use saa_common::{CredentialError, Identifiable, ensure};
+use crate::{credential::CredentialName, Credential, CredentialData, caller::Caller};
+use crate::traits::CredentialsWrapper;
 
 
 impl From<Caller> for Credential {
@@ -10,6 +13,14 @@ impl From<Caller> for Credential {
     }
 }
 
+
+impl From<&str> for Credential {
+    fn from(s: &str) -> Self {
+        Caller::from(s).into()
+    }
+}
+
+
 #[cfg(feature = "eth_personal")]
 impl From<saa_auth::eth::EthPersonalSign> for Credential {
     fn from(c: saa_auth::eth::EthPersonalSign) -> Self {
@@ -17,7 +28,15 @@ impl From<saa_auth::eth::EthPersonalSign> for Credential {
     }
 }
 
-#[cfg(feature = "cosmos")]
+#[cfg(feature = "eth_typed_data")]
+impl From<saa_auth::eth::EthTypedData> for Credential {
+    fn from(c: saa_auth::eth::EthTypedData) -> Self {
+        Credential::EthTypedData(c)
+    }
+}
+
+
+#[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
 impl From<saa_auth::cosmos::CosmosArbitrary> for Credential {
     fn from(c: saa_auth::cosmos::CosmosArbitrary) -> Self {
         Credential::CosmosArbitrary(c)
@@ -41,31 +60,47 @@ impl From<saa_curves::secp256k1::Secp256k1> for Credential {
 }
 
 #[cfg(feature = "secp256r1")]
-impl From<saa_passkeys::secp256r1::Secp256r1> for Credential {
-    fn from(c: saa_passkeys::secp256r1::Secp256r1) -> Self {
+impl From<saa_passkeys::Secp256r1> for Credential {
+    fn from(c: saa_passkeys::Secp256r1) -> Self {
         Credential::Secp256r1(c)
     }
 }
 
 
 #[cfg(feature = "passkeys")]
-impl From<saa_passkeys::passkey::PasskeyCredential> for Credential {
-    fn from(c: saa_passkeys::passkey::PasskeyCredential) -> Self {
+impl From<saa_passkeys::PasskeyCredential> for Credential {
+    fn from(c: saa_passkeys::PasskeyCredential) -> Self {
         Credential::Passkey(c)
     }
 }
 
 
 
+impl Identifiable for Credential {
+    fn id(&self) -> String {
+        self.deref().id()
+    }
+    fn name(&self) -> CredentialName {
+        self.deref().name()
+    }
+}
+
+
 impl Deref for Credential {
-    type Target = dyn Verifiable;
+    #[cfg(not(feature = "replay"))]
+    type Target = dyn saa_common::Verifiable;
+    #[cfg(feature = "replay")]
+    type Target = dyn ReplayProtection;
+
 
     fn deref(&self) -> &Self::Target {
         match self {
             Credential::Native(c) => c,
             #[cfg(feature = "eth_personal")]
             Credential::EthPersonalSign(c) => c,
-            #[cfg(feature = "cosmos")]
+            #[cfg(feature = "eth_typed_data")]
+            Credential::EthTypedData(c) => c,
+            #[cfg(any(feature = "cosmos_arb", feature = "cosmos_arb_addr"))]
             Credential::CosmosArbitrary(c) => c,
             #[cfg(feature = "passkeys")]
             Credential::Passkey(c) => c,
@@ -80,166 +115,87 @@ impl Deref for Credential {
 }
 
 
-impl Credential {
-
-    pub fn name(&self) -> CredentialName {
-        self.discriminant()
-    }
-
-
-    pub fn message(&self) -> Vec<u8> {
-        match self {
-            Credential::Native(_) => Vec::new(),
-            #[cfg(feature = "eth_personal")]
-            Credential::EthPersonalSign(c) => c.message.to_vec(),
-            #[cfg(feature = "cosmos")]
-            Credential::CosmosArbitrary(c) => c.message.to_vec(),
-            #[cfg(feature = "ed25519")]
-            Credential::Ed25519(c) => c.message.to_vec(),
-            #[cfg(feature = "secp256k1")]
-            Credential::Secp256k1(c) => c.message.to_vec(),
-            #[cfg(feature = "secp256r1")]
-            Credential::Secp256r1(c) => c.message.to_vec(),
-            #[cfg(feature = "passkeys")]
-            Credential::Passkey(c) => c.base64_message_bytes().unwrap(),
-        }
-    }
-
-    pub fn extension(&self) -> Result<Option<Binary>, AuthError> {
-        #[cfg(all(feature = "passkeys", feature = "wasm"))]
-        if let Credential::Passkey(c) = self {
-            use saa_passkeys::passkey::*;
-            return Ok(Some(saa_common::to_json_binary(&PasskeyInfo {
-                origin: c.client_data.origin.clone(),
-                cross_origin: c.client_data.cross_origin.clone(),
-                pubkey: c.pubkey.clone().unwrap_or_default(),
-                user_handle: c.user_handle.clone(),
-                authenticator_data: c.authenticator_data.clone(),
-            })?));
-        }
-        Ok(None)
-    }
-
-    pub fn info(&self) -> CredentialInfo {
-        CredentialInfo {
-            name: self.name(),
-            hrp: self.hrp(),
-            extension: self.extension().ok().flatten()
-        }
-    }
-
-    
-}
-
-
-
-
-#[cfg(feature = "traits")]
-use crate::CredentialsWrapper;
-
-#[cfg(feature = "traits")]
-impl crate::CredentialsWrapper for CredentialData {
-    type Credential = Credential;
-
-    fn credentials(&self) -> &Vec<Self::Credential> {
-        &self.credentials
-    }
-}
-
-
-
-impl Verifiable for CredentialData {
-
-    fn id(&self) -> CredentialId {
-        #[cfg(feature = "traits")]
-        return self.primary_id();
-        #[cfg(not(feature = "traits"))]
-        self.credentials.first().unwrap().id().clone()
-
-    }
-
-    fn validate(&self) -> Result<(), AuthError> {
-        let creds = &self.credentials;
-        let using_caller = self.use_native.unwrap_or(false);
-
-        let (min_len, max_len) = if using_caller {
-            let count = creds
-                .iter()
-                .filter(|c| c.discriminant() == CredentialName::Native)
-                .count();
-            ensure!(count == 1, AuthError::generic("Native caller is set but wasn't passed by environment"));
-            (0, 256)
-        } else {
-            (1, 255)
-        };
-    
-        if creds.len() < min_len {
-            return Err(AuthError::NoCredentials);
-        } else if creds.len() > max_len {
-            return Err(AuthError::Generic(format!("Too many credentials: {}", creds.len())));
-        }
-
-        if let Some(index) = self.primary_index {
-            let len = creds.len() + if using_caller { 1 } else { 0 };
-            ensure!((index as usize) < len, AuthError::generic(
-                format!("Primary index {} is out of bounds", index)
-            ));
-        }
-        creds.iter().try_for_each(|c| c.validate())
-    }
-
-
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        self.credentials.iter().try_for_each(|c| c.verify())
-    }
-
-
-    #[cfg(feature = "wasm")]
-    fn verify_cosmwasm(&self,  api : &dyn saa_common::wasm::Api) -> Result<(), AuthError>  {
-        self.credentials.iter().try_for_each(|c| c.verify_cosmwasm(api))
-    }
-
-}
-
 
 
 
 
 impl CredentialData {
-
-    fn cred_index(&self, name: CredentialName, id: Option<CredentialId>) -> Option<usize> {
-        self.credentials.iter()
-            .position(|c| c.name() == name && 
-                    id.as_ref()
-                        .map(|i| c.id() == *i)
-                        .unwrap_or(true)
+    /// Pre-validate without params using self.credentials() or post-validate using verified records
+    pub(crate) fn validate_logic(
+        &self, sender: &str, 
+        records: Option<&Vec<crate::credential::CredentialRecord>>
+    ) -> Result<(), CredentialError> {
+        // self.credentials for pre-validated and parsed recprds for post-validation
+        let iter: Box<dyn Iterator<Item = (String, CredentialName)> + '_> = match records {
+            Some(
+                records
+            ) => Box::new(records.iter().map(|(id, info)| (id.clone(), info.name.clone()))),
+            None => Box::new(self.credentials.iter().map(|c| (c.id(), c.name()))),
+        };
+        // count of credentials, native credentials and whether the sender is found
+        let (count, native_count, sender_found) = iter.fold(
+            (0, 0, false),
+            |(count, native_count, sender_found), (id, name)| (
+                    count + 1, 
+                    if name == CredentialName::Native { native_count + 1 } else { native_count }, 
+                    sender_found || id == sender
             )
+        );
+        ensure!(count > 0, CredentialError::NoCredentials);
+        ensure!(count <= 255, CredentialError::TooManyCredentials(count));
+
+        if let Some(index) = self.primary_index {
+            ensure!(index < count, CredentialError::IndexOutOfBounds(index, count));
+        }
+        if self.use_native.unwrap_or_default() {
+            ensure!(native_count > 0 && sender_found, CredentialError::NoNativeCaller);
+        }
+        // if all are native make sure that at least one is a validated by the node / environment
+        if native_count == count {
+            ensure!(sender_found, CredentialError::OnlyCustomNatives);
+        }
+        Ok(())
+    }
+}
+
+
+
+impl CredentialData {
+
+    #[cfg(feature = "utils")]
+    pub fn new(
+        credentials: Vec<Credential>,
+        use_native: Option<bool>,
+    ) -> Self {
+        Self {
+            credentials,
+            use_native,
+            primary_index: None,
+            pre_validate: None,
+            override_primary: None,
+        }
     }
 
-    /// Check whether with_caller flag is set and then ether ignore the arguemnt and return a copy
-    /// or constuct a new wrapper with the credential being set
+    /// Check whether with_caller flag is set and then ether ignore the arguemnt returning self
+    /// or constucting a new wrapper with the Caller credential being injected 
     /// @param cal: native caller of the environment
-    /// @return: checked wrapper and a flag indicating whether the copy deviated from the original Self
+    /// @return: checked wrapper 
     pub fn with_native<C: Into::<Caller>> (&self, cal: C) -> Self {
         if !self.use_native.unwrap_or(false) {
             return self.clone()
         }
         let caller : Caller = cal.into();
         let mut credentials = self.credentials.clone();
-
-        match self.cred_index(CredentialName::Native, Some(caller.0.clone())) {
+        match self.cred_index( &caller.0, CredentialName::Native) {
             Some(index) => credentials[index] = caller.into(),
             None => credentials.push(caller.into())
         };
         Self { 
             credentials, 
-            use_native: Some(true),
-            primary_index: self.primary_index
+            ..self.clone()
         }
     }
 
 
 }
-
 

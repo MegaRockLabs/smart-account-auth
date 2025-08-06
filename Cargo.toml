@@ -17,7 +17,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.25.0"
+version         = "0.26.9"
 edition         = "2021"
 readme          = "README.md"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
@@ -31,22 +31,23 @@ bech32                  = { version = "0.11.0", default-features = false, featur
 base64                  = { version = "0.22.1", default-features = false, features = ["alloc"] }
 semver                  = { version = "1.0.26", default-features = false }
 thiserror               = { version = "2.0.12", default-features = false }
-
-smart-account-auth      = { version = "0.25.0", path = "packages/bundle" }
-saa-auth                = { version = "0.25.0", path = "packages/auth" }
-saa-common              = { version = "0.25.1", path = "packages/common", default-features = false }
-saa-schema              = { version = "0.25.1", path = "packages/schema" }
-saa-curves              = { version = "0.25.0", path = "packages/curves" }
-saa-passkeys            = { version = "0.25.0", path = "packages/passkeys" }
-saa-crypto              = { version = "0.25.0", path = "packages/crypto" }
-
-saa-proto-core          = { version = "0.25.3", path = "packages/macros-proto/core" }
-saa-proto-wasm          = { version = "0.25.2", path = "packages/macros-proto/wasm" }
-saa-proto-solana        = { version = "0.25.0", path = "packages/macros-proto/solana" }
-saa-proto-substrate     = { version = "0.25.0", path = "packages/macros-proto/substrate" }
-
 cosmwasm-schema         = { version = "1.5.11", default-features = false }
 cosmwasm-crypto         = { version = "2.2.2",  default-features = false }
+
+
+saa-proto-core          = { version = "0.26.0", path = "packages/macros-proto/core" }
+saa-proto-wasm          = { version = "0.26.0", path = "packages/macros-proto/wasm" }
+saa-proto-solana        = { version = "0.26.0", path = "packages/macros-proto/solana" }
+saa-proto-substrate     = { version = "0.26.0", path = "packages/macros-proto/substrate" }
+
+saa-schema              = { version = "0.26.0", path = "packages/schema" }
+saa-common              = { version = "0.26.8", path = "packages/common", default-features = false }
+saa-crypto              = { version = "0.26.7", path = "packages/crypto" }
+saa-auth                = { version = "0.26.8", path = "packages/auth" }
+saa-curves              = { version = "0.26.5", path = "packages/curves" }
+saa-passkeys            = { version = "0.26.5", path = "packages/passkeys" }
+smart-account-auth      = { version = "0.26.3", path = "packages/bundle", default-features = false }
+
 
 
 # Substrate
@@ -61,12 +62,10 @@ borsh               = { version = "1.5.7", default-features = false, features = 
 
 strum               = { version = "0.27.1" }
 strum_macros        = { version = "0.27.1" }
-serde-json-wasm     = { version = "1.0.1",   default-features = false }
-serde_json          = { version = "1.0.140", default-features = false }
+serde-json-wasm     = { version = "1.0.1",  default-features = false }
+serde_json          = { version = "0.7.0",  default-features = false, package = "serde-cw-value" }
 
 enum_dispatch       = { version = "0.3.13" } 
-ethers-core		    = { version = "2.0.14", default-features = false }
-
 
 [profile.release.package.smart-account-auth]
 codegen-units = 1

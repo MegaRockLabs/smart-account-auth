@@ -4,8 +4,6 @@ use super::timestamp::Timestamp;
 use crate::AuthError;
 
 
-
-
 #[saa_type]
 #[derive(Display)]
 pub enum Expiration {
@@ -27,7 +25,6 @@ impl Default for Expiration {
         Expiration::Never {}
     }
 }
-
 
 
 /// Duration is a delta of time. You can add it to a BlockInfo or Expiration to

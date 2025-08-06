@@ -1,11 +1,11 @@
 mod ethereum;
 mod passkey;
-
+mod cosmos;
+mod ed25519;
 use std::str::FromStr;
 
 use crate::utils::{get_cosmos_arbitrary, get_eth_personal, get_passkey};
-use cw_auths::saa_types::{Caller, Ed25519, Credential, CredentialName};
-use strum::IntoDiscriminant; 
+use smart_account_auth::{Caller, Credential, CredentialName, Ed25519, Identifiable};
 use saa_common::Binary;
 
 
@@ -17,7 +17,7 @@ fn name_checker(
     assert!(str == cred.name().to_string() && str == name.to_string());
     let str_name = CredentialName::from_str(str);
     assert!(str_name.is_ok(), "Can't deriving `CredentialName` from {str:?}");
-    assert!(name == cred.discriminant() && name == cred.name() && name == str_name.unwrap())
+    assert!(name == cred.name() && name == cred.name() && name == str_name.unwrap())
 }
 
 

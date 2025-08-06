@@ -3,9 +3,9 @@ name        = "saa-curves"
 description = "Cryptographic curves for smart account auth"
 edition     = { workspace = true }
 authors     = { workspace = true }
-version     = { workspace = true }
 license     = { workspace = true }
 repository  = { workspace = true }
+version     = { workspace = true }
 
 
 [dependencies]
@@ -16,8 +16,9 @@ saa-crypto  = { workspace = true }
 
 [features]
 default      =   ["std"]
-ed25519      =   [     ]
-secp256k1    =   [     ]
+replay       =   []
+ed25519      =   ["saa-common/ed25519"]
+secp256k1    =   ["saa-common/secp256k1"]
 
 std          =   ["saa-crypto/std",     ]
 native       =   ["saa-crypto/native"   ]

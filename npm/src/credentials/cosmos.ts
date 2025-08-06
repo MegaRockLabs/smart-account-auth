@@ -37,7 +37,9 @@ export const getArb36SignData = (
         type: "sign/MsgSignData",
         value: {
             signer: signerAddress,
-            data: typeof data === "string" ? data : toBase64(data),
+            data: typeof data === "string" 
+            ? (base64regex.test(data) ? data : toBase64(toUtf8(data))) 
+            : toBase64(data),
         }
     }
 )
@@ -52,7 +54,7 @@ export const getArb36SignDoc = (
   
 
 
-export const getCosmosArbitraryCredential = async (
+export const getCosmosArbitrary = async (
     signer          :    OfflineAminoSigner | WalletClient | AminoWallet | Keplr,
     chainId         :    string,
     message         :    string | Uint8Array, 

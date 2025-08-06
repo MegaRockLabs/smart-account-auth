@@ -1,6 +1,7 @@
 
 mod std_mod {
     use saa_schema::saa_error;
+    use crate::CredentialName;
 
     #[cfg(feature = "session")]
     #[saa_error]
@@ -43,23 +44,34 @@ mod std_mod {
     }
 
 
-    #[cfg(feature = "replay")]
     #[saa_error]
     pub enum ReplayError {
-        #[error("{0} is invalid as nonce. Expected: {1}")]
-        DifferentNonce(u64, u64),
+        #[error("Invalid nonce. Expected: '{0}'")]
+        InvalidNonce(u64),
 
         #[error("The provided credential was meant for a different chain")]
         ChainIdMismatch,
 
         #[error("The provided credential was meant for a different contract address")]
-        ContractMismatch,
+        AddressMismatch,
 
-        #[error("Error converting binary to {0}")]
-        Convertion(String),
+        #[error("Invalid messages. Expected to be signing the following inner message: '{0}'")]
+        MessageMismatch(String),
+
+        #[error("Error converting from binary to {0}")]
+        FromBin(String),
+
+        #[error("Error serializing to binary from: {0}")]
+        ToBin(String),
 
         #[error("Signed too many messages. Expected: {0}; Received: {1}")]
         ManyMessages(u8, u8),
+
+        #[error("Invalid envelope: (chain_id, contract_address, nonce or messages)`. Expected: '{0}'; Received: '{1}'")]
+        InvalidEnvelope(String, String),
+
+        #[error("The data for the replay protection is missing or invalid. Item: {0}")]
+        MissingData(String),
     }
 
 
@@ -72,8 +84,8 @@ mod std_mod {
         #[error("Error writing {0} to storage: {1}")]
         Write(String, String),
 
-        #[error("The given credential already exists on this account")]
-        AlreadyExists,
+        #[error("The given credential already exists on this account. Failed ID: {0}")]
+        AlreadyExists(String),
 
         #[error("The given credential was not found on this account")]
         NotFound, 
@@ -86,20 +98,54 @@ mod std_mod {
         Generic(String)
     }
 
+    #[saa_error]
+    pub enum CredentialError {
+        #[error("Not provided or partially missing")]
+        NoCredentials,
+
+        #[error("At least one credential must be kept for authorization checks")]
+        NoneLeft,
+
+        #[error("Too many credentials provided: {0}. Maximum allowed is 255")]
+        TooManyCredentials(usize),
+
+        #[error("Invalid primary index: {0}. There are only {1} credentials. (Max index is {1}-1)")]
+        IndexOutOfBounds(usize, usize),
+
+        #[error("A native address is requested but not provided")]
+        NoNativeCaller,
+
+        #[error("One of the main properties of the credential '{0}' are missing")]
+        MissingData(CredentialName),
+
+        #[error("Error while processing the credential '{0}', One of the properties is invalid")]
+        IncorrectData(CredentialName),
+
+        #[error("The credential '{0}' is not valid. Error in property '{1}': {2}")]
+        InvalidProperty(CredentialName, String, String),
+
+        #[error("Must supply at least one non-native credential to be validated")]
+        OnlyCustomNatives,
+
+/*
+        #[error("The credential '{0}' was expecting an info object with a property '{1}', however it wasn't provided or was empty")]
+        NoInfoProperty(CredentialName, String),
+
+         #[error("The credential '{0}' needs an extended info to be passed. It hasn't been done or there was an error")]
+        NoInfoExt(CredentialName),
+ */
+        #[cfg(feature = "wasm")]
+        #[error("(Std) Serialization error: {0}")]
+        Std(#[from] crate::wasm::StdError),
+    }
 
 
 
     #[saa_error]
     pub enum AuthError {
 
-        #[error("No credentials provided or credentials are partially missing")]
-        NoCredentials,
-
-        #[error("{0}")]
+        #[error("Missing {0}")]
         MissingData(String),
-
-        #[error("Invalid length of {0}.  Expected: {1};  Received: {2}")]
-        InvalidLength(String, u16, u16),
 
         #[error("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here.")]
         RecoveryParam,
@@ -107,20 +153,14 @@ mod std_mod {
         #[error("Error recovering from the signature: Addresses do not match")]
         RecoveryMismatch,
 
-        #[error("The signed data is expected to be a replay attach protection envelope")]
-        InvalidSignedData,
-
-        #[error("Passkey challenge must be base64url to base64 encoded string")]
-        PasskeyChallenge,
-
         #[error("Unauthorized: {0}")]
         Unauthorized(String),
 
-        #[error("{0}")]
-        Signature(String),
+        #[error("Invalid length for type '{0}'. Expected: {1}, Received: {2}")]
+        InvalidLength(String, u16, u16),
 
-        #[error("{0}")]
-        Recovery(String),
+        #[error("Signature verification error for {0} with id of '{1}'")]
+        Signature(CredentialName, String),
 
         #[error("{0}")]
         Generic(String),
@@ -129,37 +169,37 @@ mod std_mod {
         Crypto(String),
 
         #[error("Error converting binary to {0}")]
-        Convertation(String),
-        
-        #[error("Semver parsing error: {0}")]
-        SemVer(String),
+        Convertion(String),
+
+        #[error("Credential: {0}")]
+        Credential(#[from] CredentialError),
         
         #[cfg(feature = "replay")]
-        #[error("Replay Protection Error: {0}")]
+        #[error("Replay: {0}")]
         Replay(#[from] ReplayError),
 
         #[cfg(feature = "session")]
-        #[error("Session Error: {0}")]
+        #[error("Session: {0}")]
         Session(#[from] SessionError),
 
         #[cfg(feature = "wasm")]
-        #[error("{0}")]
+        #[error("Storage: {0}")]
         Storage(#[from] StorageError),
     }
 
 
     impl From<std::string::FromUtf8Error> for AuthError {
         fn from(err: std::string::FromUtf8Error) -> Self {
-            Self::Recovery(err.to_string())
+            Self::Crypto(err.to_string())
         }
     }
 
-    #[cfg(feature = "eth_typed_data")]
-    impl From<ethers_core::types::transaction::eip712::Eip712Error> for AuthError {
-        fn from(err: ethers_core::types::transaction::eip712::Eip712Error) -> Self {
+
+    #[cfg(feature = "eth_typed_data")] 
+    impl From<serde_json::DeserializerError> for AuthError {
+        fn from(err: serde_json::DeserializerError) -> Self {
             Self::Generic(err.to_string())
         }
-        
     }
 
 
@@ -169,30 +209,18 @@ mod std_mod {
 
         impl From<crate::wasm::RecoverPubkeyError> for AuthError {
             fn from(err: crate::wasm::RecoverPubkeyError) -> Self {
-                Self::Recovery(err.to_string())
+                Self::Crypto(err.to_string())
             }
         }
 
         impl From<crate::wasm::StdError> for AuthError {
             fn from(err: crate::wasm::StdError) -> Self {
-                Self::Generic(err.to_string())
+                Self::Crypto(err.to_string())
             }
         }
 
         impl From<crate::wasm::VerificationError> for AuthError {
             fn from(err: crate::wasm::VerificationError) -> Self {
-                Self::Crypto(err.to_string())
-            }
-        }
-
-         impl From<bech32::primitives::hrp::Error> for AuthError {
-            fn from(err: bech32::primitives::hrp::Error) -> Self {
-                Self::Crypto(err.to_string())
-            }
-        }
-
-        impl From<bech32::EncodeError> for AuthError {
-            fn from(err: bech32::EncodeError) -> Self {
                 Self::Crypto(err.to_string())
             }
         }
@@ -222,7 +250,13 @@ mod no_std_mod {
     pub enum ReplayError {
         DifferentNonce(u64, u64),
         ChainIdMismatch,
-        ContractMismatch,
+        AddressMismatch,
+        MessageMismatch(String),
+        FromBin(String),
+        ToBin(String),
+        ManyMessages(u8, u8),
+        InvalidEnvelope(String, String),
+        MissingData(String),
     }
 
     #[cfg(feature = "session")]
@@ -250,7 +284,6 @@ mod no_std_mod {
         PasskeyChallenge,
         Unauthorized(String),
         Signature(String),
-        Recovery(String),
         Generic(String),
         Convertation(String),
         Crypto(String),

@@ -1,10 +1,10 @@
-
-use saa_common::String;
+use super::ClientDataOtherKeys;
 use saa_schema::saa_type;
-
+use saa_common::String;
 
 
 /// The client data object defined by the WebAuthn standard.
+#[cfg_attr(not(feature = "cosmwasm"), derive(serde::Serialize, serde::Deserialize))]
 #[saa_type(no_deny)]
 #[non_exhaustive]
 pub struct ClientData {
@@ -24,56 +24,8 @@ pub struct ClientData {
 
     /// Injecting other keys into the client data
     #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    // #[cfg_attr(feature = "cosmwasm", serde(flatten, skip_serializing_if = "Option::is_none"))]
     pub other_keys : Option<ClientDataOtherKeys>,
 }
 
 
-
-
-#[saa_type(no_deny)]
-#[non_exhaustive]
-pub struct ClientDataOtherKeys {
-    pub other_keys_can_be_added_here :  Option<String>,
-}
-
-
-
-#[saa_type(no_deny)]
-pub struct PasskeyPayload {
-    /// client data other keys
-    pub other_keys :  Option<ClientDataOtherKeys>,
-    // reserved for future use
-    pub origin: Option<String>
-}
-
-
-
-
-
-impl ClientData {
-    pub fn new(
-        challenge: impl ToString, 
-        origin: impl ToString, 
-        cross_origin: bool, 
-        other_keys: Option<ClientDataOtherKeys>
-    ) -> Self {
-        Self {
-            ty: "webauthn.get".into(),
-            challenge: challenge.to_string(),
-            origin: origin.to_string(),
-            cross_origin,
-            other_keys,
-        }
-    }
-}
-
-
-impl ClientDataOtherKeys {
-    pub fn new(
-        other_keys_can_be_added_here: Option<String>
-    ) -> Self {
-        Self {
-            other_keys_can_be_added_here
-        }
-    }
-}

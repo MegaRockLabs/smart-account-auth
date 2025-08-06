@@ -14,6 +14,28 @@ pub mod wasm {
         serde_json_wasm::to_string as to_json_string
     };
     pub use cosmwasm_std::*;
+
+    
+    pub fn get_contract_info(
+        store: &dyn Storage
+    ) -> Result<crate::types::ContractVersion, crate::AuthError> {
+        store
+        .get(b"contract_info")
+        .ok_or_else(|| {
+            crate::AuthError::Storage(crate::StorageError::Read(
+                "contract_info".to_string(),
+                "cw2::set_contract_version() hasn't been called".to_string(),
+            ))
+        })
+        .and_then(|raw| {
+            from_json(&raw).map_err(|e| {
+                crate::AuthError::Storage(crate::StorageError::Read(
+                    "contract_info".to_string(),
+                    e.to_string(),
+                ))
+            })
+        })
+    }
 }
 
 

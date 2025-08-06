@@ -1,8 +1,10 @@
-use saa_schema::saa_type;
+
 use saa_common::{
-    CredentialId, 
-    AuthError, Binary, ToString, Verifiable, ensure
+    ensure, AuthError, Binary, CredentialError, CredentialId, CredentialInfo, CredentialName, 
+    Verifiable, Identifiable
 };
+use CredentialName::Ed25519 as Name;
+use saa_schema::saa_type;
 
 
 #[saa_type]
@@ -13,10 +15,24 @@ pub struct Ed25519 {
 }
 
 
-impl Verifiable for Ed25519 {
+impl Identifiable for Ed25519 {
 
     fn id(&self) -> CredentialId {
-        self.pubkey.to_string()
+        self.pubkey.to_base64()
+    }
+
+    fn name(&self) -> CredentialName {
+        Name
+    }
+
+}
+
+
+impl Verifiable for Ed25519 {
+
+
+    fn message(&self) -> std::borrow::Cow<[u8]> {
+        std::borrow::Cow::Borrowed(self.message.as_slice())
     }
 
     fn validate(&self) -> Result<(), AuthError> {
@@ -24,34 +40,39 @@ impl Verifiable for Ed25519 {
             self.signature.len() > 0 &&
                 self.message.len() > 0 && 
                 self.pubkey.len() > 0,
-            AuthError::MissingData("Empty credential data".to_string())
+            CredentialError::MissingData(Name)
         );
         Ok(())
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
-        let success = saa_crypto::ed25519_verify(
-            &saa_crypto::hashes::sha256(&self.message), 
+    #[cfg(any(feature = "native", feature = "cosmwasm"))]  
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        #[cfg(not(feature = "cosmwasm"))]
+        let res = saa_crypto::ed25519_verify(
+            &self.message, 
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(&self, api: &dyn saa_common::wasm::Api) -> Result<(), AuthError> 
-        where Self: Clone
-    {
-        let success = api.ed25519_verify(
-            &saa_crypto::hashes::sha256(&self.message), 
-            &self.signature, 
+        #[cfg(feature = "cosmwasm")]
+        let res = deps.api.ed25519_verify(
+            &self.message,
+            &self.signature,
             &self.pubkey
         )?;
-        ensure!(success, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
+        ensure!(res, AuthError::Signature(Name, self.id()));
+        Ok(CredentialInfo {
+            extension: None,
+            address: None,
+            hrp: None,
+            name: Name,
+        })
     }
 
 }
+
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Ed25519 {}

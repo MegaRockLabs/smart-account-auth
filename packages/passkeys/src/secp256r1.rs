@@ -1,5 +1,10 @@
-use saa_common::{AuthError,  Binary,  ToString, Verifiable, ensure};
+use std::borrow::Cow;
+use saa_common::{ensure, AuthError, Binary, CredentialError, CredentialInfo, CredentialName, 
+    Verifiable, Identifiable
+};
 
+
+use CredentialName::Secp256r1 as Name;
 
 #[saa_schema::saa_type]
 pub struct Secp256r1 {
@@ -9,55 +14,64 @@ pub struct Secp256r1 {
 }
 
 
+impl Identifiable for Secp256r1 {
+
+    fn id(&self) -> saa_common::CredentialId {
+        self.pubkey.to_base64()
+    }
+
+    fn name(&self) -> saa_common::CredentialName {
+        Name
+    }
+}
+
 
 impl Verifiable for Secp256r1 {
 
-    fn id(&self) -> saa_common::CredentialId {
-        self.pubkey.to_string()
+    fn message(&self) -> Cow<[u8]> {
+        Cow::Borrowed(self.message.as_slice())
     }
 
     fn validate(&self) -> Result<(), AuthError> {
         ensure!(self.signature.len() > 0 &&
                 self.message.len() > 0 && 
                 self.pubkey.len() > 0,
-            AuthError::MissingData("Empty credential data".to_string())
+            CredentialError::MissingData(Name)
         );
         Ok(())
     }
 
-    #[cfg(feature = "native")]
-    fn verify(&self) -> Result<(), AuthError> {
+    #[allow(unused_variables)]    
+    #[cfg(any(feature = "cosmwasm", feature = "native"))]
+    fn verify(&self,
+        #[cfg(feature = "cosmwasm")]
+        deps: saa_common::wasm::Deps
+    ) -> Result<CredentialInfo, AuthError> {
+        let res = true;
+        #[cfg(all(any(feature = "native", feature = "no_api_r1"), not(feature = "cosmwasm")))]
         let res = saa_crypto::secp256r1_verify(
             &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
-    }
-
-
-    #[cfg(feature = "cosmwasm")]
-    fn verify_cosmwasm(
-        &self,
-        #[allow(unused_variables)]
-        api : &dyn saa_common::wasm::Api
-    ) -> Result<(), AuthError> {
-        use saa_crypto::hashes::sha256;
-        #[cfg(feature = "no_api_r1")]
-        let res = saa_crypto::secp256r1_verify(
-            &sha256(&self.message), 
+        #[cfg(all(feature = "cosmwasm", not(feature = "no_api_r1")))]
+        let res = deps.api.secp256r1_verify(
+            &saa_crypto::hashes::sha256(&self.message), 
             &self.signature, 
             &self.pubkey
         )?;
-        #[cfg(not(feature = "no_api_r1"))]
-        let res = api.secp256r1_verify(
-            &sha256(&self.message), 
-            &self.signature, 
-            &self.pubkey
-        )?;
-        ensure!(res, AuthError::Signature("Signature verification failed".to_string()));
-        Ok(())
+        ensure!(res, AuthError::Signature(Name, self.id()));
+        Ok(CredentialInfo {
+            extension: None,
+            address: None,
+            hrp: None,
+            name: Name,
+        })
     }
+
+
 }
 
+
+#[cfg(feature = "replay")]
+impl saa_crypto::ReplayProtection for Secp256r1 {}

@@ -13,7 +13,6 @@ saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 
 sha2                = { version = "0.10.9", default-features = false } 
-
 # native
 cosmwasm-crypto     = { workspace = true,   optional = true  }
 # ethereum
@@ -25,11 +24,19 @@ bech32              = { workspace = true,   optional = true  }
 digest              = { version = "0.10.7", optional = true,   default-features = false }
 p256                = { version = "0.13.2" , optional = true,  default-features = false , features = ["ecdsa"] }
 
+serde               = { workspace = true }
 
 [features]
 default     =   ["std"]
+utils       =   []
+replay      =   ["saa-common/replay"]
+
+
 std         =   ["saa-common/std",                     "p256?/std"]
 native      =   ["saa-common/native",        "dep:cosmwasm-crypto"]
-secp256r1   =   ["dep:p256",                          "dep:digest"]
-cosmwasm    =   ["dep:ripemd", "saa-schema/cosmwasm", "dep:bech32"]
-ethereum    =   ["dep:tiny-keccak"                                ]
+
+secp256r1   =   ["dep:p256",                             "dep:digest"]
+cosmos_arb  =   ["dep:bech32", "saa-common/cosmos_arb",  "dep:ripemd"]
+
+cosmwasm    =   ["saa-schema/cosmwasm"]
+ethereum    =   ["dep:tiny-keccak"    ]

@@ -167,7 +167,7 @@ export const registerPasskey = async (
 /// If no id is given, tries to load passkeys from local storage and find the one that matches
 /// the given parameters
 /// If no passkey found with given parameters could be found, attempts to register a new passkey if given a name
-export const getPasskeyCredential = async (
+export const getPasskey = async (
     challenge        :  string | Uint8Array,
     params?          :  GetPasskeyParams
 ) : Promise<AuthCredential & { passkey: PasskeyCredential }>  => {

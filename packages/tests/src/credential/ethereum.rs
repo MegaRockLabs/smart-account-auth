@@ -1,8 +1,17 @@
+use cosmwasm_std::Addr;
+use saa_common::{to_json_string, Verifiable};
+use serde_json::{from_value, json};
+use smart_account_auth::{types::Eip712Message, CheckOption, EthTypedData, ReplayParams, ReplayProtection};
+
+use crate::{types::{BankMsg, Coin, CosmosMsg, ExecuteMsg, StakingMsg}, utils::{get_eth_signer, get_mock_deps, get_mock_env, SIGN_NONCE}};
+
 mod tests {
 
     use cosmwasm_std::testing::mock_dependencies;
     use saa_common::{Binary, Verifiable};
     use smart_account_auth::{EthPersonalSign, EthTypedData};
+
+    use crate::utils::get_eth_signer;
 
 
     #[test]
@@ -10,7 +19,6 @@ mod tests {
         let deps = mock_dependencies();
 
         let message = r#"{"chain_id":"elgafar-1","contract_address":"stars1gjgfp9wps9c0r3uqhr0xxfgu02rnzcy6gngvwpm7a78j7ykfqquqr2fuj4","messages":["Create TBA account"],"nonce":"0"}"#;
-        let address = "0xac03048da6065e584d52007e22c69174cdf2b91a";
         let base = "eyJjaGFpbl9pZCI6ImVsZ2FmYXItMSIsImNvbnRyYWN0X2FkZHJlc3MiOiJzdGFyczFnamdmcDl3cHM5YzByM3VxaHIweHhmZ3UwMnJuemN5NmduZ3Z3cG03YTc4ajd5a2ZxcXVxcjJmdWo0IiwibWVzc2FnZXMiOlsiQ3JlYXRlIFRCQSBhY2NvdW50Il0sIm5vbmNlIjoiMCJ9";
         let message = Binary::new(message.as_bytes().to_vec());
         assert!(message.to_base64() == base, "not euqal");
@@ -20,11 +28,11 @@ mod tests {
         ).unwrap();
 
         let cred = EthPersonalSign {
-            signer : address.to_string(),
-            signature: signature.clone(),
+            signer : get_eth_signer(),
+            signature,
             message,
         };
-        let res = cred.verify_cosmwasm(deps.as_ref().api);
+        let res = cred.verify(deps.as_ref());
         println!("Res: {:?}", res);
         assert!(res.is_ok())
     }
@@ -141,48 +149,591 @@ mod tests {
             "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
             "totalOriginalConsiderationItems": "2",
             "counter": "0"
-          }
+          },
+          "signature": "",
+          "signer": ""
         }
                 );
 
         let typed_data: EthTypedData = serde_json::from_value(json).unwrap();
-
-        let hash = typed_data.encode_eip712().unwrap();
+        let hash = typed_data.encode_eip712(None).unwrap();
         assert_eq!(
             "0b8aa9f3712df0034bc29fe5b24dd88cfdba02c7f499856ab24632e2969709a8",
             hex::encode(&hash[..])
         );
     }
+
+
+    #[test]
+    fn test_manual_replay_envelope() {
+        let json = serde_json::json!({
+          "types": {
+            "EIP712Domain": [
+              {
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "name": "version",
+                "type": "string"
+              },
+              {
+                "name": "chainId",
+                "type": "uint256"
+              },
+              {
+                "name": "verifyingContract",
+                "type": "address"
+              }
+            ],
+            "Envelope": [
+              {
+                "name": "chain_id",
+                "type": "string"
+              },
+              {
+                "name": "contract_address",
+                "type": "string"
+              },
+              {
+                "name": "messages",
+                "type": "string[]"
+              },
+              {
+                "name": "nonce",
+                "type": "string"
+              }
+            ],
+          },
+          "primaryType": "Envelope",
+          "domain": {
+            "name": "Token-Bound Accounts",
+            "version": "1.1",
+            "chainId": "1",
+            "verifyingContract": "0x0000000000000000000000000000000000000000"
+          },
+          "message": {
+            "chain_id": "constantine-3",
+            "contract_address": "archway16qy02mwau05fn289h6mqm6qv4haqa6s2quwnjch0zch6a2yjr97qqv5ulg",
+            "messages": ["Create TBA account"],
+            "nonce": "0",
+          },
+          "signer": get_eth_signer(),
+          "signature": "gJvZFFHWWy4RHirV50D1BfLZMZbJo+Oye5uKVFmLNnl0/kQEFOY8kngyEq3fuiMjYBgh1K7h5GrmyxqAZOmAYhs="
+        });
+        
+
+        let deps = mock_dependencies();
+        let cred: EthTypedData = serde_json::from_value(json).unwrap();
+        println!("Cred: {:?}", cred.message);
+        println!("Props: {:?}", cred.message.props);
+        println!("Get props: {:?}", cred.message.get("chain_id"));
+
+        let hash = cred.encode_eip712(None).unwrap();
+        assert_eq!("11361aeafc7ea4ebb964e1213d59eba872c2488e5d737ed41a754d6a94b6b918", hex::encode(&hash[..]));
+
+ 
+        let res = cred.verify(deps.as_ref());
+        println!("Res: {:?}", res);
+        assert!(res.is_ok());
+
+        // "ETYa6vx+pOu5ZOEhPVnrqHLCSI5dc37UGnVNapS2uRg=";// 
+
+
+    }
 }
 
 
-/* #[serde(rename_all = "camelCase")]
-pub struct EIP712Domain {
-    ///  The user readable name of signing domain, i.e. the name of the DApp or the protocol.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
 
-    /// The current major version of the signing domain. Signatures from different versions are not
-    /// compatible.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub version: Option<String>,
 
-    /// The EIP-155 chain id. The user-agent should refuse signing if it does not match the
-    /// currently active chain.
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "crate::types::serde_helpers::deserialize_stringified_numeric_opt"
-    )]
-    pub chain_id: Option<U256>,
+#[test]
+fn eth_typed_daata_nft_acc_actions() {
 
-    /// The address of the contract that will verify the signature.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub verifying_contract: Option<Address>,
+  let json = serde_json::json!({
+    "signer": get_eth_signer(),
+    "signature": "s+Mm97zmBZpgVAQECscdQuKfqGwiCHGM2ju5U1M2rG9vu6WI7zjjVvQCw0PCt2e1N9S1e9Uha1QbCdcdSNY2dRs=",
+    "message_property": "action",
+    "types": {
+        "EIP712Domain": [
+            {
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "name": "version",
+                "type": "string"
+            },
+            {
+                "name": "chainId",
+                "type": "uint256"
+            },
+            {
+                "name": "verifyingContract",
+                "type": "address"
+            }
+        ],
+        "Coin": [
+            {
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "name": "denom",
+                "type": "string"
+            }
+        ],
+        "MintToken": [
+            {
+                "name": "minter",
+                "type": "string"
+            },
+            {
+                "name": "msg",
+                "type": "string"
+            }
+        ],
+        "BankSend": [
+            {
+                "name": "amount",
+                "type": "Coin[]"
+            },
+            {
+                "name": "to_address",
+                "type": "string"
+            }
+        ],
+        "Delegate": [
+            {
+                "name": "validator",
+                "type": "string"
+            },
+            {
+                "name": "amount",
+                "type": "Coin"
+            }
+        ],
+        "BankMsg": [
+            {
+                "name": "send",
+                "type": "BankSend"
+            }
+        ],
+        "StakingMsg": [
+            {
+                "name": "delegate",
+                "type": "Delegate"
+            }
+        ],
+        "CosmosMsg": [
+            {
+                "name": "bank",
+                "type": "BankMsg"
+            },
+            {
+                "name": "staking",
+                "type": "StakingMsg"
+            }
+        ],
+        "Execute": [
+            {
+                "name": "msgs",
+                "type": "CosmosMsg[]"
+            }
+        ],
+        "Transfer": [
+            {
+                "name": "collection",
+                "type": "string"
+            },
+            {
+                "name": "recipient",
+                "type": "string"
+            },
+            {
+                "name": "token_id",
+                "type": "string"
+            }
+        ],
+        "AccountAction": [
+            {
+                "name": "transfer_token",
+                "type": "Transfer"
+            },
+            {
+                "name": "execute",
+                "type": "Execute"
+            },
+            {
+                "name": "mint_token",
+                "type": "MintToken"
+            }
+        ],
+        "Prompt": [
+            {
+                "name": "actions",
+                "type": "AccountAction[]"
+            }
+        ]
+    },
+    "primaryType": "Prompt",
+    "domain": {
+        "verifyingContract": "0x737eb72d8c0191736447f5bf06f0619ed647abee",
+        "name": "Token-Bound Accounts",
+        "version": "1.1",
+        "chainId": "1"
+    },
+    "message": {
+        "actions": [
+            {
+                "transfer_token": {
+                    "collection": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "recipient": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "token_id": "1"
+                }
+            },
+            {
+                "execute": {
+                    "msgs": [
+                        {
+                            "bank": {
+                                "send": {
+                                    "amount": [
+                                        {
+                                            "amount": "5000000",
+                                            "denom": "ustars"
+                                        }
+                                    ],
+                                    "to_address": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn"
+                                }
+                            }
+                        },
+                        {
+                            "staking": {
+                                "delegate": {
+                                    "amount": {
+                                        "amount": "69000000",
+                                        "denom": "uconst"
+                                    },
+                                    "validator": "archwayvaloper1qt0e4eyswes6qpply2pmk8v5qm88r2c962fnvk"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "mint_token": {
+                    "minter": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+                    "msg": "eyAibWludCI6IHt9IH0="
+                }
+            }
+        ]
+      }
+    }
+  );
+  let deps = get_mock_deps();
+  let env = get_mock_env();
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+  assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
 
-    /// A disambiguating salt for the protocol. This can be used as a domain separator of last
-    /// resort.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub salt: Option<[u8; 32]>,
+
 }
- */
+
+#[test]
+fn eth_typed_local_chain_creation() {
+  let deps = get_mock_deps();
+  let mut env = get_mock_env();
+  env.block.chain_id = "testing".to_string();
+  env.contract.address = Addr::unchecked("stars1wug8sewp6cedgkmrmvhl3lf3tulagm9hnvy8p0rppz9yjw0g4wtqmpd9x3");
+
+  let msg = "Create TBA account";
+
+
+  let json = serde_json::json!({
+    "types": {
+      "EIP712Domain": [
+        { "name": "name", "type": "string" },
+        { "name": "version", "type": "string" },
+        { "name": "chainId", "type": "uint256" },
+        { "name": "verifyingContract", "type": "address" }
+      ],
+      "CreatePrompt": [{ "name": "message", "type": "string" }],
+    },
+    "primaryType": "CreatePrompt",
+    "domain": {
+      "chainId": "0",
+      "name": "Token-Bound Accounts",
+      "verifyingContract": "0xd7296ff158d2de4a0e192c8a15b2772600980c23",
+      "version": "1.1"
+    },
+    "message": { "message": msg.to_string() },
+    "signer": get_eth_signer(),
+    "signature": "0+mgaZb9ZYE8jObiMqJw/B170ojkEDTcZuqzvnt+4eB2KPk7Bpr5+25yfRHhWCpDqTYpgpW95ycAtZmEuxeALxs="
+  });
+
+  
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+
+  let eip_msg : Eip712Message = serde_json::from_value(serde_json::json!({
+    "message": msg.to_string(),
+  })).unwrap();
+  println!("EIP712 message: {:?}", eip_msg);
+
+  let eip_msg_props : Eip712Message = serde_json::from_value(serde_json::json!({
+    "props": {
+      "message": msg.to_string(),
+    }
+  })).unwrap();
+  println!("EIP712 message with props: {:?}", eip_msg_props);
+
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+
+  let mut params = ReplayParams::new(SIGN_NONCE, CheckOption::Nothing);
+  assert!(cred.protect_reply(&env, params.clone()).is_ok());
+
+  params.checking = CheckOption::Messages(vec![msg.into()]);
+  assert!(cred.protect_reply(&env, params.clone()).is_ok());
+
+  params.checking = CheckOption::Text(msg.into());
+  assert!(cred.protect_reply(&env, params).is_ok());
+
+
+}
+
+
+#[test]
+fn eth_typed_local_chain_action() {
+  let deps = get_mock_deps();
+  let mut env = get_mock_env();
+  env.block.chain_id = "testing".to_string();
+  env.contract.address = Addr::unchecked("stars1wug8sewp6cedgkmrmvhl3lf3tulagm9hnvy8p0rppz9yjw0g4wtqmpd9x3");
+
+  let json = serde_json::json!({
+    "types": {
+      "EIP712Domain": [
+        { "name": "name", "type": "string" },
+        { "name": "version", "type": "string" },
+        { "name": "chainId", "type": "uint256" },
+        { "name": "verifyingContract", "type": "address" }
+      ],
+      "Transfer": [
+        { "name": "collection", "type": "string" },
+        { "name": "recipient", "type": "string" },
+        { "name": "token_id", "type": "string" }
+      ],
+      "AccountAction": [
+        { "name": "transfer_token", "type": "Transfer" }
+      ]
+    },
+    "primaryType": "AccountAction",
+    "domain": {
+      "chainId": "0",
+      "name": "Token-Bound Accounts",
+      "verifyingContract": "0x518526d38c3242f316c622fd464c7b8970dd1250",
+      "version": "1.1"
+    },
+    "message": {
+      "transfer_token": {
+        "collection": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+        "recipient": "stars1wgesz5jrx3uvt29a9awkafy4p06rutxv2xdnqperde4tmzx4n2yq95mumn",
+        "token_id": "1"
+      }
+    },
+    "signer": get_eth_signer(),
+    "signature": "fRKr9rJAX7EGar40a9PYYfeEY14l2M8NXutilC8K2b5zMD5y+3Jl//yKEyfmaXd5CIBuM0XTqk6Lji2cO4WKnRs="
+  });
+
+  let cred: EthTypedData = serde_json::from_value(json).unwrap();
+
+  assert!(cred.validate().is_ok(), "Validation failed");
+  assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+  assert!(cred.protect_reply(&env, ReplayParams::new(SIGN_NONCE, CheckOption::Nothing)).is_ok(),);
+
+
+    let msg : Eip712Message = from_value(json!({
+        "transfer_token": {
+            "collection": "stars1wkwy0xh89ksdgj9hr347dyd2dw7zesmtrue6kfzyml4vdtz6e5ws2hcm9v",
+            "recipient": "stars1yw4xvtc43me9scqfr2jr2gzvcxd3a9y4eq7gaukreugw2yd2f8tssqyvcm",
+            "token_id": "3"
+        }
+    })).unwrap();
+
+
+    let json = serde_json::json!({
+        "signer": get_eth_signer(),
+        "signature": "XnU642YBJ3Sr7Z0K9LGntUHClUkLuxlLt+Iw2e1/L38VzP2Sdiz7TOjPPKeY+cIwzDhaIdWUcowzEaXZ0MaE2hs=",
+        "types": {
+            "EIP712Domain": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "version",
+                    "type": "string"
+                },
+                {
+                    "name": "chainId",
+                    "type": "uint256"
+                },
+                {
+                    "name": "verifyingContract",
+                    "type": "address"
+                }
+            ],
+            "Transfer": [
+                {
+                    "name": "collection",
+                    "type": "string"
+                },
+                {
+                    "name": "recipient",
+                    "type": "string"
+                },
+                {
+                    "name": "token_id",
+                    "type": "string"
+                }
+            ],
+            "AccountAction": [
+                {
+                    "name": "transfer_token",
+                    "type": "Transfer"
+                }
+            ]
+        },
+        "primaryType": "AccountAction",
+        "domain": {
+            "verifyingContract": "0xa28eb59cd37b94146b294eb46d17c0aca3d78f6e",
+            "name": "Token-Bound Accounts",
+            "version": "1.1",
+            "chainId": "0"
+        },
+        "message": msg
+    });
+
+    env.contract.address = Addr::unchecked("stars1yw4xvtc43me9scqfr2jr2gzvcxd3a9y4eq7gaukreugw2yd2f8tssqyvcm");
+
+
+    let cred: EthTypedData = from_value(json).unwrap();
+    assert!(cred.validate().is_ok());
+    assert!(cred.verify(deps.as_ref()).is_ok());
+   
+   let res = cred.protect_reply(&env, 
+    ReplayParams::new(1, CheckOption::Messages(vec![msg.to_string().unwrap()])
+  ));
+    println!("Replay protection result: {:?}", res);
+    assert!(res.is_ok(), "Replay protection failed");
+
+
+    let json = serde_json::json!({
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Coin": [
+          { "name": "denom", "type": "string" },
+          { "name": "amount", "type": "uint256" }
+        ],
+        "Send": [
+          { "name": "to_address", "type": "string" },
+          { "name": "amount", "type": "Coin[]" }
+        ],
+        "Delegate": [
+          { "name": "validator", "type": "string" },
+          { "name": "amount", "type": "Coin" }
+        ],
+        "BankMsg": [
+          { "name": "send", "type": "Send" }
+        ],
+        "StakingMsg": [
+          { "name": "delegate", "type": "Delegate" }
+        ],
+        "CosmosMsg": [
+          { "name": "bank", "type": "BankMsg" },
+          { "name": "staking", "type": "StakingMsg" }
+        ],
+        "Execute": [
+          { "name": "msgs", "type": "CosmosMsg[]" }
+        ],
+        "AccountAction": [
+          { "name": "execute", "type": "Execute" }
+        ]
+      },
+      "primaryType": "AccountAction",
+      "domain": {
+        "verifyingContract": "0x73c4d31b9abcfb1d2096b69f4cf5fb2ca5d24635",
+        "name": "Token-Bound Accounts",
+        "version": "1.1",
+        "chainId": "0"
+      },
+      "message": {
+        "execute": {
+          "msgs": [
+            {
+              "bank": {
+                "send": {
+                  "to_address": "stars16z43tjws3vw06ej9v7nrszu0ldsmn0eyjnjpu8",
+                  "amount": [
+                    { "amount": "500000", "denom": "ustars" }
+                  ]
+                }
+              }
+            },
+            {
+              "staking": {
+                "delegate": {
+                  "validator": "starsvaloper1rd6wzd9kwsg4fgdew2xs842rrqsdl3jdlwsapl",
+                  "amount": { "amount": "500000", "denom": "ustars" }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "signer": get_eth_signer(),
+      "signature": "CLPfmTNY8/ATInPCAUyvmqNZlnMTb1nlPLsdjt5lBq9jkN0faQV7H6/Pqf7fiKdZaVdiLnLCiPJqwgKe3VM9Sxw="
+    });
+
+
+    let cred: EthTypedData = serde_json::from_value(json).unwrap();
+    assert!(cred.validate().is_ok(), "Validation failed");
+    assert!(cred.verify(deps.as_ref()).is_ok(), "Verification failed");
+
+    // Default algorithm sorts the fields. The verifyn address was calculated with unsorted fields due to Cosmos fields not being sorted by default.
+    assert!(cred.protect_reply(&env, ReplayParams::new(1, CheckOption::Nothing)).is_err(),);
+    
+    let msg = ExecuteMsg::Execute { 
+      msgs: vec![
+        CosmosMsg::Bank(BankMsg::Send { 
+          to_address: "stars16z43tjws3vw06ej9v7nrszu0ldsmn0eyjnjpu8".to_string(),
+          amount: vec![Coin {
+            amount: 500000u128.into(),
+            denom: "ustars".to_string()
+          }]
+        }),
+        CosmosMsg::Staking(StakingMsg::Delegate { 
+          validator: "starsvaloper1rd6wzd9kwsg4fgdew2xs842rrqsdl3jdlwsapl".to_string(),
+          amount: Coin {
+            amount: 500000u128.into(),
+            denom: "ustars".to_string()
+          }
+        })
+      ]
+    };
+
+    let res = cred.protect_reply(&env, 
+        ReplayParams::new(1, CheckOption::Messages(vec![to_json_string(&msg).unwrap()]))
+    );
+    println!("Replay protection result: {:?}", res);
+    assert!(res.is_ok(), "Replay protection failed");
+
+}
+
+
