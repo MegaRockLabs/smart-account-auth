@@ -9,7 +9,7 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 <!-- next-header -->
 
 
-## [0.27.0] - 2025-07-97
+## [0.28.0] - 2025-07-97
 
 ## Fixed
 - `CredentialWrapper` panicking on verify when calling `primary_id`

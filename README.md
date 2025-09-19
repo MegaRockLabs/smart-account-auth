@@ -31,18 +31,26 @@ Authentication Library / SDK  for working with various crypthograpghic credentia
 
 ## Supported Credentials
 
-- Ethereum (EVM) personal sign
-- Cosmos Arbitrary (036)
-- Passkeys / Webauthn
-- Secp256k1 / Secp256r1 / Ed25519 Curves
+| Credential               | Feature Flag     | Specification / Use Case                          |
+|--------------------------|------------------|----------------------------------------------------|
+| Ethereum Personal Sign   | ``ethereum``     | EVM-compatible signing (EIP-191)                  |
+| Cosmos Arbitrary Sign    | ``cosmos``       | Human-readable msgs (ADR-036)                     |
+| Passkeys (WebAuthn)      | ``passkeys``     | FIDO2 / WebAuthn public key authentication        |
+| Secp256k1 / Secp256r1    | ``curves`` or ``ethereum`` | Raw signature verification on ECDSA curves |
+| Ed25519                  | ``curves`` or ``ed25519`` | EdDSA signatures (e.g., Solana, Substrate)   |
+
 
 ## Virtual Machine Support
 
-- Cosmwasm [1.x]  -  Complete
-- Cosmwasm [2.x]  -  Partial
-- SecretWasm      -  Partial
-- Ink / Substrate -  Partial
-- Solana Seahorse -  Serialization
+| Virtual Machine       | Version      | Support Level     | Notes                                  |
+|-----------------------|-------------|-------------------|----------------------------------------|
+| CosmWasm              | 1.x         | Complete          | Full signing and verification          |
+| CosmWasm              | 2.x         | Partial           | Ongoing updates for v2 changes         |
+| SecretWasm            | -           | Partial           | Based on CosmWasm; limited extensions  |
+| Ink / Substrate       | -           | Partial           | Core types supported; more in development |
+| Solana (Seahorse)     | -           | Serialization     | Only message serialization; no signing |
+
+> Legend: Complete = fully supported, Partial = limited or experimental, Serialization = only data formatting available
 
 # Smart Contracts / Programs
 
@@ -62,38 +70,52 @@ saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwa
 
 ### Features
 
-Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
+Environment specific features that are mutually exclusive and **shouldn't** be used together. Pick depending on your virtual machine:
 
-- `native` - for native rust code
-- `cosmwasm` - for cosmwasm 2.x
-- `cosmwasm_v1` - for cosmwasm 1.x
-- `secretwasm` - for cosmwasm of secret network (in development)
-- `substrate` - for smart contracts written in ink (in development)
-- `solana` - for solana programs (in development)
+| Feature         | Target Environment                     | Status        |
+|----------------|----------------------------------------|---------------|
+| ``native``     | Native Rust execution                  | Stable        |
+| ``cosmwasm``   | CosmWasm 2.x smart contracts           | Stable        |
+| ``cosmwasm_v1``| CosmWasm 1.x smart contracts           | Stable        |
+| ``secretwasm`` | Secret Network (CosmWasm fork)         | In Development |
+| ``substrate``  | Substrate ink! smart contracts         | In Development |
+| ``solana``     | Solana programs (BPF)                  | In Development |
 
-Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size
+Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size:
 
-- `ethereum` - for Ethereum personal sign message specification (  [EIP-191](https://eips.ethereum.org/EIPS/eip-191) )
-- `cosmos` - for Cosmos Arbitrary message specificion (  [ADR 036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) )
-- `passkeys` - for passkey based authentication ( [Webauthn](https://www.w3.org/TR/webauthn-3) )
-- `curves` - verification of signature over any raw data using any of the supported curves (Ed25519, Secp256k1, Secp256r1)
-- `ed25519` - same as above but only for Ed25519 curve
+| Feature       | Purpose                                      | Specification |
+|--------------|----------------------------------------------|---------------|
+| ``ethereum`` | Ethereum personal sign messages              | [EIP-191](https://eips.ethereum.org/EIPS/eip-191) |
+| ``cosmos``   | Cosmos arbitrary signing (human-readable)    | [ADR-036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) |
+| ``passkeys`` | WebAuthn / FIDO2 passkey authentication      | [WebAuthn](https://www.w3.org/TR/webauthn-3) |
+| ``curves``   | Raw data sig verification (Ed25519, Secp256k1, Secp256r1) | Multi-curve support |
+| ``ed25519``  | Sig verification only on Ed25519 curve       | Subset of ``curves`` |
 
 The following features give you access to additional logic related to better control or additional security
 
-- `session` - tool and primitives for session keys and message type identification
-- `replay` - enable replay protection and enforce signed messages to follow a specific format that includes nonces
-- `std` - whether to enable native Rust std library
+| Feature     | Purpose                                      |
+|------------|----------------------------------------------|
+| ``session``| Tools & primitives for  session keys and message typing      |
+| ``replay`` | Adds replay protection with nonce enforcement |
+| ``std``    | Enables Rust `std` (vs `no_std` compatibility) |
+
 
 The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
 
-- `utils` - inner utilities for serialization and preparing them for cryptography
-- `types` - enable minimalistic vm agnostic types ported from `cosmwasm_std` and `cw-utils`
-- `traits` - for importing trait `Verifiable` used internally or `CredentialsWrapper` to customise or simply use the wrapper methods
+| Feature      | Purpose                                         |
+|-------------|-------------------------------------------------|
+| ``utils``   | Serialization and crypto preprocessing tools   |
+| ``types``   | Lightweight, VM-agnostic types (from `cosmwasm_std` / `cw-utils`) |
+| ``traits``  | Exposes `Verifiable` *used internally* and `CredentialsWrapper` traits *to customise or simply use the wrapper methods* |
+
+___
 
 The following credentials are not meant to be specified directly and used only internal purposes 🚫
 
-- `wasm` - common logic for different versions of cosmwasm or it's derivatives
+| Feature   | Purpose                              |
+|----------|---------------------------------------|
+| ``wasm`` | Shared logic for CosmWasm derivatives |
+
 
 ## Verification
 
