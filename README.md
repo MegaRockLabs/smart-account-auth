@@ -39,7 +39,6 @@ Authentication Library / SDK  for working with various crypthograpghic credentia
 | Secp256k1 / Secp256r1    | ``curves`` or ``ethereum`` | Raw signature verification on ECDSA curves |
 | Ed25519                  | ``curves`` or ``ed25519`` | EdDSA signatures (e.g., Solana, Substrate)   |
 
-
 ## Virtual Machine Support
 
 | Virtual Machine       | Version      | Support Level     | Notes                                  |
@@ -99,7 +98,6 @@ The following features give you access to additional logic related to better con
 | ``replay`` | Adds replay protection with nonce enforcement |
 | ``std``    | Enables Rust `std` (vs `no_std` compatibility) |
 
-
 The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
 
 | Feature      | Purpose                                         |
@@ -115,7 +113,6 @@ The following credentials are not meant to be specified directly and used only i
 | Feature   | Purpose                              |
 |----------|---------------------------------------|
 | ``wasm`` | Shared logic for CosmWasm derivatives |
-
 
 ## Verification
 
