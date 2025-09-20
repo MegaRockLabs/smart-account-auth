@@ -10,7 +10,7 @@ npm install smart-account-auth
 
 ### Basics
 
-Requsting a credemtial is as simple as calling a function with a message to be signed and passing the neccecary signer information
+Requesting a credential is as simple as calling a function with a message to be signed and passing the neccecary signer information
 ```typescript
 import { getEthPersonalSignCredential } from 'smart-account-auth';
 const ethCredential = await getEthPersonalSignCredential(window.ethereum, message)
@@ -46,7 +46,7 @@ const credential = await getPasskeyCredPromise;
 
 ### Replay Attack Protection
 
-If replay attack protection is enabled on the contract side, the message to be signed must be a json strong of the following format
+If replay attack protection is enabled on the contract side, the message to be signed must be a json string of the following format
 ```typescript
 type DataToSign = {
     chain_id: string,

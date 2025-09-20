@@ -3,9 +3,9 @@
 
 # Smart Account Authentication
 
-Authentication Library / SDK  for working with various crypthograpghic credentials / authenticators
+Authentication Library / SDK  for working with various cryptographic credentials / authenticators
 
-- Client-side tools for requesting credentials abd their serilizations
+- Client-side tools for requesting credentials and their serializations
 - Verification (+ storage) logic for Rust environments.
 - Ideal for smart accounts, wallets and apps with build-in authentication
 
@@ -15,19 +15,19 @@ Authentication Library / SDK  for working with various crypthograpghic credentia
 - Formatting data according to specs. Primarily with use of envelopes
 - Serialisation and deserialisation of the date depending on context
 - Passing data to underlying cryptographic APIs and libraries
-- Dealing with batches / multuple credentials at the same time
+- Dealing with batches / multiple credentials at the same time
 - [FEAT] Protection against replay attacks
 - [FEAT] Encapsulated storage of the credentials
 - [FEAT] Encapsulated reconstruction & verification of credentials from payload
 
 ### Cryptography
 
-- ⚡ Delegations verifcation to available APIs for efficency
+- ⚡ Delegations verification to available APIs for efficiency
 - ⚙️ Native version relies on [cosmwasm-crypto](https://crates.io/crates/cosmwasm-crypto)
 
 ### Other Info
 
-- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url`
+- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sense according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url`
 
 ## Supported Credentials
 
@@ -53,7 +53,7 @@ Authentication Library / SDK  for working with various crypthograpghic credentia
 
 # Smart Contracts / Programs
 
-## Instalation
+## Installation
 
 ```bash
 # Add the library to your project
@@ -63,7 +63,7 @@ cargo add smart-account-auth
 You can also give the library an alias to simplify typing
 
 ```toml
-# tp import for CosmWasm(v1) contracts with all default features 
+# to import for CosmWasm(v1) contracts with all default features 
 saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwasm"] }
 ```
 
@@ -80,7 +80,7 @@ Environment specific features that are mutually exclusive and **shouldn't** be u
 | ``substrate``  | Substrate ink! smart contracts         | In Development |
 | ``solana``     | Solana programs (BPF)                  | In Development |
 
-Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size:
+Credential specific features allow you to include / exclude specific credential types for better control and optimizing the binary size:
 
 | Feature       | Purpose                                      | Specification |
 |--------------|----------------------------------------------|---------------|
@@ -182,7 +182,7 @@ npm install smart-account-auth
 
 ### Basics
 
-Requsting a credemtial is as simple as calling a function with a message to be signed and passing the neccecary signer information
+Requesting a credential is as simple as calling a function with a message to be signed and passing the neccecary signer information
 
 ```typescript
 import { getEthPersonalSignCredential } from 'smart-account-auth';
@@ -221,7 +221,7 @@ const credential = await getPasskeyCredPromise;
 
 ### Replay Attack Protection
 
-If replay attack protection is enabled on the contract side, the message to be signed must be a json strong of the following format
+If replay attack protection is enabled on the contract side, the message to be signed must be a json string of the following format
 
 ```typescript
 type DataToSign = {
@@ -254,7 +254,7 @@ const data : CredentialData = {
 ### Meta / Usage
 
 - OpenSource -> Low Funding / Resources -> Contributions are especially needed and welcomed
-- Authors of the library are also its main users. The expirience is iteratively used to improve the SDK by understaning the needs and shifting more and more logic from apps to the lib.
+- Authors of the library are also its main users. The experience is iteratively used to improve the SDK by understanding the needs and shifting more and more logic from apps to the lib.
 - `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez).
 
 ## Disclaimer
