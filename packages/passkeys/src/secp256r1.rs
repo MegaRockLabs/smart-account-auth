@@ -28,7 +28,7 @@ impl Identifiable for Secp256r1 {
 
 impl Verifiable for Secp256r1 {
 
-    fn message(&self) -> Cow<[u8]> {
+    fn message(&self) -> Cow<'_, [u8]> {
         Cow::Borrowed(self.message.as_slice())
     }
 

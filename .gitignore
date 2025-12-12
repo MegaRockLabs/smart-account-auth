@@ -15,12 +15,14 @@ target/
 
 # User-gen
 metadata.csv
+logs
 
 # ENV
 .env
 
 # Auto-gen
 .cargo-ok
+.qodoa
 
 # Build artifacts
 *.wasm

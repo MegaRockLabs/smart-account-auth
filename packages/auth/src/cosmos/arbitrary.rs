@@ -72,7 +72,7 @@ impl Identifiable for CosmosArbitrary {
 
 impl Verifiable for CosmosArbitrary {
     
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         std::borrow::Cow::Borrowed(self.message.as_slice())
     }
 

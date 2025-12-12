@@ -28,7 +28,7 @@ impl Identifiable for Secp256k1 {
 
 impl Verifiable for Secp256k1 {
 
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         std::borrow::Cow::Borrowed(&self.message)
     }
 

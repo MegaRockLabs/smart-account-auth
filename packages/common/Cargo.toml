@@ -13,7 +13,7 @@ saa-schema          = { workspace = true }
 thiserror           = { workspace = true }
 
 
-cosmwasm-std        = { version = "2.2.2",  optional = true }
+cosmwasm-std        = { version = "3.0.2",  optional = true }
 cosmwasm-std-v1     = { version = "1.5.11", optional = true, package = "cosmwasm-std" }
 secretwasm-std      = { version = "1.1.11", optional = true, package = "secret-cosmwasm-std" }
 ink                 = { version = "5.1.1", optional = true, default-features = false }
@@ -28,7 +28,7 @@ serde               = { workspace = true }
 strum               = { workspace = true }
 serde-json-wasm     = { workspace = true }
 serde_json          = { workspace = true, optional = true }
-getrandom           = { version = "0.2.15",  default-features = false, features = ["custom"] }
+getrandom           = { version = "0.2.16",  default-features = false, features = ["custom"] }
 
 
 [features]

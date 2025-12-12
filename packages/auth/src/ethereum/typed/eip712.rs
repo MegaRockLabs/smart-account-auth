@@ -327,7 +327,7 @@ fn encode_head_tail_append(acc: &mut Vec<Word>, mediates: &[Mediate]) {
 }
 
 
-fn mediate_token(token: &Token) -> Mediate {
+fn mediate_token(token: &Token) -> Mediate<'_> {
 	match token {
 		Token::Address(_) => Mediate::Raw(1, token),
 		Token::Bytes(bytes) => Mediate::Prefixed(pad_bytes_len(bytes), token),

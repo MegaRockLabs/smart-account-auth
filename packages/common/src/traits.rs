@@ -12,7 +12,7 @@ pub trait Identifiable {
 
 
 pub trait Verifiable : Identifiable  {
-    fn message(&self) -> Cow<[u8]>;
+    fn message(&self) -> Cow<'_, [u8]>;
     fn validate(&self) -> Result<(), AuthError>;
     #[cfg(any(feature = "native", feature = "wasm"))]  
     fn verify(&self,
@@ -55,7 +55,7 @@ impl<T: Deref> Verifiable for T
         )
     }
     
-    fn message(&self) -> Cow<[u8]> {
+    fn message(&self) -> Cow<'_, [u8]> {
         self.deref().message()
     }
 }

@@ -31,7 +31,7 @@ impl Identifiable for Ed25519 {
 impl Verifiable for Ed25519 {
 
 
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         std::borrow::Cow::Borrowed(self.message.as_slice())
     }
 

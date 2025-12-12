@@ -102,7 +102,7 @@ fn saa_error_impl(input: DeriveInput, options: Options) -> syn::Result<DeriveInp
     let crate_path = &options.crate_path;
     let error_path: syn::Path = syn::parse_quote!(#crate_path::thiserror::Error);
     let mut stream = quote! {
-        #[derive(PartialEq, Debug, #error_path)]
+        #[derive(Debug, #error_path)]
     };
     match &input.data {
         syn::Data::Enum(_) => {},

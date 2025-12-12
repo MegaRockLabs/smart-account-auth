@@ -3,30 +3,26 @@
 
 # Smart Account Authentication
 
-Authentication Library / SDK  for working with various crypthograpghic credentials / authenticators
-- Client-side tools for requesting credentials abd their serilizations 
+Authentication Library / SDK for working with various cryptographic credentials / authenticators
+- Client-side tools for requesting credentials and their serializations 
 - Verification (+ storage) logic for Rust environments. 
-- Ideal for smart accounts, wallets and apps with build-in authentication 
+- Ideal for smart accounts, wallets and apps with built-in authentication 
 
 ## Goals and Focus-Area
-- Definition of useful data structure, trais and utlity functions
+- Definition of useful data structure, traits and utility functions
 - Formatting data according to specs. Primarily with use of envelopes
-- Serialisation and deserialisation of the date depending on context
+- Serialisation and deserialisation of the data depending on context
 - Passing data to underlying cryptographic APIs and libraries
-- Dealing with batches / multuple credentials at the same time 
-- [FEAT] Protection against replay attacks 
-- [FEAT] Encapsulated storage of the credentials 
-- [FEAT] Encapsulated reconstruction & verification of credentials from payload
+- Dealing with batches / multiple credentials at the same time 
+
 
 ### Cryptography
-- ⚡ Delegations verifcation to available APIs for efficency 
+- ⚡ Delegates verification to available APIs for efficiency 
 - ⚙️ Native version relies on [cosmwasm-crypto](https://crates.io/crates/cosmwasm-crypto)
 
 ### Other Info
 
-- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
-
-
+- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sense according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
 
 ## Supported Credentials
 - Ethereum (EVM) personal sign
@@ -35,18 +31,15 @@ Authentication Library / SDK  for working with various crypthograpghic credentia
 - Secp256k1 / Secp256r1 / Ed25519 Curves
 
 ## Virtual Machine Support
-- Cosmwasm [1.x]  -  Complete
-- Cosmwasm [2.x]  -  Partial
-- SecretWasm      -  Partial
-- Ink / Substrate -  Partial
-- Solana Seahorse -  Serialization
-
-
+- Cosmwasm  
+- SecretWasm      
+- Cosmwasm 1.5.x  - Temporary support
+- Ink / Substrate -  Types only
+- Solana (SVM)    -  Types only
 
 # Smart Contracts / Programs
 
-
-## Instalation
+## Installation
 
 ```bash
 # Add the library to your project
@@ -55,50 +48,60 @@ cargo add smart-account-auth
 
 You can also give the library an alias to simplify typing
 ```toml
-# tp import for CosmWasm(v1) contracts with all default features 
-saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwasm"] }
+# To import for CosmWasm(v1) contracts with all default features 
+saa  = { package = "smart-account-auth", version = "0.26.9", features = ["cosmwasm"] }
 ```
 
 ### Features
 
-Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
+#### Feature Groups
+- `default` - includes standard library, replay protection, and major credential types
+- `majors` - includes the most commonly used credential types (Cosmos, Ethereum personal sign, Passkeys, Ed25519)
+- `curves` - includes all supported cryptographic curves (Secp256r1, Secp256k1, Ed25519)
+- `ethereum` - includes Ethereum personal sign and typed data support
+
+#### Environment Features
+Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine:
 - `native` - for native rust code
 - `cosmwasm` - for cosmwasm 2.x
 - `cosmwasm_v1` - for cosmwasm 1.x 
-- `secretwasm` - for cosmwasm of secret network (in development)
-- `substrate` - for smart contracts written in ink (in development)
-- `solana` - for solana programs (in development)
+- `secretwasm` - for cosmwasm of secret network
+- `substrate` - for smart contracts written in ink (types only)
+- `solana` - for solana programs (types only)
 
+#### Credential Features
+Credential specific features allow you to include / exclude specific credential types for better control and optimizing the binary size:
 
-Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size
-
-- `ethereum` - for Ethereum personal sign message specification (  [EIP-191](https://eips.ethereum.org/EIPS/eip-191) )
-- `cosmos` - for Cosmos Arbitrary message specificion (  [ADR 036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) )
+- `eth_personal` - for Ethereum personal sign message specification ( [EIP-191](https://eips.ethereum.org/EIPS/eip-191) )
+- `eth_typed_data` - for Ethereum typed data (EIP-712) support
+- `cosmos_arb` - for Cosmos Arbitrary message specification ( [ADR 036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) )
+- `cosmos_arb_addr` - for Cosmos address derivation from arbitrary signatures
 - `passkeys` - for passkey based authentication ( [Webauthn](https://www.w3.org/TR/webauthn-3) )
-- `curves` - verification of signature over any raw data using any of the supported curves (Ed25519, Secp256k1, Secp256r1) 
-- `ed25519` - same as above but only for Ed25519 curve
+- `ed25519` - for Ed25519 curve support
+- `secp256k1` - for Secp256k1 curve support
+- `secp256r1` - for Secp256r1 curve support
 
-The following features give you access to additional logic related to better control or additional security
+#### Additional Features
+The following features give you access to additional logic related to better control or additional security:
 - `session` - tool and primitives for session keys and message type identification 
 - `replay` - enable replay protection and enforce signed messages to follow a specific format that includes nonces 
 - `std` - whether to enable native Rust std library 
 
-The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
+#### Extra Exports
+The following features enable or disable inner primitives to either help you out or to reduce the binary size as much as possible:
 - `utils` - inner utilities for serialization and preparing them for cryptography 
 - `types` - enable minimalistic vm agnostic types ported from `cosmwasm_std` and `cw-utils`
-- `traits` - for importing trait `Verifiable` used internally or `CredentialsWrapper` to customise or simply use the wrapper methods 
 
-The following credentials are not meant to be specified directly and used only internal purposes 🚫
-- `wasm` - common logic for different versions of cosmwasm or it's derivatives
-
-
+#### Internal Features
+The following features are not meant to be specified directly and used only for internal purposes 🚫
+- `wasm` - common logic for different versions of cosmwasm or its derivatives
 
 ## Verification
 
 ### Single Credential
 ```rust
 use cosmwasm_std::Binary;
-use smart_acccount_auth::{traits::Verifiable, EvmCredential};
+use smart_account_auth::{traits::Verifiable, EvmCredential};
 
 let evm_credential = EvmCredential {
     message:   Binary::from_base64( ** your message ** ),
@@ -107,16 +110,16 @@ let evm_credential = EvmCredential {
 }
 
 # native rust code
-evm_credential.verify()?:
+evm_credential.verify()?;
 
 # cosmwasm (feature) api code
 evm_credential.verify_cosmwasm(deps.api)?;
 ```
 
-### Multiple Credentials / Credentil Data Wrapper
+### Multiple Credentials / Credential Data Wrapper
 
 ```rust
-use smart_acccount_auth::{traits::{Verifiable, CredentialsWrapper}, CredentialData};
+use smart_account_auth::{traits::{Verifiable, CredentialsWrapper}, CredentialData};
 
 let credential_data = CredentialData {
     credentials         :  vec![ ** your credentials here **  ],
@@ -140,12 +143,11 @@ let cred = data.primary();
 let id = cred.id();
 
 if cred.is_cosmos_derivable() {
-    // wull be using passed hrp if available or the default
+    // will be using passed hrp if available or the default
     let cosmos_address = cred.cosmos_address(deps.api);
 }
 
 ```
-
 
 # Typescript
 
@@ -160,7 +162,7 @@ npm install smart-account-auth
 
 ### Basics
 
-Requsting a credemtial is as simple as calling a function with a message to be signed and passing the neccecary signer information
+Requesting a credential is as simple as calling a function with a message to be signed and passing the necessary signer information
 ```typescript
 import { getEthPersonalSignCredential } from 'smart-account-auth';
 const ethCredential = await getEthPersonalSignCredential(window.ethereum, message)
@@ -173,7 +175,7 @@ const cosmosCredential = await getCosmosArbitraryCredential(window.keplr, chainI
 
 ### Passkeys
 
-For passkeys you need to check whether a credential has been registeted and prompt the user to register one if it hasn't
+For passkeys you need to check whether a credential has been registered and prompt the user to register one if it hasn't
 
 ```typescript
 import { getPasskeyCredential, registerPasskey } from 'smart-account-auth'
@@ -196,7 +198,7 @@ const credential = await getPasskeyCredPromise;
 
 ### Replay Attack Protection
 
-If replay attack protection is enabled on the contract side, the message to be signed must be a json strong of the following format
+If replay attack protection is enabled on the contract side, the message to be signed must be a JSON string of the following format
 ```typescript
 type DataToSign = {
     chain_id: string,
@@ -206,7 +208,6 @@ type DataToSign = {
   }
 ```
 The order of the fields is important (set to alphabetical order) and the nonce must be equal to the current account number
-
 
 ### Multiple Credentials / Credential Data Wrapper
 
@@ -226,15 +227,11 @@ const data : CredentialData = {
 
 ### Meta / Usage
 - OpenSource -> Low Funding / Resources -> Contributions are especially needed and welcomed
-- Authors of the library are also its main users. The expirience is iteratively used to improve the SDK by understaning the needs and shifting more and more logic from apps to the lib. 
-- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez). 
-
-
+- Authors of the library are also its main users. The experience is iteratively used to improve the SDK by understanding the needs and shifting more and more logic from apps to the lib. 
+- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadratic funding on [DoraHacks](https://dorahacks.io/aez). 
 
 ## Disclaimer
 
 - 🛠 In-Active development. Breaking changes might occur
 - 👾 Test coverage to be improved and some bugs might occur
 - ⚠️ The project hasn't been audited. Use at your own risk
-
-

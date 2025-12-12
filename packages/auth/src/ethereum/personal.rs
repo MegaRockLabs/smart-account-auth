@@ -32,7 +32,7 @@ impl Identifiable for EthPersonalSign {
 
 impl Verifiable for EthPersonalSign {
     
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         std::borrow::Cow::Borrowed(self.message.as_slice())
     }
 

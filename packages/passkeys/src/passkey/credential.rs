@@ -44,7 +44,7 @@ impl Identifiable for PasskeyCredential {
 impl Verifiable for PasskeyCredential {
 
     // transfroming from base64 url to regular base64 so that we can deserialize using `from_json` etc.
-    fn message(&self) -> std::borrow::Cow<[u8]> {
+    fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         match Binary::from_base64(&super::utils::url_to_base64(&self.client_data.challenge)) {
             Ok(bytes) => std::borrow::Cow::Owned(bytes.to_vec()),
             Err(_) => std::borrow::Cow::Borrowed(&[])

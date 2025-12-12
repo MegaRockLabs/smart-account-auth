@@ -31,7 +31,7 @@ impl Identifiable for Caller {
 
 impl Verifiable for Caller {
 
-     fn message(&self) -> std::borrow::Cow<[u8]> {
+     fn message(&self) -> std::borrow::Cow<'_, [u8]> {
         std::borrow::Cow::Owned(vec![])
     }
 
