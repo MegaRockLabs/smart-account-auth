@@ -12,4 +12,4 @@ pub fn prefix_from_address(address: &str) -> String {
 }
 
 #[cfg(not(feature = "cosmos_arb_addr"))]
-pub use saa_crypto::{pubkey_to_address, pubkey_to_canonical};
+pub use saa_crypto::{pubkey_to_address, *};

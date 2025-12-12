@@ -17,7 +17,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version         = "0.26.10"
+version         = "0.26.12"
 edition         = "2021"
 readme          = "README.md"
 repository      = "https://github.com/MegaRockLabs/smart-account-auth"
@@ -42,8 +42,8 @@ saa-proto-substrate     = { version = "0.26.10", path = "packages/macros-proto/s
 
 saa-schema              = { version = "0.26.10", path = "packages/schema" }
 saa-common              = { version = "0.26.10", path = "packages/common", default-features = false }
-saa-crypto              = { version = "0.26.10", path = "packages/crypto" }
-saa-auth                = { version = "0.26.10", path = "packages/auth" }
+saa-crypto              = { version = "0.26.12", path = "packages/crypto" }
+saa-auth                = { version = "0.26.12", path = "packages/auth" }
 saa-curves              = { version = "0.26.10", path = "packages/curves" }
 saa-passkeys            = { version = "0.26.10", path = "packages/passkeys" }
 smart-account-auth      = { version = "0.26.4", path = "packages/bundle", default-features = false }

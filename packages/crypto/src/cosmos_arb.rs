@@ -3,7 +3,7 @@ use saa_common::{AuthError, String};
 use bech32::{hrp::Hrp, Bech32};
 
 
-
+#[cfg(feature = "cosmwasm")]
 pub fn pubkey_to_canonical(pubkey: &[u8]) -> saa_common::wasm::CanonicalAddr {
     saa_common::wasm::CanonicalAddr::from(ripemd160(&sha256(pubkey))).into()
 }
