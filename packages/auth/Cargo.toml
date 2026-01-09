@@ -17,7 +17,7 @@ saa-crypto          = { workspace = true }
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 
-# ethabi              = { version = "0.26.0", default-features = false, features = ["serde"] }
+# ethabi              = { version = "0.28.0", default-features = false, features = ["serde"] }
 primitive-types      = { version = "0.12.2", optional = true, default-features = false, features = ["serde"] }
 
 [features]

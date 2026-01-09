@@ -18,7 +18,7 @@ strum_macros        = { workspace = true }
 strum               = { workspace = true }
 
 serde_json          = { version = "1.0.140" }
-cosmwasm-std        = { version = "2.2.2", default-features = false }
+cosmwasm-std        = { version = "3.0.2", default-features = false }
 base64-url          = { version = "3.0.0", default-features = false }
 hex                 = { version = "0.4.3", default-features = false }
 cosmwasm-schema     = { workspace = true }

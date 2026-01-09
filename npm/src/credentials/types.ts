@@ -90,7 +90,7 @@ export interface GetPasskeyParams {
     // enduring that a passkey is stricly a cross-platform  or stricly based on a local platform
     crossPlatform?          :      boolean;
     
-    // parameters for usage of local storage in order to request a specifc credential
+    // parameters for usage of local storage in order to request a specific credential
     // false to disable the usage completely
     localStorage?            :      {
         // name of the local storage key to use: Default: "passkeys"

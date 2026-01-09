@@ -3,50 +3,57 @@
 
 # Smart Account Authentication
 
-Authentication Library / SDK  for working with various crypthograpghic credentials / authenticators
-- Client-side tools for requesting credentials abd their serilizations 
-- Verification (+ storage) logic for Rust environments. 
-- Ideal for smart accounts, wallets and apps with build-in authentication 
+Authentication Library / SDK  for working with various cryptographic credentials / authenticators
+
+- Client-side tools for requesting credentials and their serializations
+- Verification (+ storage) logic for Rust environments.
+- Ideal for smart accounts, wallets and apps with build-in authentication
 
 ## Goals and Focus-Area
+
 - Definition of useful data structure, trais and utlity functions
 - Formatting data according to specs. Primarily with use of envelopes
 - Serialisation and deserialisation of the date depending on context
 - Passing data to underlying cryptographic APIs and libraries
-- Dealing with batches / multuple credentials at the same time 
-- [FEAT] Protection against replay attacks 
-- [FEAT] Encapsulated storage of the credentials 
+- Dealing with batches / multiple credentials at the same time
+- [FEAT] Protection against replay attacks
+- [FEAT] Encapsulated storage of the credentials
 - [FEAT] Encapsulated reconstruction & verification of credentials from payload
 
 ### Cryptography
-- ⚡ Delegations verifcation to available APIs for efficency 
+
+- ⚡ Delegations verification to available APIs for efficiency
 - ⚙️ Native version relies on [cosmwasm-crypto](https://crates.io/crates/cosmwasm-crypto)
 
 ### Other Info
 
-- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sence according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url` 
-
-
+- **Encoding:** By default using `base64` everywhere. The exceptions are primarily when it makes sense according to the specs of a credential such as Eth addresses using `hex` or webauthn challenge using `base64url`
 
 ## Supported Credentials
-- Ethereum (EVM) personal sign
-- Cosmos Arbitrary (036)
-- Passkeys / Webauthn
-- Secp256k1 / Secp256r1 / Ed25519 Curves
+
+| Credential               | Feature Flag     | Specification / Use Case                          |
+|--------------------------|------------------|----------------------------------------------------|
+| Ethereum Personal Sign   | ``ethereum``     | EVM-compatible signing (EIP-191)                  |
+| Cosmos Arbitrary Sign    | ``cosmos``       | Human-readable msgs (ADR-036)                     |
+| Passkeys (WebAuthn)      | ``passkeys``     | FIDO2 / WebAuthn public key authentication        |
+| Secp256k1 / Secp256r1    | ``curves`` or ``ethereum`` | Raw signature verification on ECDSA curves |
+| Ed25519                  | ``curves`` or ``ed25519`` | EdDSA signatures (e.g., Solana, Substrate)   |
 
 ## Virtual Machine Support
-- Cosmwasm [1.x]  -  Complete
-- Cosmwasm [2.x]  -  Partial
-- SecretWasm      -  Partial
-- Ink / Substrate -  Partial
-- Solana Seahorse -  Serialization
 
+| Virtual Machine       | Version      | Support Level     | Notes                                  |
+|-----------------------|-------------|-------------------|----------------------------------------|
+| CosmWasm              | 1.x         | Complete          | Full signing and verification          |
+| CosmWasm              | 2.x         | Partial           | Ongoing updates for v2 changes         |
+| SecretWasm            | -           | Partial           | Based on CosmWasm; limited extensions  |
+| Ink / Substrate       | -           | Partial           | Core types supported; more in development |
+| Solana (Seahorse)     | -           | Serialization     | Only message serialization; no signing |
 
+> Legend: Complete = fully supported, Partial = limited or experimental, Serialization = only data formatting available
 
 # Smart Contracts / Programs
 
-
-## Instalation
+## Installation
 
 ```bash
 # Add the library to your project
@@ -54,48 +61,63 @@ cargo add smart-account-auth
 ```
 
 You can also give the library an alias to simplify typing
+
 ```toml
-# tp import for CosmWasm(v1) contracts with all default features 
+# to import for CosmWasm(v1) contracts with all default features 
 saa  = { package = "smart-account-auth", version = "0.24.5", features = ["cosmwasm"] }
 ```
 
 ### Features
 
-Environment specific features that are mutually exclusive and shouldn't be used together. Pick depending on your virtual machine
-- `native` - for native rust code
-- `cosmwasm` - for cosmwasm 2.x
-- `cosmwasm_v1` - for cosmwasm 1.x 
-- `secretwasm` - for cosmwasm of secret network (in development)
-- `substrate` - for smart contracts written in ink (in development)
-- `solana` - for solana programs (in development)
+Environment specific features that are mutually exclusive and **shouldn't** be used together. Pick depending on your virtual machine:
 
+| Feature         | Target Environment                     | Status        |
+|----------------|----------------------------------------|---------------|
+| ``native``     | Native Rust execution                  | Stable        |
+| ``cosmwasm``   | CosmWasm 2.x smart contracts           | Stable        |
+| ``cosmwasm_v1``| CosmWasm 1.x smart contracts           | Stable        |
+| ``secretwasm`` | Secret Network (CosmWasm fork)         | In Development |
+| ``substrate``  | Substrate ink! smart contracts         | In Development |
+| ``solana``     | Solana programs (BPF)                  | In Development |
 
-Credential specifc features allow you to include / exclude specific credential types for better control and optimisizing the binary size
+Credential specific features allow you to include / exclude specific credential types for better control and optimizing the binary size:
 
-- `ethereum` - for Ethereum personal sign message specification (  [EIP-191](https://eips.ethereum.org/EIPS/eip-191) )
-- `cosmos` - for Cosmos Arbitrary message specificion (  [ADR 036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) )
-- `passkeys` - for passkey based authentication ( [Webauthn](https://www.w3.org/TR/webauthn-3) )
-- `curves` - verification of signature over any raw data using any of the supported curves (Ed25519, Secp256k1, Secp256r1) 
-- `ed25519` - same as above but only for Ed25519 curve
+| Feature       | Purpose                                      | Specification |
+|--------------|----------------------------------------------|---------------|
+| ``ethereum`` | Ethereum personal sign messages              | [EIP-191](https://eips.ethereum.org/EIPS/eip-191) |
+| ``cosmos``   | Cosmos arbitrary signing (human-readable)    | [ADR-036](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-036-arbitrary-signature.md) |
+| ``passkeys`` | WebAuthn / FIDO2 passkey authentication      | [WebAuthn](https://www.w3.org/TR/webauthn-3) |
+| ``curves``   | Raw data sig verification (Ed25519, Secp256k1, Secp256r1) | Multi-curve support |
+| ``ed25519``  | Sig verification only on Ed25519 curve       | Subset of ``curves`` |
 
 The following features give you access to additional logic related to better control or additional security
-- `session` - tool and primitives for session keys and message type identification 
-- `replay` - enable replay protection and enforce signed messages to follow a specific format that includes nonces 
-- `std` - whether to enable native Rust std library 
+
+| Feature     | Purpose                                      |
+|------------|----------------------------------------------|
+| ``session``| Tools & primitives for  session keys and message typing      |
+| ``replay`` | Adds replay protection with nonce enforcement |
+| ``std``    | Enables Rust `std` (vs `no_std` compatibility) |
 
 The following features enable or disable inner primitives to ether help you out or to reduce the binary size as much as possible
-- `utils` - inner utilities for serialization and preparing them for cryptography 
-- `types` - enable minimalistic vm agnostic types ported from `cosmwasm_std` and `cw-utils`
-- `traits` - for importing trait `Verifiable` used internally or `CredentialsWrapper` to customise or simply use the wrapper methods 
+
+| Feature      | Purpose                                         |
+|-------------|-------------------------------------------------|
+| ``utils``   | Serialization and crypto preprocessing tools   |
+| ``types``   | Lightweight, VM-agnostic types (from `cosmwasm_std` / `cw-utils`) |
+| ``traits``  | Exposes `Verifiable` *used internally* and `CredentialsWrapper` traits *to customise or simply use the wrapper methods* |
+
+___
 
 The following credentials are not meant to be specified directly and used only internal purposes 🚫
-- `wasm` - common logic for different versions of cosmwasm or it's derivatives
 
-
+| Feature   | Purpose                              |
+|----------|---------------------------------------|
+| ``wasm`` | Shared logic for CosmWasm derivatives |
 
 ## Verification
 
 ### Single Credential
+
 ```rust
 use cosmwasm_std::Binary;
 use smart_acccount_auth::{traits::Verifiable, EvmCredential};
@@ -146,12 +168,12 @@ if cred.is_cosmos_derivable() {
 
 ```
 
-
 # Typescript
 
 ## Installation
 
 Add the library to your project
+
 ```bash
 npm install smart-account-auth
 ```
@@ -160,12 +182,15 @@ npm install smart-account-auth
 
 ### Basics
 
-Requsting a credemtial is as simple as calling a function with a message to be signed and passing the neccecary signer information
+Requesting a credential is as simple as calling a function with a message to be signed and passing the neccecary signer information
+
 ```typescript
 import { getEthPersonalSignCredential } from 'smart-account-auth';
 const ethCredential = await getEthPersonalSignCredential(window.ethereum, message)
 ```
+
 or
+
 ```typescript
 import { getCosmosArbitraryCredential } from 'smart-account-auth';
 const cosmosCredential = await getCosmosArbitraryCredential(window.keplr, chainId, message)
@@ -196,7 +221,8 @@ const credential = await getPasskeyCredPromise;
 
 ### Replay Attack Protection
 
-If replay attack protection is enabled on the contract side, the message to be signed must be a json strong of the following format
+If replay attack protection is enabled on the contract side, the message to be signed must be a json string of the following format
+
 ```typescript
 type DataToSign = {
     chain_id: string,
@@ -205,12 +231,13 @@ type DataToSign = {
     nonce: string
   }
 ```
-The order of the fields is important (set to alphabetical order) and the nonce must be equal to the current account number
 
+The order of the fields is important (set to alphabetical order) and the nonce must be equal to the current account number
 
 ### Multiple Credentials / Credential Data Wrapper
 
 You can use `CredentialData` object to wrap multiple credentials and efficiently verify them in a single call
+
 ```typescript
 import { CredentialData } from 'smart-account-auth'
 
@@ -225,16 +252,13 @@ const data : CredentialData = {
 ```
 
 ### Meta / Usage
+
 - OpenSource -> Low Funding / Resources -> Contributions are especially needed and welcomed
-- Authors of the library are also its main users. The expirience is iteratively used to improve the SDK by understaning the needs and shifting more and more logic from apps to the lib. 
-- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez). 
-
-
+- Authors of the library are also its main users. The experience is iteratively used to improve the SDK by understanding the needs and shifting more and more logic from apps to the lib.
+- `CosmWasm` retains the status of the primary target and used the most often during feature design stage and for tests. The main reason is being funded through quadrating funding on [DoraHacks](https://dorahacks.io/aez).
 
 ## Disclaimer
 
 - 🛠 In-Active development. Breaking changes might occur
 - 👾 Test coverage to be improved and some bugs might occur
 - ⚠️ The project hasn't been audited. Use at your own risk
-
-
