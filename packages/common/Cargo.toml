@@ -20,13 +20,13 @@ ink                 = { version = "5.1.1", optional = true, default-features = f
 scale-info          = { workspace = true, optional = true }
 scale               = { workspace = true, optional = true }
 borsh               = { workspace = true, optional = true }
-schemars            = { workspace = true, optional = true }
 cosmwasm-crypto     = { workspace = true, optional = true }
 bech32              = { workspace = true, optional = true }
 base64              = { workspace = true }
 serde               = { workspace = true }
 strum               = { workspace = true }
 serde-json-wasm     = { workspace = true }
+cw-schema           = { workspace = true , optional = true }
 serde_json          = { workspace = true, optional = true }
 getrandom           = { version = "0.2.16",  default-features = false, features = ["custom"] }
 
@@ -41,7 +41,9 @@ solana      = [
     "saa-schema/solana"
 ]
 cosmwasm    = [
+    "dep:cw-schema",
     "cosmwasm-std/std",
+    "saa-schema/cosmwasm",
     "std",
     "wasm",
 ]
@@ -71,12 +73,10 @@ native     = [
 ]
 session    = []
 wasm       = [
-    "dep:schemars",
-    "saa-schema/cosmwasm",
+    "saa-schema/wasm",
 ]
 replay     = []
 types      = [
-    "dep:schemars",
     "saa-schema/cosmwasm",
 ]
 ed25519         =  []
@@ -84,5 +84,5 @@ secp256k1       =  []
 secp256r1       =  []
 passkeys        =  []
 eth_personal    =  []
-eth_typed_data  =  ["dep:serde_json", "dep:schemars", "std"]
+eth_typed_data  =  ["dep:serde_json",  "std"]
 cosmos_arb      =  ["dep:bech32"]

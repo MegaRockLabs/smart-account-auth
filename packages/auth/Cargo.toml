@@ -12,6 +12,7 @@ hex                 = { version = "0.4.3", optional = true, default-features = f
 serde_json          = { workspace = true,  optional = true }
 serde               = { workspace = true }
 schemars            = { workspace = true }
+cw-schema           = { workspace = true }
 
 saa-crypto          = { workspace = true }
 saa-common          = { workspace = true }

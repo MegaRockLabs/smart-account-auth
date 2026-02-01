@@ -1,7 +1,6 @@
 use crate::{AuthError, Binary, String, Uint64};
+use saa_schema::{saa_type, schemars::{self, JsonSchema}};
 use std::collections::BTreeMap;
-use saa_schema::saa_type;
-use schemars::JsonSchema;
 use serde_json::Value;
 
 pub type Eip712Types    =  BTreeMap<String, Vec<Eip712DomainType>>;
@@ -22,6 +21,25 @@ pub struct Eip712Message {
 
     #[serde(flatten)]
     pub props: BTreeMap<Value, Value>,
+}
+
+
+#[cfg(feature = "cosmwasm")]
+impl saa_schema::Schemaifier for Eip712Message {
+    fn visit_schema(visitor: &mut cw_schema::SchemaVisitor) -> cw_schema::DefinitionReference {
+        if let Some(existing) = visitor.get_reference::<Self>() {
+            return existing;
+        }
+        let id = Self::id();
+        visitor.insert(
+            id,
+            cw_schema::Node {
+                name: "Eip712Message".into(),
+                description: Some("EIP-712 message structure".into()),
+                value: cw_schema::NodeType::Struct(cw_schema::StructType::Unit),
+            },
+        )
+    }
 }
 
 
@@ -76,7 +94,7 @@ impl JsonSchema for Eip712Message {
         "Eip712Message".to_string()
     }
 
-    fn json_schema(_: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+    fn json_schema(_: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
         schemars::schema::Schema::Object(schemars::schema::SchemaObject {
             metadata: Some(Box::new(schemars::schema::Metadata {
                 description: Some("EIP-712 message structure".to_string()),
@@ -115,7 +133,7 @@ pub struct Eip712Domain {
     #[serde(rename = "verifyingContract")]
     pub verifying_contract: Option<String>,
     /// A disambiguating salt for the protocol. This can be used as a domain separator of last resort.
-    pub salt: Option<[u8; 32]>,
+    pub salt: Option<Vec<u8>>,
 }
 
 

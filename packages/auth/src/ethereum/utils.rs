@@ -49,7 +49,7 @@ pub fn hash_eth_typed_data(
     preamble_hash: &[u8],
     chain_id: &[u8],
     contract_addr: &[u8],
-    salt: Option<[u8; 32]>,
+    salt: &Option<Vec<u8>>,
 ) -> [u8; 32] {
     let mut data = Vec::with_capacity(match salt {
         Some(_) => 128,

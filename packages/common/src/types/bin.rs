@@ -24,7 +24,10 @@ pub struct Binary(
     #[cfg_attr(feature = "wasm", schemars(with = "String"))]
     Vec<u8>
 );
-
+#[cfg_attr(feature = "cosmwasm", 
+    derive(saa_schema::Schemaifier), 
+    schemaifier(type = cw_schema::NodeType::Binary)
+)]
 impl Binary {
     /// Creates a new `Binary` containing the given data.
     pub const fn new(data: Vec<u8>) -> Self {

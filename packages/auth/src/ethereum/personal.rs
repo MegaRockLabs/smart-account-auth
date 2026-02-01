@@ -19,7 +19,7 @@ pub struct EthPersonalSign {
 
 
 impl Identifiable for EthPersonalSign {
-    fn id(&self) -> CredentialId {
+    fn cred_id(&self) -> CredentialId {
         self.signer.to_lowercase()
     }
     
@@ -57,7 +57,7 @@ impl Verifiable for EthPersonalSign {
         #[cfg(feature = "cosmwasm")]
         deps: saa_common::wasm::Deps
     ) -> Result<CredentialInfo, AuthError> {
-        let address = self.id();
+        let address = self.cred_id();
         let signature = &self.signature.to_vec();
         #[cfg(all(feature = "native", not(feature = "cosmwasm")))]
         let key_data = saa_crypto::secp256k1_recover_pubkey(

@@ -1,13 +1,15 @@
-# cd packages/macros-proto/core && cargo publish && cd ../../..
-# sleep 10
-# cd packages/macros-proto/wasm && cargo publish && cd ../../..
-# sleep 10
-# cd packages/macros-proto/solana && cargo publish && cd ../../..
-# sleep 10
-# cd packages/macros-proto/substrate && cargo publish && cd ../../..
-# sleep 10
-# cd packages/schema && cargo publish && cd ../..
-# sleep 10
+cd packages/macros-proto/core && cargo publish && cd ../../..
+sleep 10
+cd packages/macros-proto/wasm && cargo publish && cd ../../..
+sleep 10
+cd packages/macros-proto/cosmwasm && cargo publish && cd ../../..
+sleep 10
+cd packages/macros-proto/substrate && cargo publish && cd ../../..
+sleep 10
+cd packages/macros-proto/solana && cargo publish && cd ../../..
+sleep 10
+cd packages/schema && cargo publish && cd ../..
+sleep 10
 cd packages/common && cargo publish && cd ../..
 sleep 10
 cd packages/crypto && cargo publish && cd ../..

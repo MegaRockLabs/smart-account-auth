@@ -74,13 +74,14 @@ impl EthTypedData {
             None => {
                 #[cfg(not(feature = "replay"))]
                 return None;
-                #[cfg(feature = "replay")]
-                if self.message_property.is_some() && self.message.nonce.is_some() {
-                    return self.domain.verifying_contract
-                        .as_ref()
-                        .map(|addr| addr[2..].to_string());
+                #[cfg(feature = "replay")] {
+                    if self.message_property.is_some() && self.message.nonce.is_some() {
+                        return self.domain.verifying_contract
+                            .as_ref()
+                            .map(|addr| addr[2..].to_string());
+                    }
+                    None
                 }
-                None
             }
          }
     }
@@ -127,7 +128,7 @@ impl EthTypedData {
             &pre_hash, 
             &chain_id,
             &address,
-            self.domain.salt
+            &self.domain.salt
         )
     }
 
@@ -159,7 +160,7 @@ impl EthTypedData {
 
 impl Identifiable for EthTypedData {
 
-    fn id(&self) -> CredentialId {
+    fn cred_id(&self) -> CredentialId {
         self.signer.to_lowercase()
     }
     

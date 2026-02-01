@@ -7,7 +7,9 @@ pub use saa_proto_core::saa_error;
 
 
 #[cfg(feature = "cosmwasm")]
-pub use {serde, schemars, cosmwasm_schema::{cw_schema::Schemaifier, QueryResponses}};
+pub use cw_schema::Schemaifier;
+#[cfg(feature = "wasm")]
+pub use {serde, cosmwasm_schema::schemars, cosmwasm_schema::{QueryResponses}};
 #[cfg(feature = "solana")]
 pub use borsh;
 #[cfg(feature = "substrate")]
@@ -17,25 +19,25 @@ pub use scale_info;
 
 
 #[cfg(all(
-    not(feature = "cosmwasm"), 
+    not(feature = "wasm"), 
     not(feature = "solana"), 
     not(feature = "substrate"))
 )]
 pub use saa_proto_core::saa_type;
 #[cfg(all(
     feature = "solana", 
-    not(feature = "cosmwasm"), 
+    not(feature = "wasm"), 
     not(feature = "substrate"))
 )]
 pub use {borsh, saa_proto_solana::saa_type};
 #[cfg(all(
     feature = "substrate", 
-    not(feature = "cosmwasm"), 
+    not(feature = "wasm"), 
     not(feature = "solana"))
 )]
 pub use {saa_proto_substrate::saa_type, scale};
-#[cfg(not(feature = "cosmwasm"))]
+#[cfg(not(feature = "wasm"))]
 pub use saa_proto_core::{saa_derivable, saa_str_struct};
-#[cfg(feature = "cosmwasm")]
+#[cfg(feature = "wasm")]
 pub use saa_proto_wasm::{saa_derivable, saa_str_struct, saa_type};
 

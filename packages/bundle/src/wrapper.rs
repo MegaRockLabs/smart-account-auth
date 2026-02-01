@@ -41,7 +41,7 @@ pub trait CredentialsWrapper  {
     }
 
     fn primary_id(&self) -> CredentialId {
-        self.primary().id()
+        self.primary().cred_id()
     }
 
     
@@ -65,7 +65,7 @@ pub trait CredentialsWrapper  {
         let primary_id = self.primary_id().to_lowercase();
         self.credentials()
             .into_iter()
-            .filter(|c| c.id() != primary_id)
+            .filter(|c| c.cred_id() != primary_id)
             .collect()
     }
 
@@ -76,7 +76,7 @@ pub trait CredentialsWrapper  {
         name: CredentialName
     ) -> Option<usize> {
         self.credentials().iter()
-            .position(|c| c.name() == name && *id == c.id())
+            .position(|c| c.name() == name && *id == c.cred_id())
     }
 
     

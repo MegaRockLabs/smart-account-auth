@@ -96,7 +96,7 @@ impl crate::CredentialsWrapper for CredentialData {
             if let Some(address) = info.address.clone() {
                 addresses.push(address);
             }
-            credentials.push((c.id().to_lowercase(), info));
+            credentials.push((c.cred_id().to_lowercase(), info));
             Ok::<(), AuthError>(())
         })?;
 

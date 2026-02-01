@@ -10,6 +10,7 @@ version     = { workspace = true }
 
 [dependencies]
 serde               = { workspace = true, optional = true }
+cw-schema           = { workspace = true }
 saa-common          = { workspace = true }
 saa-schema          = { workspace = true }
 saa-crypto          = { workspace = true }

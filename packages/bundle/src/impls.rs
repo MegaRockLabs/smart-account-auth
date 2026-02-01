@@ -77,8 +77,8 @@ impl From<saa_passkeys::PasskeyCredential> for Credential {
 
 
 impl Identifiable for Credential {
-    fn id(&self) -> String {
-        self.deref().id()
+    fn cred_id(&self) -> String {
+        self.deref().cred_id()
     }
     fn name(&self) -> CredentialName {
         self.deref().name()
@@ -130,7 +130,7 @@ impl CredentialData {
             Some(
                 records
             ) => Box::new(records.iter().map(|(id, info)| (id.clone(), info.name.clone()))),
-            None => Box::new(self.credentials.iter().map(|c| (c.id(), c.name()))),
+            None => Box::new(self.credentials.iter().map(|c| (c.cred_id(), c.name()))),
         };
         // count of credentials, native credentials and whether the sender is found
         let (count, native_count, sender_found) = iter.fold(

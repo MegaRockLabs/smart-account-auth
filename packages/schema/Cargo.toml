@@ -10,16 +10,17 @@ version             = { workspace = true }
 [dependencies]
 saa-proto-core      = { workspace = true  }
 saa-proto-wasm      = { workspace = true, optional = true }
-saa-proto-solana    = { workspace = true, optional = true }
+saa-proto-cosmwasm  = { workspace = true, optional = true }
 saa-proto-substrate = { workspace = true, optional = true }
+saa-proto-solana    = { workspace = true, optional = true }
 
 
 # Substrate
 scale               = { workspace = true, optional = true }
 scale-info          = { workspace = true, optional = true }
 # CosmWasm
+cw-schema           = { workspace = true, optional = true }
 cosmwasm-schema     = { workspace = true, optional = true }
-schemars            = { workspace = true, optional = true }
 serde               = { workspace = true, optional = true } 
 # Solana
 borsh               = { workspace = true, optional = true }
@@ -44,9 +45,13 @@ substrate      = [
     "saa-proto-substrate",
 ]
 cosmwasm       = [
+    "wasm",
+    "saa-proto-cosmwasm", 
+]
+wasm           = [
     "dep:serde", 
-    "dep:schemars", 
     "dep:cosmwasm-schema", 
+    "dep:cw-schema",
     "saa-proto-wasm", 
     "std"     
 ]

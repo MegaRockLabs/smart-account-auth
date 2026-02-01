@@ -17,7 +17,7 @@ pub struct Ed25519 {
 
 impl Identifiable for Ed25519 {
 
-    fn id(&self) -> CredentialId {
+    fn cred_id(&self) -> CredentialId {
         self.pubkey.to_base64()
     }
 
@@ -63,7 +63,7 @@ impl Verifiable for Ed25519 {
             &self.pubkey
         )?;
         
-        ensure!(res, AuthError::Signature(Name, self.id()));
+        ensure!(res, AuthError::Signature(Name, self.cred_id()));
         Ok(CredentialInfo {
             extension: None,
             address: None,

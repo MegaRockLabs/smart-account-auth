@@ -27,7 +27,7 @@ pub struct PasskeyCredential {
 
 impl Identifiable for PasskeyCredential {
 
-    fn id(&self) -> saa_common::CredentialId {
+    fn cred_id(&self) -> saa_common::CredentialId {
         self.id.to_lowercase()
     }
 
@@ -87,7 +87,7 @@ impl Verifiable for PasskeyCredential {
             &self.signature,
             &self.pubkey.as_ref().unwrap()
         )?;
-        ensure!(res, AuthError::Signature(PasskeyName, self.id()));
+        ensure!(res, AuthError::Signature(PasskeyName, self.cred_id()));
         Ok(CredentialInfo { extension: None, address: None, hrp: None, name: PasskeyName })
     }
 

@@ -1044,7 +1044,7 @@ checksum = "d8f335d3f51e10260f4dfb0840f0526c1d25c6b42a9489c04ce41ed9aa54dd6d"
 dependencies = [
  "cw-schema-derive",
  "indexmap",
- "schemars 1.1.0",
+ "schemars 1.2.0",
  "serde",
  "serde_with",
  "siphasher",
@@ -2880,21 +2880,22 @@ checksum = "28d3b2b1366ec20994f1fd18c3c594f05c5dd4bc44d8bb0c1c632c8d6829481f"
 
 [[package]]
 name = "saa-auth"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
+ "cw-schema",
  "hex",
  "primitive-types",
  "saa-common",
  "saa-crypto",
  "saa-schema",
- "schemars 0.8.22",
+ "schemars 1.2.0",
  "serde",
  "serde-cw-value",
 ]
 
 [[package]]
 name = "saa-common"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "base64 0.22.1",
  "bech32 0.11.1",
@@ -2902,12 +2903,12 @@ dependencies = [
  "cosmwasm-crypto 3.0.2",
  "cosmwasm-std 1.5.11",
  "cosmwasm-std 3.0.2",
+ "cw-schema",
  "getrandom 0.2.16",
  "ink",
  "parity-scale-codec",
  "saa-schema",
  "scale-info",
- "schemars 0.8.22",
  "secret-cosmwasm-std",
  "serde",
  "serde-cw-value",
@@ -2918,7 +2919,7 @@ dependencies = [
 
 [[package]]
 name = "saa-crypto"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "bech32 0.11.1",
  "cosmwasm-crypto 3.0.2",
@@ -2934,8 +2935,9 @@ dependencies = [
 
 [[package]]
 name = "saa-curves"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
+ "cw-schema",
  "saa-common",
  "saa-crypto",
  "saa-schema",
@@ -2943,8 +2945,9 @@ dependencies = [
 
 [[package]]
 name = "saa-passkeys"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
+ "cw-schema",
  "saa-common",
  "saa-crypto",
  "saa-schema",
@@ -2953,7 +2956,16 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-core"
-version = "0.27.1"
+version = "0.27.2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "saa-proto-cosmwasm"
+version = "0.27.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2962,7 +2974,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-solana"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2971,7 +2983,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-substrate"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2980,7 +2992,7 @@ dependencies = [
 
 [[package]]
 name = "saa-proto-wasm"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2989,17 +3001,18 @@ dependencies = [
 
 [[package]]
 name = "saa-schema"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "borsh",
  "cosmwasm-schema",
+ "cw-schema",
  "parity-scale-codec",
  "saa-proto-core",
+ "saa-proto-cosmwasm",
  "saa-proto-solana",
  "saa-proto-substrate",
  "saa-proto-wasm",
  "scale-info",
- "schemars 0.8.22",
  "serde",
  "strum 0.27.2",
  "strum_macros 0.27.2",
@@ -3008,7 +3021,7 @@ dependencies = [
 
 [[package]]
 name = "saa-tests"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
  "atp-chain-utils",
  "b58",
@@ -3018,10 +3031,11 @@ dependencies = [
  "bitcoin-bosd",
  "cosmwasm-schema",
  "cosmwasm-std 3.0.2",
+ "cw-schema",
  "hex",
  "saa-common",
  "saa-schema",
- "schemars 0.8.22",
+ "schemars 1.2.0",
  "serde",
  "serde_json",
  "smart-account-auth",
@@ -3150,13 +3164,13 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9558e172d4e8533736ba97870c4b2cd63f84b382a3d6eb063da41b91cce17289"
+checksum = "54e910108742c57a770f492731f99be216a52fadd361b06c8fb59d74ccc267d2"
 dependencies = [
  "dyn-clone",
  "ref-cast",
- "schemars_derive 1.1.0",
+ "schemars_derive 1.2.0",
  "serde",
  "serde_json",
 ]
@@ -3175,9 +3189,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "301858a4023d78debd2353c7426dc486001bddc91ae31a76fb1f55132f7e2633"
+checksum = "4908ad288c5035a8eb12cfdf0d49270def0a268ee162b75eeee0f85d155a7c45"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3519,15 +3533,16 @@ checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
 name = "smart-account-auth"
-version = "0.27.1"
+version = "0.27.2"
 dependencies = [
+ "cw-schema",
  "saa-auth",
  "saa-common",
  "saa-crypto",
  "saa-curves",
  "saa-passkeys",
  "saa-schema",
- "schemars 0.8.22",
+ "schemars 1.2.0",
  "serde",
  "serde-cw-value",
  "strum 0.27.2",

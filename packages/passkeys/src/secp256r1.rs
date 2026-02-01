@@ -16,7 +16,7 @@ pub struct Secp256r1 {
 
 impl Identifiable for Secp256r1 {
 
-    fn id(&self) -> saa_common::CredentialId {
+    fn cred_id(&self) -> saa_common::CredentialId {
         self.pubkey.to_base64()
     }
 
@@ -60,7 +60,7 @@ impl Verifiable for Secp256r1 {
             &self.signature, 
             &self.pubkey
         )?;
-        ensure!(res, AuthError::Signature(Name, self.id()));
+        ensure!(res, AuthError::Signature(Name, self.cred_id()));
         Ok(CredentialInfo {
             extension: None,
             address: None,

@@ -60,7 +60,7 @@ impl CosmosArbitrary {
 
 
 impl Identifiable for CosmosArbitrary {
-    fn id(&self) -> CredentialId {
+    fn cred_id(&self) -> CredentialId {
         self.pubkey.to_string().to_lowercase()
     }
     
@@ -107,7 +107,7 @@ impl Verifiable for CosmosArbitrary {
             &self.signature, 
             &self.pubkey
         )?;
-        saa_common::ensure!(res, AuthError::Signature(CosmosName, self.id()));
+        saa_common::ensure!(res, AuthError::Signature(CosmosName, self.cred_id()));
         let hrp = address.as_str().split('1').next().map(|s| s.to_string());
         Ok(CredentialInfo {
             hrp,

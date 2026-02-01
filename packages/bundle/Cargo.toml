@@ -19,6 +19,7 @@ crate-type  =  ["cdylib", "rlib"]
 strum                   = { workspace = true }
 serde                   = { workspace = true }
 schemars                = { workspace = true }
+cw-schema               = { workspace = true }
 saa-schema              = { workspace = true }
 saa-crypto              = { workspace = true }
 saa-common              = { workspace = true }

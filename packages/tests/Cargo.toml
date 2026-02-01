@@ -17,6 +17,7 @@ saa-schema          = { workspace = true }
 strum_macros        = { workspace = true }
 strum               = { workspace = true }
 atp-chain-utils = "0.1.1"
+cw-schema           = { workspace = true }
 bitcoin-bosd = { version = "0.6.0", features = ["address", "arbitrary"] }
 bitcoin =  { version = "0.32.6", features = ["secp-recovery"] }
 b58 = "0.1.2"

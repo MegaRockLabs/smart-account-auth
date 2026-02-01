@@ -1,0 +1,25 @@
+[package]
+name        = "saa-proto-cosmwasm"
+description = "Procedural macros of saa-schema for cosmwasm"
+edition     = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+version     = { workspace = true }
+
+[lib]
+proc-macro = true
+
+[dependencies.proc-macro2]
+version = "1"
+
+[dependencies.quote]
+version = "1"
+
+[dependencies.syn]
+version = "1"
+features = [
+    "full",
+    "printing",
+    "extra-traits",
+]

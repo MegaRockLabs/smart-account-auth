@@ -5,7 +5,7 @@ use crate::{AuthError, CredentialId, CredentialName};
 
 
 pub trait Identifiable {
-    fn id(&self) -> CredentialId;
+    fn cred_id(&self) -> CredentialId;
     fn name(&self) -> CredentialName;
 }
 
@@ -23,8 +23,8 @@ pub trait Verifiable : Identifiable  {
 
 
 impl<T: Deref<Target = dyn Identifiable>> Identifiable for T {
-    fn id(&self) -> CredentialId {
-        self.deref().id()
+    fn cred_id(&self) -> CredentialId {
+        self.deref().cred_id()
     }
 
     fn name(&self) -> CredentialName {
