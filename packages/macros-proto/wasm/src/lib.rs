@@ -41,7 +41,8 @@ fn saa_type_impl(input: TokenStream, options: Options) -> TokenStream {
                     PartialEq,
                     ::saa_schema::serde::Serialize,
                     ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
+                    ::saa_schema::schemars::JsonSchema,
+                    ::saa_schema::Schemaifier,
                 )]
                 #[serde( #(#serde_args),* )]
                 #[schemars(crate = "::saa_schema::schemars")]
@@ -58,7 +59,8 @@ fn saa_type_impl(input: TokenStream, options: Options) -> TokenStream {
                     PartialEq,
                     ::saa_schema::serde::Serialize,
                     ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
+                    ::saa_schema::schemars::JsonSchema,
+                    ::saa_schema::Schemaifier
                 )]
                 #[serde( #(#serde_args,)* rename_all = "snake_case")]
                 #[schemars(crate = "::saa_schema::schemars")]
@@ -103,6 +105,7 @@ fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::Tok
             ::saa_schema::serde::Serialize,
             ::saa_schema::serde::Deserialize,
             ::saa_schema::schemars::JsonSchema,
+            ::saa_schema::Schemaifier
         )]
         #[strum_discriminants(
             #maybe_name
@@ -110,6 +113,7 @@ fn strum_enum(input: &DeriveInput, attr_args: &[NestedMeta]) -> proc_macro2::Tok
                 ::saa_schema::serde::Serialize,
                 ::saa_schema::serde::Deserialize,
                 ::saa_schema::schemars::JsonSchema,
+                ::saa_schema::Schemaifier,
                 ::saa_schema::strum_macros::Display,
                 ::saa_schema::strum_macros::EnumString,
                 ::saa_schema::strum_macros::VariantArray,
@@ -154,7 +158,8 @@ pub fn saa_derivable(
                     PartialEq,
                     ::saa_schema::serde::Serialize,
                     ::saa_schema::serde::Deserialize,
-                    ::saa_schema::schemars::JsonSchema
+                    ::saa_schema::schemars::JsonSchema,
+                    ::saa_schema::Schemaifier,
                 )]
                 #[allow(clippy::derive_partial_eq_without_eq)]
                 #input_ast
@@ -179,8 +184,9 @@ pub fn saa_str_struct(
     let expanded : DeriveInput = match input.data {
         syn::Data::Struct(_) => parse_quote! {
             #[derive(
-                Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default
-                ::saa_schema::schemars::JsonSchema
+                Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default,
+                ::saa_schema::schemars::JsonSchema,
+                ::saa_schema::Schemaifier
             )]
             #[serde(deny_unknown_fields, crate = "::saa_schema::serde")]
             #[schemars(crate = "::saa_schema::schemars")]

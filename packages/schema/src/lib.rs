@@ -7,7 +7,7 @@ pub use saa_proto_core::saa_error;
 
 
 #[cfg(feature = "cosmwasm")]
-pub use {serde, schemars, cosmwasm_schema::{QueryResponses}};
+pub use {serde, schemars, cosmwasm_schema::{cw_schema::Schemaifier, QueryResponses}};
 #[cfg(feature = "solana")]
 pub use borsh;
 #[cfg(feature = "substrate")]

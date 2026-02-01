@@ -12,17 +12,19 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 ## [0.26.3] - 2025-07-97
 
 ## Fixed
+
 - `CredentialWrapper` panicking on verify when calling `primary_id`
 - `CredentialWrapper`'s post validation not making sure that the sender is found when `use_native` is set
 
 ## Changed
-- `CredentialWrapper`'s method `with_native` now returns a copy of the data instead of changing in place
 
+- `CredentialWrapper`'s method `with_native` now returns a copy of the data instead of changing in place
 
 
 ## [0.26.2] - 2025-07-97
 
 ## Added
+
 - Feature tags for including every single one of the supported credentials separately
 - `ClientData` of passkeys can now contain additional fields on top od the most common `other_keys_can...`
 - a separate testing golder
@@ -33,6 +35,7 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - Definitions to `EthTypedData` credential type
 
 ## Changed
+
 - `Verifiable` interface now has only one (mutually exclusive) `verify` method without VMs suffixes (like _cosmwasm)
 - `Verifiable` now return a `CredentialInfo` object instead
 - `CredentialInfo` now has an optional `address` for credentials that have them [`Caller`, `CosmosArbirary`]
@@ -46,22 +49,23 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - [Feature] `ethereum` feature is changed to include all ethereum related credentials. The previous behaviour can enabled with `eth_personal` separately
 
 ## Fixed
+
 - Replay attack protection works for each credential individually now
 - Overall optimisations, refactoring and including less dependencies when possible
 - `PasskeyCredential` and `Secp256r1` are now in a separate crate and don't include `p256` crate for CosmWasm 2.0
 - `to_json_string` imports and definitions
 
 ## Removed
-- `injective` feature until adding complete support
 
+- `injective` feature until adding complete support
 
 ## [Unreleased] Typescript
 
 ## Changed
+
 - stopped converting `PasskeyCredential::credential_data.challenge` from `base64` to `base64-url` 
 
-
-## [0.25.0] - 2024-12-18 
+## [0.25.0] - 2024-12-18
 
 ## Added
 
@@ -74,6 +78,7 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - this document
 
 ## Changed
+
 - type of CredentialId has changed from `Vec<u8>` to `String`
 - response types that had ids were also changed from  `Binary` to `String` 
 - `Caller` credential is now an enum struct (after being a regular struct)
@@ -86,13 +91,12 @@ The promise only applies to the main crate `smart-account-auth` (in packages/bun
 - updated readme with features and focus-areas
 
 ## Removed
+
 - All storage related types and primitives and logic have been removed to be moved to a separate package for each VM  
 - Deleted  `storage` and `iterator` feature tags
 
 ## Fixed
+
 - validation for max and min number of credentials in `CredentialData`
 - fixed situatino with redundant (re-)validations 
 - removed clutter from complex derrive clauses
-- macros 
-
-
