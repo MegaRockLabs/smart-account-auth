@@ -1,4 +1,4 @@
-use saa_common::{AuthError, vec, format};
+use saa_common::AuthError;
 use saa_crypto::hashes::keccak256;
 
 
@@ -14,9 +14,9 @@ pub fn get_recovery_param(v: u8) -> Result<u8, AuthError> {
 #[cfg(feature = "eth_personal")]
 pub fn hash_eth_personal(msg: &[u8]) -> [u8; 32] {
     const PREFIX: &str = "\x19Ethereum Signed Message:\n";
-    let mut bytes = vec![];
+    let mut bytes = saa_common::vec![];
     bytes.extend_from_slice(PREFIX.as_bytes());
-    let len_str = format!("{}", msg.len());
+    let len_str = saa_common::format!("{}", msg.len());
     bytes.extend_from_slice(len_str.as_bytes());
     bytes.extend_from_slice(msg);
     keccak256(&bytes)
@@ -65,7 +65,7 @@ pub fn hash_eth_typed_data(
 }
 
 
-
+#[cfg(feature = "eth_typed_data")]
 pub(crate) fn encode_address(addr_hex: &str) -> [u8; 32] {
     let addr = hex::decode(addr_hex.trim_start_matches("0x")).expect("Invalid hex address");
     let mut out = [0u8; 32];
@@ -73,6 +73,7 @@ pub(crate) fn encode_address(addr_hex: &str) -> [u8; 32] {
     out
 }
 
+#[cfg(feature = "eth_typed_data")]
 pub(crate) fn encode_u64(value: u64) -> [u8; 32] {
     let mut buf = [0u8; 32];
     buf[24..].copy_from_slice(&value.to_be_bytes()); // Right-align
@@ -84,11 +85,13 @@ pub(crate) fn encode_u64(value: u64) -> [u8; 32] {
 ///
 /// `keccak256("EIP712Domain(string name,string version,uint256 chainId,address
 /// verifyingContract)")`
+#[cfg(feature = "eth_typed_data")]
 const EIP712_DOMAIN_TYPE_HASH: [u8; 32] = [
     139, 115, 195, 198, 155, 184, 254, 61, 81, 46, 204, 76, 247, 89, 204, 121, 35, 159, 123, 23,
     155, 15, 250, 202, 169, 167, 93, 82, 43, 57, 64, 15,
 ];
 
+#[cfg(feature = "eth_typed_data")]
 const EIP712_DOMAIN_TYPE_HASH_WITH_SALT: [u8; 32] = [
     216, 124, 214, 239, 121, 212, 226, 185, 94, 21, 206, 138, 191, 115, 45, 181, 30, 199, 113, 241,
     202, 46, 220, 207, 34, 164, 108, 114, 154, 197, 100, 114,

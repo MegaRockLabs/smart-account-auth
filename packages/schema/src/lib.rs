@@ -39,5 +39,8 @@ pub use {saa_proto_substrate::saa_type, scale};
 #[cfg(not(feature = "wasm"))]
 pub use saa_proto_core::{saa_derivable, saa_str_struct};
 #[cfg(feature = "wasm")]
-pub use saa_proto_wasm::{saa_derivable, saa_str_struct, saa_type};
+#[cfg(all(feature = "wasm", not(feature = "cosmwasm")))]
+pub use saa_proto_wasm::{saa_type, saa_derivable, saa_str_struct};
+#[cfg(feature = "cosmwasm")]
+pub use saa_proto_cosmwasm::{saa_type, saa_derivable, saa_str_struct};
 

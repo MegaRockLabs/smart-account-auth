@@ -87,6 +87,5 @@ impl Parse for Options {
     }
 }
 
-pub(crate) use bail;
 pub(crate) use error_message;
 pub(crate) use fallible_macro;
